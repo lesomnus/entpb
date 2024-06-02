@@ -1,0 +1,17 @@
+{
+	"name": "lesomnus-entpb",
+	"build": {
+		"context": ".",
+		"dockerfile": "Dockerfile"
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"golang.go",
+				"plex.vscode-protolint",
+				"zxh404.vscode-proto3",
+				"streetsidesoftware.code-spell-checker"
+			]
+		}
+	}
+}

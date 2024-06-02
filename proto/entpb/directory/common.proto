@@ -1,0 +1,10 @@
+edition = "2023";
+
+package entpb.directory;
+
+option go_package = "github.com/lesomnus/entpb/pb";
+
+enum Role {
+	OWNER = 10;
+	MEMBER = 20;
+}
