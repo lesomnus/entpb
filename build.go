@@ -1,11 +1,8 @@
 package entpb
 
 import (
-	"cmp"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
@@ -14,16 +11,13 @@ import (
 	"entgo.io/ent/entc/load"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
-	"github.com/lesomnus/entpb/pbgen"
 	"github.com/lesomnus/entpb/pbgen/ident"
 	"github.com/mitchellh/mapstructure"
-	"golang.org/x/exp/maps"
 )
 
-type generator struct {
-	out_dir string // Expected it to be a absolute path.
-
-	files map[string]*ProtoFile // Filepath or alias to proto file.
+type Build struct {
+	// Filepath or alias to proto file to be output.
+	files map[string]*ProtoFile
 
 	// Holds proto file that contains the enum definition.
 	// Key is global name of the Go type that bound to enum.
@@ -38,194 +32,23 @@ type generator struct {
 	// Holds message definitions.
 	// Key is name of Ent Schema.
 	// e.g. User, Identity, ...
-	schema_to_messages map[string]*messageAnnotation
+	messages map[string]*messageAnnotation
 }
 
-func (g *generator) generate(graph *gen.Graph) error {
-	d, ok := decodeAnnotation(&ProtoFiles{}, graph.Annotations)
-	if !ok {
-		return nil
+func NewBuild(graph *gen.Graph) (*Build, error) {
+	b := &Build{
+		files:        map[string]*ProtoFile{},
+		enum_holders: map[string]*ProtoFile{},
+		messages:     map[string]*messageAnnotation{},
+	}
+	if err := b.parse(graph); err != nil {
+		return nil, err
 	}
 
-	if err := g.parseGraph(graph); err != nil {
-		return fmt.Errorf("parse graph: %w", err)
-	}
-
-	for p := range *d {
-		// `g` contains aliased files but `d` doesn't.
-		// Iterating `d` means iterating files with no aliased file.
-		f, ok := g.files[p]
-		if !ok {
-			panic("invalid generator state: file not found")
-		}
-
-		proto_file := pbgen.ProtoFile{
-			Edition: pbgen.Edition2023,
-			Package: f.pbPackage,
-			Options: []pbgen.Option{pbgen.FeatureFieldPresenceImplicit},
-		}
-		if f.goPackage != "" {
-			proto_file.Options = append(proto_file.Options, pbgen.OptionGoPackage(f.goPackage))
-		}
-
-		// Collect imports.
-		{
-			imports := map[string]struct{}{}
-			for _, message := range f.messages {
-				for _, field := range message.fields {
-					imports[field.pb_type.Import] = struct{}{}
-				}
-			}
-			for _, service := range f.services {
-				for _, rpc := range service.Rpcs {
-					imports[rpc.Req.Import] = struct{}{}
-					imports[rpc.Res.Import] = struct{}{}
-				}
-			}
-			delete(imports, "")
-			delete(imports, f.path)
-
-			paths := maps.Keys(imports)
-			slices.Sort(paths)
-			for _, p := range paths {
-				proto_file.Imports = append(proto_file.Imports, pbgen.Import{Name: p})
-			}
-		}
-
-		//
-		// Service definitions.
-		//
-		services := maps.Values(f.services)
-		slices.SortFunc(services, func(a, b *service) int {
-			return cmp.Compare(a.Name, b.Name)
-		})
-		for _, service := range services {
-			d := pbgen.Service{Name: service.Name}
-
-			rpcs := maps.Values(service.Rpcs)
-			slices.SortFunc(rpcs, func(a, b *Rpc) int {
-				return cmp.Compare(a.Name, b.Name)
-			})
-			for _, v := range rpcs {
-				if v.Comment != "" {
-					d.Body = append(d.Body, pbgen.Comment{Value: v.Comment})
-				}
-
-				elem := pbgen.Rpc{Name: v.Name}
-				elem.Request.Type = v.Req.ReferencedIn(f.pbPackage)
-				elem.Response.Type = v.Res.ReferencedIn(f.pbPackage)
-				switch v.Stream {
-				case StreamNone:
-				case StreamClient:
-					elem.Request.Stream = true
-				case StreamServer:
-					elem.Response.Stream = true
-				case StreamBoth:
-					elem.Request.Stream = true
-					elem.Response.Stream = true
-
-				default:
-					// ignore
-				}
-
-				d.Body = append(d.Body, elem)
-			}
-
-			proto_file.TopLevelDefinitions = append(proto_file.TopLevelDefinitions, d)
-		}
-
-		//
-		// Enum definitions
-		//
-		enums := maps.Values(f.enums)
-		slices.SortFunc(enums, func(a, b *enum) int {
-			return cmp.Compare(a.t.Name(), b.t.Name())
-		})
-		for _, enum := range enums {
-			// TODO: comment for enum
-
-			//
-			// Field definitions
-			//
-			d := pbgen.Enum{Name: enum.t.Name()}
-			if enum.is_closed {
-				d.Options = append(d.Options, pbgen.FeatureEnumTypeClosed)
-			}
-			fields := slices.Clone(enum.vs)
-			slices.SortFunc(fields, func(a, b EnumField) int {
-				return cmp.Compare(a.Number, b.Number)
-			})
-			for _, v := range fields {
-				if v.Comment != "" {
-					d.Body = append(d.Body, pbgen.Comment{Value: v.Comment})
-				}
-				d.Body = append(d.Body, pbgen.EnumField{Name: v.Name, Number: v.Number})
-			}
-
-			proto_file.TopLevelDefinitions = append(proto_file.TopLevelDefinitions, d)
-		}
-
-		//
-		// Message definitions
-		//
-		messages := maps.Values(f.messages)
-		slices.SortFunc(messages, func(a, b *messageAnnotation) int {
-			return cmp.Compare(a.name, b.name)
-		})
-		for _, message := range messages {
-			if message.comment != "" {
-				proto_file.TopLevelDefinitions = append(proto_file.TopLevelDefinitions, pbgen.Comment{Value: message.comment})
-			}
-
-			//
-			// Field definitions
-			//
-			d := pbgen.Message{Name: message.name}
-			fields := slices.Clone(message.fields)
-			slices.SortFunc(fields, func(a, b *fieldAnnotation) int {
-				return cmp.Compare(a.Number, b.Number)
-			})
-			for _, v := range fields {
-				if v.comment != "" {
-					d.Body = append(d.Body, pbgen.Comment{Value: v.comment})
-				}
-
-				elem := pbgen.MessageField{
-					Type:   v.pb_type.ReferencedIn(f.pbPackage),
-					Name:   v.name,
-					Number: v.Number,
-				}
-				if v.isRepeated {
-					elem.Labels = append(elem.Labels, pbgen.LabelRepeated)
-				} else if v.isOptional {
-					// Presence of "repeated" fields are not tracked.
-					elem.Options = append(elem.Options, pbgen.FeatureFieldPresenceExplicit)
-				}
-
-				d.Body = append(d.Body, elem)
-			}
-
-			proto_file.TopLevelDefinitions = append(proto_file.TopLevelDefinitions, d)
-		}
-
-		os_path := filepath.Join(g.out_dir, p)
-		if err := os.MkdirAll(filepath.Dir(os_path), 0755); err != nil {
-			return fmt.Errorf(`create directory for proto files: %w`, err)
-		}
-
-		w, err := os.Create(os_path)
-		if err != nil {
-			return fmt.Errorf(`create proto file: %w`, err)
-		}
-		if err := pbgen.Execute(w, proto_file); err != nil {
-			return fmt.Errorf(`generate proto file for "%s": %w`, p, err)
-		}
-	}
-
-	return nil
+	return b, nil
 }
 
-func (g *generator) parseGraph(graph *gen.Graph) error {
+func (b *Build) parse(graph *gen.Graph) error {
 	var d map[string]*ProtoFile
 	if a, ok := graph.Annotations[ProtoFilesAnnotation]; !ok {
 		return nil
@@ -244,23 +67,23 @@ func (g *generator) parseGraph(graph *gen.Graph) error {
 		}
 
 		for name := range f.enums {
-			if _, ok := g.enum_holders[name]; ok {
+			if _, ok := b.enum_holders[name]; ok {
 				return fmt.Errorf(`multiple definition of enum for same Go type "%s"`, name)
 			}
 
-			g.enum_holders[name] = f
+			b.enum_holders[name] = f
 		}
 
 		f.path = p
-		g.files[p] = f
-		g.files[f.alias] = f
+		b.files[p] = f
+		b.files[f.alias] = f
 	}
 
 	errs := []error{}
 	for _, s := range graph.Schemas {
 		// Note that `parseMessage` does not parse their fields but only its name
 		// since there may be dependencies between messages.
-		if err := g.parseMessage(s); err != nil {
+		if err := b.parseMessage(s); err != nil {
 			errs = append(errs, fmt.Errorf(`schema "%s": %w`, s.Name, err))
 			continue
 		}
@@ -270,19 +93,19 @@ func (g *generator) parseGraph(graph *gen.Graph) error {
 	}
 
 	errs = []error{}
-	for _, f := range g.enum_holders {
+	for _, f := range b.enum_holders {
 		for _, enum := range f.enums {
-			if err := g.normalizeEnum(enum); err != nil {
+			if err := b.normalizeEnum(enum); err != nil {
 				errs = append(errs, fmt.Errorf(`normalize enum%s: %w`, enum.t.Name(), err))
 			}
 		}
 	}
-	for _, msg := range g.schema_to_messages {
+	for _, msg := range b.messages {
 		errs_ := []error{}
-		if err := g.parseFields(msg); err != nil {
+		if err := b.parseFields(msg); err != nil {
 			errs_ = append(errs_, fmt.Errorf(`parse fields: %w`, err))
 		}
-		if err := g.parseService(msg); err != nil {
+		if err := b.parseService(msg); err != nil {
 			errs_ = append(errs_, fmt.Errorf(`parse service: %w`, err))
 		}
 		if len(errs_) > 0 {
@@ -296,7 +119,7 @@ func (g *generator) parseGraph(graph *gen.Graph) error {
 	return nil
 }
 
-func (g *generator) parseMessage(r *load.Schema) error {
+func (b *Build) parseMessage(r *load.Schema) error {
 	d, ok := decodeAnnotation(&messageAnnotation{}, r.Annotations)
 	if !ok {
 		return nil
@@ -310,7 +133,7 @@ func (g *generator) parseMessage(r *load.Schema) error {
 		d.comment = a.Text
 	}
 
-	f, ok := g.files[d.Filepath]
+	f, ok := b.files[d.Filepath]
 	if !ok {
 		return fmt.Errorf(`message "%s" references non-exists proto file "%s"`, d.name, d.Filepath)
 	}
@@ -322,11 +145,11 @@ func (g *generator) parseMessage(r *load.Schema) error {
 	d.file = f
 	d.schema = r
 	f.messages[d.name] = d
-	g.schema_to_messages[r.Name] = d
+	b.messages[r.Name] = d
 	return nil
 }
 
-func (g *generator) normalizeEnum(enum *enum) error {
+func (p *Build) normalizeEnum(enum *enum) error {
 	prefix := ""
 	has_zero := false
 	if enum.prefix == nil {
@@ -358,10 +181,10 @@ func (g *generator) normalizeEnum(enum *enum) error {
 	return nil
 }
 
-func (g *generator) parseFields(m *messageAnnotation) error {
+func (b *Build) parseFields(m *messageAnnotation) error {
 	errs := []error{}
 	for _, field := range m.schema.Fields {
-		d, err := g.parseEntField(field)
+		d, err := b.parseEntField(field)
 		if err != nil {
 			errs = append(errs, fmt.Errorf(`field "%s": %w`, field.Name, err))
 			continue
@@ -383,7 +206,7 @@ func (g *generator) parseFields(m *messageAnnotation) error {
 		}
 	}
 	for _, edge := range edges {
-		d, err := g.parseEntEdge(edge)
+		d, err := b.parseEntEdge(edge)
 		if err != nil {
 			errs = append(errs, fmt.Errorf(`edge "%s": %w`, edge.Name, err))
 			continue
@@ -402,7 +225,7 @@ func (g *generator) parseFields(m *messageAnnotation) error {
 	return nil
 }
 
-func (g *generator) parseEntField(r *load.Field) (*fieldAnnotation, error) {
+func (p *Build) parseEntField(r *load.Field) (*fieldAnnotation, error) {
 	d, ok := decodeAnnotation(&fieldAnnotation{}, r.Annotations)
 	if !ok {
 		return nil, nil
@@ -415,14 +238,14 @@ func (g *generator) parseEntField(r *load.Field) (*fieldAnnotation, error) {
 
 	if r.Info.Type == field.TypeEnum {
 		name := globalTypeNameFromEntTypeInfo(r.Info)
-		f, ok := g.enum_holders[name]
+		f, ok := p.enum_holders[name]
 		if !ok {
 			return nil, fmt.Errorf("unregistered enum type: %s", name)
 		}
 
 		enum, ok := f.enums[name]
 		if !ok {
-			panic(fmt.Errorf(`invalid state of generator: enum does not exist on file: "%s"`, name))
+			panic(fmt.Errorf(`invalid state of Parser: enum does not exist on file: "%s"`, name))
 		}
 
 		d.pb_type = PbType{
@@ -442,7 +265,7 @@ func (g *generator) parseEntField(r *load.Field) (*fieldAnnotation, error) {
 	return d, nil
 }
 
-func (g *generator) parseEntEdge(r *load.Edge) (*fieldAnnotation, error) {
+func (p *Build) parseEntEdge(r *load.Edge) (*fieldAnnotation, error) {
 	d, ok := decodeAnnotation(&fieldAnnotation{}, r.Annotations)
 	if !ok {
 		return nil, nil
@@ -453,7 +276,7 @@ func (g *generator) parseEntEdge(r *load.Edge) (*fieldAnnotation, error) {
 		d.name = ident.Ident(r.Name)
 	}
 
-	message, ok := g.schema_to_messages[r.Type]
+	message, ok := p.messages[r.Type]
 	if !ok {
 		return nil, fmt.Errorf(`edge "%s" references a schema "%s" that is not a proto message`, r.Name, r.Type)
 	}
@@ -466,7 +289,7 @@ func (g *generator) parseEntEdge(r *load.Edge) (*fieldAnnotation, error) {
 	return d, nil
 }
 
-func (g *generator) parseService(d *messageAnnotation) error {
+func (p *Build) parseService(d *messageAnnotation) error {
 	s := d.Service
 	if s == nil || len(s.Rpcs) == 0 {
 		return nil
@@ -477,7 +300,7 @@ func (g *generator) parseService(d *messageAnnotation) error {
 		s.Filepath = d.Filepath
 	}
 
-	f, ok := g.files[s.Filepath]
+	f, ok := p.files[s.Filepath]
 	if !ok {
 		return fmt.Errorf(`service "%s" references non-exists proto file "%s"`, d.name, d.Filepath)
 	}

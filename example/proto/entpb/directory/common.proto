@@ -5,7 +5,7 @@ package entpb.directory;
 import "google/protobuf/timestamp.proto";
 
 option features.field_presence = IMPLICIT;
-option go_package = "github.com/lesomnus/entpb/pb";
+option go_package = "github.com/lesomnus/entpb/_pb";
 
 enum Role {
 	ROLE_UNSPECIFIED = 0;

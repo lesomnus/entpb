@@ -2,33 +2,44 @@ package entpb
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
+	"github.com/lesomnus/entpb/pbgen"
 )
 
 type Extension struct {
 	entc.DefaultExtension
-	out_dir string
+	out     Fs
+	printer Printer
 }
 
 // ExtensionOption is an option for the entproto extension.
-type ExtensionOption func(*Extension)
+type ExtensionOption func(*Extension) error
+
+func WithEdition(edition pbgen.Edition) ExtensionOption {
+	return func(e *Extension) error {
+		p, err := NewPrinter(edition)
+		if err != nil {
+			return fmt.Errorf("printer: %w", err)
+		}
+
+		e.printer = p
+		return nil
+	}
+}
 
 // NewExtension returns a new Extension configured by opts.
-func NewExtension(out_dir string, opts ...ExtensionOption) (*Extension, error) {
-	if out_dir == "" {
-		return nil, fmt.Errorf(`"out_dir" cannot be an empty string`)
+func NewExtension(out Fs, opts ...ExtensionOption) (*Extension, error) {
+	p, err := NewPrinter(pbgen.Edition2023)
+	if err != nil {
+		panic("new printer")
 	}
 
-	if p, err := filepath.Abs(out_dir); err != nil {
-		return nil, fmt.Errorf("resolve absolute path for output directory: %w", err)
-	} else {
-		out_dir = p
+	e := &Extension{
+		out:     out,
+		printer: p,
 	}
-
-	e := &Extension{out_dir: out_dir}
 	for _, opt := range opts {
 		opt(e)
 	}
@@ -58,18 +69,13 @@ func (e *Extension) hook() gen.Hook {
 }
 
 func (e *Extension) generate(g *gen.Graph) error {
-	if e.out_dir == "" {
-		panic(`"out_dir" is empty`)
+	b, err := NewBuild(g)
+	if err != nil {
+		return fmt.Errorf("parse graph: %w", err)
+	}
+	if err := e.printer.Print(b, e.out); err != nil {
+		return fmt.Errorf("print: %w", err)
 	}
 
-	gen := generator{
-		out_dir: e.out_dir,
-
-		files:        map[string]*ProtoFile{},
-		enum_holders: map[string]*ProtoFile{},
-
-		schema_to_messages: map[string]*messageAnnotation{},
-	}
-
-	return gen.generate(g)
+	return nil
 }

@@ -1,4 +1,4 @@
-edition = "{{ .Edition }}";
+{{ with .Edition }}{{ .Keyword }} = "{{ .Value }}"{{ end }};
 
 {{- with .Package }}
 

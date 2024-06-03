@@ -6,7 +6,7 @@ import "entpb/directory/common.proto";
 import "google/protobuf/empty.proto";
 
 option features.field_presence = IMPLICIT;
-option go_package = "github.com/lesomnus/entpb/pb";
+option go_package = "github.com/lesomnus/entpb/_pb";
 
 service AccountService {
 	rpc Create (Account) returns (Account);

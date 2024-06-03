@@ -14,7 +14,7 @@ __root="$(cd "$(dirname "${__dir}")" && pwd)"         # Root directory of projec
 
 MODULE_NAME=github.com/lesomnus/entpb
 PROTO_ROOT="${__root}/example/proto"
-OUTPUT_DIR="${__root}/exmaple"
+OUTPUT_DIR="${__root}/example"
 cd "${PROTO_ROOT}"
 
 protoc \

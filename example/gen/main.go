@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -11,7 +12,17 @@ import (
 	"github.com/lesomnus/entpb"
 	"github.com/lesomnus/entpb/example"
 	"github.com/lesomnus/entpb/pbgen/ident"
+	"github.com/spf13/afero"
 )
+
+type fs_adaptor struct {
+	afero.Fs
+}
+
+func (a *fs_adaptor) Create(name string) (io.WriteCloser, error) {
+	f, err := a.Fs.Create(name)
+	return f, err
+}
 
 // CWD is assumed to be a project root.
 func main() {
@@ -21,17 +32,16 @@ func main() {
 	}
 
 	wd = filepath.Join(wd, "example")
-
-	proto_file_init := entpb.ProtoFileInit{
-		PbPackage: ident.Full{"entpb", "directory"},
-		GoPackage: "github.com/lesomnus/entpb/pb",
-	}
-
-	entpb_ext, err := entpb.NewExtension(filepath.Join(wd, "proto"))
+	fs := afero.NewBasePathFs(afero.NewOsFs(), filepath.Join(wd, "proto"))
+	entpb_ext, err := entpb.NewExtension(&fs_adaptor{Fs: fs})
 	if err != nil {
 		log.Fatal(fmt.Errorf("create entpb extension: %w", err))
 	}
 
+	proto_file_init := entpb.ProtoFileInit{
+		PbPackage: ident.Full{"entpb", "directory"},
+		GoPackage: "github.com/lesomnus/entpb/_pb",
+	}
 	err = entc.Generate(
 		filepath.Join(wd, "schema"),
 		&gen.Config{

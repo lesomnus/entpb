@@ -39,10 +39,15 @@ const (
 	VisibilityPublic = Visibility("public")
 )
 
-type Edition string
+type Edition struct {
+	Keyword string
+	Value   string
+}
 
-const (
-	Edition2023 = Edition("2023")
+var (
+	SyntaxProto2 = Edition{"syntax", "proto2"}
+	SyntaxProto3 = Edition{"syntax", "proto3"}
+	Edition2023  = Edition{"edition", "2023"}
 )
 
 type ProtoFile struct {
