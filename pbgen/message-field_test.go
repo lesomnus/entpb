@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/lesomnus/entpb/pbgen"
+	"github.com/lesomnus/entpb/pbgen/ident"
 	"github.com/stretchr/testify/require"
 )
 
@@ -46,7 +47,7 @@ func TestMessageField(t *testing.T) {
 		require := require.New(t)
 
 		d := pbgen.MessageField{
-			Type:   pbgen.FullIdent{"foo", "bar", "baz"},
+			Type:   ident.Full{"foo", "bar", "baz"},
 			Name:   "id",
 			Number: 1,
 		}
@@ -72,9 +73,7 @@ func TestMessageField(t *testing.T) {
 		require.NoError(err)
 
 		v := o.String()
-		require.Equal(`bytes id = 1 [
-	features.field_presence = EXPLICIT
-];`, v)
+		require.Equal(`bytes id = 1 [features.field_presence = EXPLICIT];`, v)
 	})
 
 	t.Run("multiple options", func(t *testing.T) {
@@ -107,7 +106,7 @@ func TestMessageField(t *testing.T) {
 
 		d := pbgen.MessageField{
 			Labels: []pbgen.Label{pbgen.LabelRepeated, pbgen.LabelOptional},
-			Type:   pbgen.FullIdent{"foo", "bar", "baz"},
+			Type:   ident.Full{"foo", "bar", "baz"},
 			Name:   "id",
 			Number: 1,
 			Options: []pbgen.Option{

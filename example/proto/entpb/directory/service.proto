@@ -1,0 +1,26 @@
+edition = "2023";
+
+package entpb.directory;
+
+import "entpb/directory/common.proto";
+import "google/protobuf/empty.proto";
+
+option features.field_presence = IMPLICIT;
+option go_package = "github.com/lesomnus/entpb/pb";
+
+service AccountService {
+	rpc Create (Account) returns (Account);
+	rpc Lock (Account) returns (google.protobuf.Empty);
+}
+
+service IdentityService {
+	rpc Create (Identity) returns (Identity);
+}
+
+service MembershipService {
+	rpc Create (Membership) returns (Membership);
+}
+
+service UserService {
+	rpc Create (User) returns (User);
+}

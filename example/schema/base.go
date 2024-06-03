@@ -32,6 +32,10 @@ func (BaseMixin) Fields() []ent.Field {
 
 func (BaseMixin) Annotations() []schema.Annotation {
 	return []schema.Annotation{
-		entpb.Message("entpb/directory/common.proto"),
+		entpb.Message(
+			"entpb/directory/common.proto",
+			&entpb.Service{Filepath: "svc"},
+			entpb.RpcEntCreate(),
+		),
 	}
 }

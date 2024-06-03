@@ -15,8 +15,11 @@ import {{ with .Visibility }}{{ . }} {{ end }}"{{ .Name }}";
 {{ template "options.go.tpl" . }}
 {{- end }}
 
-{{- range .TopLevelDefinitions }}
 
+{{- $empty_line := true }}
+{{- range .TopLevelDefinitions }}{{ if $empty_line }}
+{{ end }}
+{{- $empty_line = ne .TemplateName "comment" }}
 {{ include .TemplateName . }}
 {{- end }}
 

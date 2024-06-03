@@ -65,8 +65,10 @@ func (e *Extension) generate(g *gen.Graph) error {
 	gen := generator{
 		out_dir: e.out_dir,
 
-		files: map[string]*ProtoFile{},
-		enums: map[string]*ProtoFile{},
+		files:        map[string]*ProtoFile{},
+		enum_holders: map[string]*ProtoFile{},
+
+		schema_to_messages: map[string]*messageAnnotation{},
 	}
 
 	return gen.generate(g)

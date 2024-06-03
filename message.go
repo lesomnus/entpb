@@ -3,28 +3,82 @@ package entpb
 import (
 	"entgo.io/ent/entc/load"
 	"entgo.io/ent/schema"
+	"github.com/lesomnus/entpb/pbgen/ident"
+	"golang.org/x/exp/maps"
 )
 
 const MessageAnnotation = "ProtoMessage"
 
-func Message(filepath string) schema.Annotation {
-	return &messageAnnotation{Filepath: filepath}
+type MessageOption interface {
+	messageOpt(*messageAnnotation)
+}
+
+func Message(filepath string, opts ...MessageOption) schema.Annotation {
+	a := &messageAnnotation{Filepath: filepath}
+	for _, opt := range opts {
+		opt.messageOpt(a)
+	}
+	return a
 }
 
 type messageAnnotation struct {
 	Filepath string
+	Service  *service
 
-	ref    *load.Schema
+	file   *ProtoFile
+	schema *load.Schema
 	fields []*fieldAnnotation
 
-	name    string
+	name    ident.Ident
 	comment string
+}
+
+func (a *messageAnnotation) pbType() PbType {
+	t := PbType{
+		Name:   a.name,
+		Import: a.Filepath,
+	}
+	if f := a.file; f != nil {
+		t.Package = f.pbPackage
+	}
+
+	return t
 }
 
 func (messageAnnotation) Name() string {
 	return MessageAnnotation
 }
 
-func (messageAnnotation) Merge(other schema.Annotation) schema.Annotation {
+func (a messageAnnotation) Merge(other schema.Annotation) schema.Annotation {
+	a_, ok := other.(*messageAnnotation)
+	if !ok {
+		panic("invalid annotation")
+	}
+	if a_.Filepath == PathInherit {
+		a_.Filepath = a.Filepath
+	}
+	if a.Service != nil {
+		if a_.Service == nil {
+			a_.Service = a.Service
+		} else {
+			lhs := a.Service
+			rhs := a_.Service
+
+			if rhs.Filepath == PathInherit {
+				rhs.Filepath = lhs.Filepath
+			}
+
+			rpcs := maps.Clone(lhs.Rpcs)
+			maps.Copy(rpcs, rhs.Rpcs)
+			rhs.Rpcs = rpcs
+
+			builtin := maps.Clone(lhs.BuiltIn)
+			maps.Copy(builtin, rhs.BuiltIn)
+			rhs.BuiltIn = builtin
+		}
+	}
+
 	return other
 }
+
+const PathInherit = "$inherit"

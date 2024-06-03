@@ -1,6 +1,9 @@
 package entpb
 
-import "entgo.io/ent/schema"
+import (
+	"entgo.io/ent/schema"
+	"github.com/lesomnus/entpb/pbgen/ident"
+)
 
 const FieldAnnotation = "ProtoField"
 
@@ -17,7 +20,7 @@ type fieldAnnotation struct {
 
 	pb_type PbType
 
-	name    string
+	name    ident.Ident
 	comment string
 
 	isOptional bool

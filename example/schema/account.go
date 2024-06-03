@@ -54,5 +54,11 @@ func (Account) Edges() []ent.Edge {
 }
 
 func (Account) Annotations() []schema.Annotation {
-	return []schema.Annotation{}
+	return []schema.Annotation{
+		entpb.Message(
+			entpb.PathInherit,
+			&entpb.Service{Filepath: entpb.PathInherit},
+			&entpb.Rpc{Name: "Lock", Req: entpb.PbThis, Res: entpb.PbEmpty},
+		),
+	}
 }

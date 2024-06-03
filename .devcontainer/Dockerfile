@@ -11,6 +11,11 @@ RUN TEMP=$(mktemp -d) \
 
 USER hypnos
 
+RUN  echo \
+		google.golang.org/protobuf/cmd/protoc-gen-go@v1.31 \
+		google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4 \
+	| xargs -n1 go install
+
 # Comment below lines if you don't want to use Zsh
 RUN wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh || true \
 	&& git clone https://github.com/zsh-users/zsh-autosuggestions         ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions     \

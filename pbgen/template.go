@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
-	"html/template"
 	"io"
 	"strings"
+	"text/template"
 )
 
 var (

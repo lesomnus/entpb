@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/lesomnus/entpb/pbgen"
+	"github.com/lesomnus/entpb/pbgen/ident"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,8 +15,8 @@ func TestRpc(t *testing.T) {
 
 		d := pbgen.Rpc{
 			Name:     "Create",
-			Request:  pbgen.RpcType{Type: []string{"User"}},
-			Response: pbgen.RpcType{Type: []string{"User"}},
+			Request:  pbgen.RpcType{Type: ident.Full{"User"}},
+			Response: pbgen.RpcType{Type: ident.Full{"User"}},
 		}
 		o := bytes.Buffer{}
 		err := pbgen.Execute(&o, &d)
@@ -30,8 +31,8 @@ func TestRpc(t *testing.T) {
 
 		d := pbgen.Rpc{
 			Name:     "Create",
-			Request:  pbgen.RpcType{Type: []string{"User"}, Stream: true},
-			Response: pbgen.RpcType{Type: []string{"User"}},
+			Request:  pbgen.RpcType{Type: ident.Full{"User"}, Stream: true},
+			Response: pbgen.RpcType{Type: ident.Full{"User"}},
 		}
 		o := bytes.Buffer{}
 		err := pbgen.Execute(&o, &d)
@@ -46,8 +47,8 @@ func TestRpc(t *testing.T) {
 
 		d := pbgen.Rpc{
 			Name:     "Create",
-			Request:  pbgen.RpcType{Type: []string{"User"}},
-			Response: pbgen.RpcType{Type: []string{"User"}, Stream: true},
+			Request:  pbgen.RpcType{Type: ident.Full{"User"}},
+			Response: pbgen.RpcType{Type: ident.Full{"User"}, Stream: true},
 		}
 		o := bytes.Buffer{}
 		err := pbgen.Execute(&o, &d)

@@ -1,15 +1,18 @@
 package entpb
 
-import "entgo.io/ent/schema"
+import (
+	"entgo.io/ent/schema"
+	"github.com/lesomnus/entpb/pbgen/ident"
+)
 
 const NameAnnotation = "ProtoName"
 
-func Name(v string) schema.Annotation {
+func Name(v ident.Ident) schema.Annotation {
 	return &nameAnnotation{Value: v}
 }
 
 type nameAnnotation struct {
-	Value string
+	Value ident.Ident
 }
 
 func (nameAnnotation) Name() string {

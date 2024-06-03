@@ -48,4 +48,31 @@ func TestEnum(t *testing.T) {
 	OWNER = 1;
 }`, v)
 	})
+
+	t.Run("options", func(t *testing.T) {
+		require := require.New(t)
+
+		d := pbgen.Enum{
+			Name: "Role",
+			Options: []pbgen.Option{
+				pbgen.FeatureEnumTypeClosed,
+				pbgen.FeatureEnumTypeOpen,
+			},
+			Body: []pbgen.EnumBody{
+				pbgen.EnumField{Name: "UNSPECIFIED", Number: 0},
+				pbgen.EnumField{Name: "OWNER", Number: 1},
+			},
+		}
+		o := bytes.Buffer{}
+		err := pbgen.Execute(&o, &d)
+		require.NoError(err)
+
+		v := o.String()
+		require.Equal(`enum Role {
+	option features.enum_type = CLOSED;
+	option features.enum_type = OPEN;
+	UNSPECIFIED = 0;
+	OWNER = 1;
+}`, v)
+	})
 }

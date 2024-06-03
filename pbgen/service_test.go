@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/lesomnus/entpb/pbgen"
+	"github.com/lesomnus/entpb/pbgen/ident"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,8 +18,8 @@ func TestService(t *testing.T) {
 			Body: []pbgen.ServiceBody{
 				pbgen.Rpc{
 					Name:     "Create",
-					Request:  pbgen.RpcType{Type: []string{"User"}},
-					Response: pbgen.RpcType{Type: []string{"User"}},
+					Request:  pbgen.RpcType{Type: ident.Full{"User"}},
+					Response: pbgen.RpcType{Type: ident.Full{"User"}},
 				},
 			},
 		}
@@ -40,13 +41,13 @@ func TestService(t *testing.T) {
 			Body: []pbgen.ServiceBody{
 				pbgen.Rpc{
 					Name:     "Create",
-					Request:  pbgen.RpcType{Type: []string{"User"}},
-					Response: pbgen.RpcType{Type: []string{"User"}},
+					Request:  pbgen.RpcType{Type: ident.Full{"User"}},
+					Response: pbgen.RpcType{Type: ident.Full{"User"}},
 				},
 				pbgen.Rpc{
 					Name:     "Update",
-					Request:  pbgen.RpcType{Type: []string{"User"}},
-					Response: pbgen.RpcType{Type: []string{"User"}},
+					Request:  pbgen.RpcType{Type: ident.Full{"User"}},
+					Response: pbgen.RpcType{Type: ident.Full{"User"}},
 				},
 			},
 		}
@@ -71,14 +72,14 @@ func TestService(t *testing.T) {
 				pbgen.Comment{Value: "Royale"},
 				pbgen.Rpc{
 					Name:     "Create",
-					Request:  pbgen.RpcType{Type: []string{"User"}},
-					Response: pbgen.RpcType{Type: []string{"User"}},
+					Request:  pbgen.RpcType{Type: ident.Full{"User"}},
+					Response: pbgen.RpcType{Type: ident.Full{"User"}},
 				},
 				pbgen.Comment{Value: "with"},
 				pbgen.Rpc{
 					Name:     "Update",
-					Request:  pbgen.RpcType{Type: []string{"User"}},
-					Response: pbgen.RpcType{Type: []string{"User"}},
+					Request:  pbgen.RpcType{Type: ident.Full{"User"}},
+					Response: pbgen.RpcType{Type: ident.Full{"User"}},
 				},
 				pbgen.Comment{Value: "cheese"},
 			},

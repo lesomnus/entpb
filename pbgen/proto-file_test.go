@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/lesomnus/entpb/pbgen"
+	"github.com/lesomnus/entpb/pbgen/ident"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,7 +29,7 @@ func TestProtoFile(t *testing.T) {
 
 		d := pbgen.ProtoFile{
 			Edition: pbgen.Edition2023,
-			Package: []string{"foo", "bar", "baz"},
+			Package: ident.Full{"foo", "bar", "baz"},
 		}
 		o := bytes.Buffer{}
 		err := pbgen.Execute(&o, &d)
@@ -111,6 +112,46 @@ message User {
 	bytes id = 1;
 }
 
+message Account {
+	bytes id = 1;
+}`, v)
+	})
+
+	t.Run("messages with comment", func(t *testing.T) {
+		require := require.New(t)
+
+		d := pbgen.ProtoFile{
+			Edition: pbgen.Edition2023,
+			TopLevelDefinitions: []pbgen.TopLevelDef{
+				pbgen.Comment{Value: "foo"},
+				pbgen.Message{
+					Name: "User",
+					Body: []pbgen.MessageBody{
+						pbgen.MessageField{Type: pbgen.TypeBytes, Name: "id", Number: 1},
+					},
+				},
+				pbgen.Comment{Value: "bar"},
+				pbgen.Message{
+					Name: "Account",
+					Body: []pbgen.MessageBody{
+						pbgen.MessageField{Type: pbgen.TypeBytes, Name: "id", Number: 1},
+					},
+				},
+			},
+		}
+		o := bytes.Buffer{}
+		err := pbgen.Execute(&o, &d)
+		require.NoError(err)
+
+		v := o.String()
+		require.Equal(`edition = "2023";
+
+// foo
+message User {
+	bytes id = 1;
+}
+
+// bar
 message Account {
 	bytes id = 1;
 }`, v)

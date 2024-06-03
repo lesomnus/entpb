@@ -1,16 +1,10 @@
 package pbgen
 
-import "strings"
+import (
+	"github.com/lesomnus/entpb/pbgen/ident"
+)
 
-type Ident = string
-
-type FullIdent []Ident
-
-func (i FullIdent) String() string {
-	return strings.Join(i, ".")
-}
-
-type Type = FullIdent
+type Type = ident.Full
 
 var (
 	TypeDouble   = Type{"double"}
@@ -53,7 +47,7 @@ const (
 
 type ProtoFile struct {
 	Edition Edition
-	Package FullIdent
+	Package ident.Full
 	Imports []Import
 	Options []Option
 
@@ -70,8 +64,9 @@ type Import struct {
 }
 
 type Enum struct {
-	Name string
-	Body []EnumBody
+	Name    string
+	Options []Option
+	Body    []EnumBody
 
 	topLevelDef_
 	messageBody_
@@ -99,7 +94,7 @@ func (EnumField) TemplateName() string {
 }
 
 type Message struct {
-	Name string
+	Name ident.Ident
 	Body []MessageBody
 
 	topLevelDef_
@@ -118,7 +113,7 @@ func (messageBody_) messageBody() {}
 type MessageField struct {
 	Labels  []Label
 	Type    Type
-	Name    string
+	Name    ident.Ident
 	Number  int
 	Options []Option
 
@@ -130,7 +125,7 @@ func (MessageField) TemplateName() string {
 }
 
 type Service struct {
-	Name string
+	Name ident.Ident
 	Body []ServiceBody
 
 	topLevelDef_
@@ -146,7 +141,7 @@ type serviceBody_ struct{}
 func (serviceBody_) serviceBody() {}
 
 type Rpc struct {
-	Name     string
+	Name     ident.Ident
 	Request  RpcType
 	Response RpcType
 
@@ -163,7 +158,7 @@ type RpcType struct {
 }
 
 type Option struct {
-	Name  FullIdent
+	Name  ident.Full
 	Value string
 }
 

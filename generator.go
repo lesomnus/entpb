@@ -1,24 +1,44 @@
 package entpb
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"slices"
+	"strings"
 
 	"entgo.io/ent/entc/gen"
 	"entgo.io/ent/entc/load"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
 	"github.com/lesomnus/entpb/pbgen"
+	"github.com/lesomnus/entpb/pbgen/ident"
 	"github.com/mitchellh/mapstructure"
+	"golang.org/x/exp/maps"
 )
 
 type generator struct {
 	out_dir string // Expected it to be a absolute path.
 
-	files map[string]*ProtoFile
-	enums map[string]*ProtoFile // Holds proto file that contains the enum definition.
+	files map[string]*ProtoFile // Filepath or alias to proto file.
+
+	// Holds proto file that contains the enum definition.
+	// Key is global name of the Go type that bound to enum.
+	// e.g. for enum "Role" that bound to Go type "Role" in package "github.com/lesomnus/entpb/example",
+	// the key would be its global name, "github.com/lesomnus/entpb/example:example.Role".
+	// Global name can be build using following functions:
+	//   - globalTypeName
+	//   - globalTypeNameFromReflect
+	//   - globalTypeNameFromEntTypeInfo
+	enum_holders map[string]*ProtoFile
+
+	// Holds message definitions.
+	// Key is name of Ent Schema.
+	// e.g. User, Identity, ...
+	schema_to_messages map[string]*messageAnnotation
 }
 
 func (g *generator) generate(graph *gen.Graph) error {
@@ -31,28 +51,171 @@ func (g *generator) generate(graph *gen.Graph) error {
 		return fmt.Errorf("parse graph: %w", err)
 	}
 
-	// files := []pbgen.ProtoFile{}
-	for p, f := range *d {
+	for p := range *d {
+		// `g` contains aliased files but `d` doesn't.
+		// Iterating `d` means iterating files with no aliased file.
+		f, ok := g.files[p]
+		if !ok {
+			panic("invalid generator state: file not found")
+		}
+
 		proto_file := pbgen.ProtoFile{
 			Edition: pbgen.Edition2023,
-			Package: pbgen.ParseFullIndent(f.pbPackage),
+			Package: f.pbPackage,
+			Options: []pbgen.Option{pbgen.FeatureFieldPresenceImplicit},
 		}
 		if f.goPackage != "" {
 			proto_file.Options = append(proto_file.Options, pbgen.OptionGoPackage(f.goPackage))
 		}
-		for _, enum := range f.enums {
+
+		// Collect imports.
+		{
+			imports := map[string]struct{}{}
+			for _, message := range f.messages {
+				for _, field := range message.fields {
+					imports[field.pb_type.Import] = struct{}{}
+				}
+			}
+			for _, service := range f.services {
+				for _, rpc := range service.Rpcs {
+					imports[rpc.Req.Import] = struct{}{}
+					imports[rpc.Res.Import] = struct{}{}
+				}
+			}
+			delete(imports, "")
+			delete(imports, f.path)
+
+			paths := maps.Keys(imports)
+			slices.Sort(paths)
+			for _, p := range paths {
+				proto_file.Imports = append(proto_file.Imports, pbgen.Import{Name: p})
+			}
+		}
+
+		//
+		// Service definitions.
+		//
+		services := maps.Values(f.services)
+		slices.SortFunc(services, func(a, b *service) int {
+			return cmp.Compare(a.Name, b.Name)
+		})
+		for _, service := range services {
+			d := pbgen.Service{Name: service.Name}
+
+			rpcs := maps.Values(service.Rpcs)
+			slices.SortFunc(rpcs, func(a, b *Rpc) int {
+				return cmp.Compare(a.Name, b.Name)
+			})
+			for _, v := range rpcs {
+				if v.Comment != "" {
+					d.Body = append(d.Body, pbgen.Comment{Value: v.Comment})
+				}
+
+				elem := pbgen.Rpc{Name: v.Name}
+				elem.Request.Type = v.Req.ReferencedIn(f.pbPackage)
+				elem.Response.Type = v.Res.ReferencedIn(f.pbPackage)
+				switch v.Stream {
+				case StreamNone:
+				case StreamClient:
+					elem.Request.Stream = true
+				case StreamServer:
+					elem.Response.Stream = true
+				case StreamBoth:
+					elem.Request.Stream = true
+					elem.Response.Stream = true
+
+				default:
+					// ignore
+				}
+
+				d.Body = append(d.Body, elem)
+			}
+
+			proto_file.TopLevelDefinitions = append(proto_file.TopLevelDefinitions, d)
+		}
+
+		//
+		// Enum definitions
+		//
+		enums := maps.Values(f.enums)
+		slices.SortFunc(enums, func(a, b *enum) int {
+			return cmp.Compare(a.t.Name(), b.t.Name())
+		})
+		for _, enum := range enums {
+			// TODO: comment for enum
+
+			//
+			// Field definitions
+			//
 			d := pbgen.Enum{Name: enum.t.Name()}
-			for k, v := range enum.vs {
-				d.Body = append(d.Body, pbgen.EnumField{Name: k, Number: v})
+			if enum.is_closed {
+				d.Options = append(d.Options, pbgen.FeatureEnumTypeClosed)
+			}
+			fields := slices.Clone(enum.vs)
+			slices.SortFunc(fields, func(a, b EnumField) int {
+				return cmp.Compare(a.Number, b.Number)
+			})
+			for _, v := range fields {
+				if v.Comment != "" {
+					d.Body = append(d.Body, pbgen.Comment{Value: v.Comment})
+				}
+				d.Body = append(d.Body, pbgen.EnumField{Name: v.Name, Number: v.Number})
+			}
+
+			proto_file.TopLevelDefinitions = append(proto_file.TopLevelDefinitions, d)
+		}
+
+		//
+		// Message definitions
+		//
+		messages := maps.Values(f.messages)
+		slices.SortFunc(messages, func(a, b *messageAnnotation) int {
+			return cmp.Compare(a.name, b.name)
+		})
+		for _, message := range messages {
+			if message.comment != "" {
+				proto_file.TopLevelDefinitions = append(proto_file.TopLevelDefinitions, pbgen.Comment{Value: message.comment})
+			}
+
+			//
+			// Field definitions
+			//
+			d := pbgen.Message{Name: message.name}
+			fields := slices.Clone(message.fields)
+			slices.SortFunc(fields, func(a, b *fieldAnnotation) int {
+				return cmp.Compare(a.Number, b.Number)
+			})
+			for _, v := range fields {
+				if v.comment != "" {
+					d.Body = append(d.Body, pbgen.Comment{Value: v.comment})
+				}
+
+				elem := pbgen.MessageField{
+					Type:   v.pb_type.ReferencedIn(f.pbPackage),
+					Name:   v.name,
+					Number: v.Number,
+				}
+				if v.isRepeated {
+					elem.Labels = append(elem.Labels, pbgen.LabelRepeated)
+				} else if v.isOptional {
+					// Presence of "repeated" fields are not tracked.
+					elem.Options = append(elem.Options, pbgen.FeatureFieldPresenceExplicit)
+				}
+
+				d.Body = append(d.Body, elem)
 			}
 
 			proto_file.TopLevelDefinitions = append(proto_file.TopLevelDefinitions, d)
 		}
 
 		os_path := filepath.Join(g.out_dir, p)
+		if err := os.MkdirAll(filepath.Dir(os_path), 0755); err != nil {
+			return fmt.Errorf(`create directory for proto files: %w`, err)
+		}
+
 		w, err := os.Create(os_path)
 		if err != nil {
-			return fmt.Errorf(`create file at "%s": %w`, os_path, err)
+			return fmt.Errorf(`create proto file: %w`, err)
 		}
 		if err := pbgen.Execute(w, proto_file); err != nil {
 			return fmt.Errorf(`generate proto file for "%s": %w`, p, err)
@@ -81,11 +244,11 @@ func (g *generator) parseGraph(graph *gen.Graph) error {
 		}
 
 		for name := range f.enums {
-			if _, ok := g.enums[name]; ok {
+			if _, ok := g.enum_holders[name]; ok {
 				return fmt.Errorf(`multiple definition of enum for same Go type "%s"`, name)
 			}
 
-			g.enums[name] = f
+			g.enum_holders[name] = f
 		}
 
 		f.path = p
@@ -103,20 +266,31 @@ func (g *generator) parseGraph(graph *gen.Graph) error {
 		}
 	}
 	if len(errs) > 0 {
-		return fmt.Errorf("parse messages: %w", errors.Join(errs...))
+		return fmt.Errorf("parse messages declarations: %w", errors.Join(errs...))
 	}
 
 	errs = []error{}
-	for _, file := range g.files {
-		for _, msg := range file.messages {
-			if err := g.parseFields(msg); err != nil {
-				errs = append(errs, fmt.Errorf(`schema "%s": %w`, msg.ref.Name, err))
-				continue
+	for _, f := range g.enum_holders {
+		for _, enum := range f.enums {
+			if err := g.normalizeEnum(enum); err != nil {
+				errs = append(errs, fmt.Errorf(`normalize enum%s: %w`, enum.t.Name(), err))
 			}
 		}
 	}
+	for _, msg := range g.schema_to_messages {
+		errs_ := []error{}
+		if err := g.parseFields(msg); err != nil {
+			errs_ = append(errs_, fmt.Errorf(`parse fields: %w`, err))
+		}
+		if err := g.parseService(msg); err != nil {
+			errs_ = append(errs_, fmt.Errorf(`parse service: %w`, err))
+		}
+		if len(errs_) > 0 {
+			errs = append(errs, fmt.Errorf(`schema "%s": %w`, msg.schema.Name, errors.Join(errs_...)))
+		}
+	}
 	if len(errs) > 0 {
-		return fmt.Errorf("parse fields: %w", errors.Join(errs...))
+		return fmt.Errorf("parse message definitions: %w", errors.Join(errs...))
 	}
 
 	return nil
@@ -128,9 +302,9 @@ func (g *generator) parseMessage(r *load.Schema) error {
 		return nil
 	}
 	if a, ok := decodeAnnotation(&nameAnnotation{}, r.Annotations); ok {
-		d.name = a.Value
+		d.name = ident.Ident(a.Value)
 	} else {
-		d.name = r.Name
+		d.name = ident.Ident(r.Name)
 	}
 	if a, ok := decodeAnnotation(&schema.CommentAnnotation{}, r.Annotations); ok {
 		d.comment = a.Text
@@ -145,26 +319,76 @@ func (g *generator) parseMessage(r *load.Schema) error {
 		return fmt.Errorf(`message name "%s" duplicated with proto file "%s"`, d.name, d.Filepath)
 	}
 
-	d.ref = r
+	d.file = f
+	d.schema = r
 	f.messages[d.name] = d
+	g.schema_to_messages[r.Name] = d
+	return nil
+}
+
+func (g *generator) normalizeEnum(enum *enum) error {
+	prefix := ""
+	has_zero := false
+	if enum.prefix == nil {
+		// no prefix
+	} else if *enum.prefix == "" {
+		prefix = fmt.Sprintf("%s_", enum.t.Name())
+	} else {
+		prefix = fmt.Sprintf("%s_", *enum.prefix)
+	}
+	prefix = strings.ToUpper(prefix)
+
+	for k, v := range enum.vs {
+		if v.Number == 0 {
+			has_zero = true
+		}
+
+		name := regexp.MustCompile(`([a-z])([A-Z])`).ReplaceAllString(v.Name, `${1}_${2}`)
+		name = strings.ToUpper(name)
+		name = fmt.Sprintf("%s%s", prefix, name)
+		enum.vs[k].Name = name
+	}
+	if !enum.is_closed && !has_zero {
+		enum.vs = append(enum.vs, EnumField{
+			Name:   fmt.Sprintf("%sUNSPECIFIED", prefix),
+			Number: 0,
+		})
+	}
+
 	return nil
 }
 
 func (g *generator) parseFields(m *messageAnnotation) error {
 	errs := []error{}
-	for _, field := range m.ref.Fields {
+	for _, field := range m.schema.Fields {
 		d, err := g.parseEntField(field)
 		if err != nil {
 			errs = append(errs, fmt.Errorf(`field "%s": %w`, field.Name, err))
 			continue
 		}
+		if d == nil {
+			continue
+		}
 
 		m.fields = append(m.fields, d)
 	}
-	for _, edge := range m.ref.Edges {
+
+	edges := slices.Clone(m.schema.Edges)
+	for _, edge := range m.schema.Edges {
+		if edge.Ref == nil {
+			continue
+		}
+		if edge.Ref.Type == edge.Type {
+			edges = append(edges, edge.Ref)
+		}
+	}
+	for _, edge := range edges {
 		d, err := g.parseEntEdge(edge)
 		if err != nil {
 			errs = append(errs, fmt.Errorf(`edge "%s": %w`, edge.Name, err))
+			continue
+		}
+		if d == nil {
 			continue
 		}
 
@@ -186,12 +410,12 @@ func (g *generator) parseEntField(r *load.Field) (*fieldAnnotation, error) {
 	if a, ok := decodeAnnotation(&nameAnnotation{}, r.Annotations); ok {
 		d.name = a.Value
 	} else {
-		d.name = r.Name
+		d.name = ident.Ident(r.Name)
 	}
 
 	if r.Info.Type == field.TypeEnum {
 		name := globalTypeNameFromEntTypeInfo(r.Info)
-		f, ok := g.enums[name]
+		f, ok := g.enum_holders[name]
 		if !ok {
 			return nil, fmt.Errorf("unregistered enum type: %s", name)
 		}
@@ -202,8 +426,9 @@ func (g *generator) parseEntField(r *load.Field) (*fieldAnnotation, error) {
 		}
 
 		d.pb_type = PbType{
-			Name:   enum.t.Name(),
-			Import: f.path,
+			Name:    ident.Ident(enum.t.Name()),
+			Package: f.pbPackage,
+			Import:  f.path,
 		}
 	} else if t := pb_types[int(r.Info.Type)]; t.Name == "" {
 		return nil, fmt.Errorf("unsupported type: %s", r.Info.Type.String())
@@ -225,147 +450,61 @@ func (g *generator) parseEntEdge(r *load.Edge) (*fieldAnnotation, error) {
 	if a, ok := decodeAnnotation(&nameAnnotation{}, r.Annotations); ok {
 		d.name = a.Value
 	} else {
-		d.name = r.Name
+		d.name = ident.Ident(r.Name)
 	}
 
-	// TODO: resolve pb_type
+	message, ok := g.schema_to_messages[r.Type]
+	if !ok {
+		return nil, fmt.Errorf(`edge "%s" references a schema "%s" that is not a proto message`, r.Name, r.Type)
+	}
 
+	d.pb_type = message.pbType()
 	d.comment = r.Comment
 	d.isOptional = !r.Required
 	d.isRepeated = !r.Unique
 
-	return nil, nil
+	return d, nil
 }
 
-// func (g *generator) generateMessage(s *load.Schema) error {
-// 	var d MessageDescriptor
-// 	if a, ok := s.Annotations[MessageAnnotation]; !ok {
-// 		return nil
-// 	} else if err := mapstructure.Decode(a, &d); err != nil {
-// 		panic(fmt.Errorf("decode proto message: %w", err))
-// 	}
+func (g *generator) parseService(d *messageAnnotation) error {
+	s := d.Service
+	if s == nil || len(s.Rpcs) == 0 {
+		return nil
+	}
 
-// 	if d.PbFilepath == "" {
-// 		return fmt.Errorf(`path to proto file not provided`)
-// 	}
+	s.message = d
+	if s.Filepath == "" {
+		s.Filepath = d.Filepath
+	}
 
-// 	d.name = s.Name
-// 	if a, ok := s.Annotations["Comment"]; ok {
-// 		var c schema.CommentAnnotation
-// 		if err := mapstructure.Decode(a, &c); err != nil {
-// 			panic(fmt.Errorf("decode comment annotation: %w", err))
-// 		}
-// 		d.comment = c.Text
-// 	}
+	f, ok := g.files[s.Filepath]
+	if !ok {
+		return fmt.Errorf(`service "%s" references non-exists proto file "%s"`, d.name, d.Filepath)
+	}
+	if s.Name == "" {
+		s.Name = ident.Ident(fmt.Sprintf("%sService", d.name))
+	}
+	if _, ok := f.services[s.Name]; ok {
+		return fmt.Errorf(`duplicated service "%s"`, s.Name)
+	} else {
+		f.services[s.Name] = s
+	}
 
-// 	o, err := g.getMessageOutput(&d)
-// 	if err != nil {
-// 		return fmt.Errorf("get output: %w", err)
-// 	}
-// 	if o.GoPackage == "" {
-// 		o.GoPackage = d.GoPackage
-// 	}
+	for _, rpc := range s.Rpcs {
+		if rpc.Req.Equal(&PbThis) {
+			rpc.Req = d.pbType()
+		}
+		if rpc.Res.Equal(&PbThis) {
+			rpc.Res = d.pbType()
+		}
 
-// 	for _, field := range s.Fields {
-// 		v, err := g.parseField(field)
-// 		if err != nil {
-// 			return fmt.Errorf("generate proto field for Ent field %s: %w", field.Name, err)
-// 		}
-// 		if v == nil {
-// 			continue
-// 		}
+		if rpc.Req.Import == "" {
+			return fmt.Errorf(`RPC "%s": parameter type must be message`, rpc.Name)
+		}
+		if rpc.Res.Import == "" {
+			return fmt.Errorf(`RPC "%s": return type must be message`, rpc.Name)
+		}
+	}
 
-// 		d.fields = append(d.fields, v)
-// 		if v.Type.Import != "" {
-// 			o.PackageDependencies[v.Type.Import] = struct{}{}
-// 		}
-// 	}
-
-// 	edges := s.Edges[:]
-// 	for _, edge := range s.Edges {
-// 		if edge.Ref == nil {
-// 			continue
-// 		}
-// 		if edge.Ref.Type == edge.Type {
-// 			edges = append(edges, edge.Ref)
-// 		}
-// 	}
-// 	for _, edge := range edges {
-// 		v, err := g.parseEdge(edge)
-// 		if err != nil {
-// 			return fmt.Errorf("generate proto field for Ent edge %s: %w", edge.Name, err)
-// 		}
-// 		if v == nil {
-// 			continue
-// 		}
-
-// 		d.fields = append(d.fields, v)
-// 	}
-// 	slices.SortFunc(d.fields, func(l, r *FieldDescriptor) int {
-// 		return cmp.Compare(l.Number, r.Number)
-// 	})
-
-// 	if err := tpl.ExecuteTemplate(o, "message-def.tpl", d); err != nil {
-// 		return fmt.Errorf("execute template for message: %w", err)
-// 	}
-
-// 	return nil
-// }
-
-// func (g *generator) parseField(f *load.Field) (*FieldDescriptor, error) {
-// 	d := &FieldDescriptor{}
-// 	if a, ok := f.Annotations[FieldAnnotation]; !ok {
-// 		return nil, nil
-// 	} else if err := mapstructure.Decode(a, d); err != nil {
-// 		panic(fmt.Errorf("decode proto field: %w", err))
-// 	}
-
-// 	if t := pb_types[int(f.Info.Type)]; t.Name == "" {
-// 		return nil, fmt.Errorf("unsupported type: %s", f.Info.Type.String())
-// 	} else {
-// 		d.Type = t
-// 	}
-
-// 	d.Name = f.Name
-// 	d.comment = f.Comment
-// 	d.isOptional = f.Nillable
-
-// 	return d, nil
-// }
-
-// func (g *generator) parseEdge(e *load.Edge) (*FieldDescriptor, error) {
-// 	d := &FieldDescriptor{}
-// 	if a, ok := e.Annotations[FieldAnnotation]; !ok {
-// 		return nil, nil
-// 	} else if err := mapstructure.Decode(a, d); err != nil {
-// 		panic(fmt.Errorf("decode proto field: %w", err))
-// 	}
-
-// 	d.Name = e.Name
-// 	d.Type = PbType{Name: e.Type}
-// 	d.comment = e.Comment
-// 	d.isOptional = !e.Required
-// 	d.isRepeated = !e.Unique
-
-// 	return d, nil
-// }
-
-// func (g *generator) getMessageOutput(d *MessageDescriptor) (*MessageOut, error) {
-// 	p := d.PbFilepath
-// 	v, ok := g.msg_out[p]
-// 	if !ok {
-// 		o, err := g.open(p)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("open for proto output: %w", err)
-// 		}
-
-// 		v, err = NewMessageOutput(o, d)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("create printer: %w", err)
-// 		}
-
-// 		g.msg_out[p] = v
-// 	}
-
-// 	return v, nil
-// }
+	return nil
+}
