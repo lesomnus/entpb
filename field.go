@@ -7,26 +7,30 @@ import (
 
 const FieldAnnotation = "ProtoField"
 
-func Field(num int) schema.Annotation {
-	a := &fieldAnnotation{Number: num}
-	// for _, apply := range opts {
-	// 	apply(&a)
-	// }
+type MessageFieldOption interface {
+	messageFieldOpt(*messageFieldAnnotation)
+}
+
+func Field(num int, opts ...MessageFieldOption) schema.Annotation {
+	a := &messageFieldAnnotation{Number: num}
+	for _, opt := range opts {
+		opt.messageFieldOpt(a)
+	}
 	return a
 }
 
-type fieldAnnotation struct {
+type messageFieldAnnotation struct {
+	Ident  ident.Ident
 	Number int
 
 	pb_type PbType
 
-	name    ident.Ident
 	comment string
 
 	isOptional bool
 	isRepeated bool
 }
 
-func (fieldAnnotation) Name() string {
+func (messageFieldAnnotation) Name() string {
 	return FieldAnnotation
 }

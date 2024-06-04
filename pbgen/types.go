@@ -69,7 +69,7 @@ type Import struct {
 }
 
 type Enum struct {
-	Name    string
+	Name    ident.Ident
 	Options []Option
 	Body    []EnumBody
 

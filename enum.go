@@ -1,12 +1,21 @@
 package entpb
 
-import "reflect"
+import (
+	"reflect"
 
-type EnumOption func(*enum)
+	"github.com/lesomnus/entpb/pbgen/ident"
+)
+
+type EnumOption interface {
+	enumOpt(*enum)
+}
 
 type enum struct {
 	t  reflect.Type
 	vs []EnumField
+
+	ident   ident.Ident
+	comment string
 
 	prefix    *string
 	is_closed bool
@@ -30,36 +39,32 @@ func (f ProtoFile) AddEnum(t any, fields []EnumField, opts ...EnumOption) ProtoF
 		t:  r,
 		vs: fields,
 
+		ident: ident.Ident(r.Name()),
+
 		prefix: &z,
 	}
 	for _, opt := range opts {
-		opt(v)
+		opt.enumOpt(v)
 	}
 
 	f.enums[globalTypeNameFromReflect(r)] = v
 	return f
 }
 
-func WithPrefix(v string) EnumOption {
-	return func(e *enum) {
-		e.prefix = &v
-	}
+type enumOptPrefix struct{ v *string }
+
+func (o *enumOptPrefix) enumOpt(t *enum) {
+	t.prefix = o.v
 }
 
-func WithNoPrefix() EnumOption {
-	return func(e *enum) {
-		e.prefix = nil
-	}
+func WithPrefix(v string) EnumOption { return &enumOptPrefix{&v} }
+func WithNoPrefix() EnumOption       { return &enumOptPrefix{nil} }
+
+type enumOptBound struct{ v bool }
+
+func (o *enumOptBound) enumOpt(t *enum) {
+	t.is_closed = o.v
 }
 
-func WithOpen() EnumOption {
-	return func(e *enum) {
-		e.is_closed = false
-	}
-}
-
-func WithClose() EnumOption {
-	return func(e *enum) {
-		e.is_closed = true
-	}
-}
+func WithOpen() EnumOption  { return &enumOptBound{false} }
+func WithClose() EnumOption { return &enumOptBound{true} }

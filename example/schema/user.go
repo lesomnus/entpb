@@ -22,7 +22,7 @@ func (User) Edges() []ent.Edge {
 		edge.To("children", User.Type).
 			Annotations(entpb.Field(2)).
 			From("parent").
-			Annotations(entpb.Field(3)).
+			Annotations(entpb.Field(3, entpb.WithName("referer"))).
 			Unique(),
 		edge.To("identities", Identity.Type),
 		edge.To("accounts", Account.Type),
@@ -32,6 +32,7 @@ func (User) Edges() []ent.Edge {
 
 func (User) Annotations() []schema.Annotation {
 	return []schema.Annotation{
-		schema.Comment("User is an actor"),
+		schema.Comment("Entity interacting with the service, \nit can be either a human or a computer."),
+		entpb.Message(entpb.PathInherit, entpb.WithName("Actor")),
 	}
 }

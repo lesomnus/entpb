@@ -96,7 +96,7 @@ func (b *Build) parse(graph *gen.Graph) error {
 	for _, f := range b.enum_holders {
 		for _, enum := range f.enums {
 			if err := b.normalizeEnum(enum); err != nil {
-				errs = append(errs, fmt.Errorf(`normalize enum%s: %w`, enum.t.Name(), err))
+				errs = append(errs, fmt.Errorf(`normalize enum "%s": %w`, enum.ident, err))
 			}
 		}
 	}
@@ -124,10 +124,8 @@ func (b *Build) parseMessage(r *load.Schema) error {
 	if !ok {
 		return nil
 	}
-	if a, ok := decodeAnnotation(&nameAnnotation{}, r.Annotations); ok {
-		d.name = ident.Ident(a.Value)
-	} else {
-		d.name = ident.Ident(r.Name)
+	if d.Ident == "" {
+		d.Ident = ident.Ident(r.Name)
 	}
 	if a, ok := decodeAnnotation(&schema.CommentAnnotation{}, r.Annotations); ok {
 		d.comment = a.Text
@@ -135,16 +133,16 @@ func (b *Build) parseMessage(r *load.Schema) error {
 
 	f, ok := b.files[d.Filepath]
 	if !ok {
-		return fmt.Errorf(`message "%s" references non-exists proto file "%s"`, d.name, d.Filepath)
+		return fmt.Errorf(`message "%s" references non-exists proto file "%s"`, d.Ident, d.Filepath)
 	}
 
-	if _, ok := f.messages[d.name]; ok {
-		return fmt.Errorf(`message name "%s" duplicated with proto file "%s"`, d.name, d.Filepath)
+	if _, ok := f.messages[d.Ident]; ok {
+		return fmt.Errorf(`message name "%s" duplicated with proto file "%s"`, d.Ident, d.Filepath)
 	}
 
 	d.file = f
 	d.schema = r
-	f.messages[d.name] = d
+	f.messages[d.Ident] = d
 	b.messages[r.Name] = d
 	return nil
 }
@@ -155,7 +153,7 @@ func (p *Build) normalizeEnum(enum *enum) error {
 	if enum.prefix == nil {
 		// no prefix
 	} else if *enum.prefix == "" {
-		prefix = fmt.Sprintf("%s_", enum.t.Name())
+		prefix = fmt.Sprintf("%s_", enum.ident)
 	} else {
 		prefix = fmt.Sprintf("%s_", *enum.prefix)
 	}
@@ -225,22 +223,20 @@ func (b *Build) parseFields(m *messageAnnotation) error {
 	return nil
 }
 
-func (p *Build) parseEntField(r *load.Field) (*fieldAnnotation, error) {
-	d, ok := decodeAnnotation(&fieldAnnotation{}, r.Annotations)
+func (p *Build) parseEntField(r *load.Field) (*messageFieldAnnotation, error) {
+	d, ok := decodeAnnotation(&messageFieldAnnotation{}, r.Annotations)
 	if !ok {
 		return nil, nil
 	}
-	if a, ok := decodeAnnotation(&nameAnnotation{}, r.Annotations); ok {
-		d.name = a.Value
-	} else {
-		d.name = ident.Ident(r.Name)
+	if d.Ident == "" {
+		d.Ident = ident.Ident(r.Name)
 	}
 
 	if r.Info.Type == field.TypeEnum {
 		name := globalTypeNameFromEntTypeInfo(r.Info)
 		f, ok := p.enum_holders[name]
 		if !ok {
-			return nil, fmt.Errorf("unregistered enum type: %s", name)
+			return nil, fmt.Errorf(`unregistered enum type: "%s"`, name)
 		}
 
 		enum, ok := f.enums[name]
@@ -249,7 +245,7 @@ func (p *Build) parseEntField(r *load.Field) (*fieldAnnotation, error) {
 		}
 
 		d.pb_type = PbType{
-			Name:    ident.Ident(enum.t.Name()),
+			Name:    enum.ident,
 			Package: f.pbPackage,
 			Import:  f.path,
 		}
@@ -265,15 +261,13 @@ func (p *Build) parseEntField(r *load.Field) (*fieldAnnotation, error) {
 	return d, nil
 }
 
-func (p *Build) parseEntEdge(r *load.Edge) (*fieldAnnotation, error) {
-	d, ok := decodeAnnotation(&fieldAnnotation{}, r.Annotations)
+func (p *Build) parseEntEdge(r *load.Edge) (*messageFieldAnnotation, error) {
+	d, ok := decodeAnnotation(&messageFieldAnnotation{}, r.Annotations)
 	if !ok {
 		return nil, nil
 	}
-	if a, ok := decodeAnnotation(&nameAnnotation{}, r.Annotations); ok {
-		d.name = a.Value
-	} else {
-		d.name = ident.Ident(r.Name)
+	if d.Ident == "" {
+		d.Ident = ident.Ident(r.Name)
 	}
 
 	message, ok := p.messages[r.Type]
@@ -302,10 +296,10 @@ func (p *Build) parseService(d *messageAnnotation) error {
 
 	f, ok := p.files[s.Filepath]
 	if !ok {
-		return fmt.Errorf(`service "%s" references non-exists proto file "%s"`, d.name, d.Filepath)
+		return fmt.Errorf(`service "%s" references non-exists proto file "%s"`, d.Ident, d.Filepath)
 	}
 	if s.Name == "" {
-		s.Name = ident.Ident(fmt.Sprintf("%sService", d.name))
+		s.Name = ident.Ident(fmt.Sprintf("%sService", d.Ident))
 	}
 	if _, ok := f.services[s.Name]; ok {
 		return fmt.Errorf(`duplicated service "%s"`, s.Name)

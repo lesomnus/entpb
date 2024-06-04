@@ -28,188 +28,259 @@ func NewPrinter(edition pbgen.Edition) (Printer, error) {
 	switch edition {
 	case pbgen.Edition2023:
 		return &edition2023Printer{}, nil
+	case pbgen.SyntaxProto3:
+		return &proto3Printer{}, nil
 
 	case pbgen.SyntaxProto2:
-		fallthrough
-	case pbgen.SyntaxProto3:
 		fallthrough
 	default:
 		return nil, errors.New("not implemented")
 	}
 }
 
-type edition2023Printer struct{}
+type edition2023Printer struct {
+	printerUtils
+}
 
 func (p *edition2023Printer) Print(b *Build, fs Fs) error {
-	for p, f := range b.files {
-		if f.path != p {
+	return p.print(b, fs, p.printFile)
+}
+
+func (p *edition2023Printer) printFile(f *ProtoFile) pbgen.ProtoFile {
+	v := pbgen.ProtoFile{
+		Edition: pbgen.Edition2023,
+		Package: f.pbPackage,
+		Imports: p.importPaths(f),
+		Options: []pbgen.Option{pbgen.FeatureFieldPresenceImplicit},
+	}
+	if f.goPackage != "" {
+		v.Options = append(v.Options, pbgen.OptionGoPackage(f.goPackage))
+	}
+
+	a := func(ds ...pbgen.TopLevelDef) {
+		v.TopLevelDefinitions = append(v.TopLevelDefinitions, ds...)
+	}
+
+	a(p.printServices(f)...)
+	a(p.printEnums(f, func(enum *enum) pbgen.Enum {
+		d := pbgen.Enum{}
+		if enum.is_closed {
+			d.Options = append(d.Options, pbgen.FeatureEnumTypeClosed)
+		}
+
+		return d
+	})...)
+	a(p.printMessages(f, func(a *messageFieldAnnotation) pbgen.MessageField {
+		d := pbgen.MessageField{
+			Type:   a.pb_type.ReferencedIn(f.pbPackage),
+			Name:   a.Ident,
+			Number: a.Number,
+		}
+		if a.isRepeated {
+			d.Labels = append(d.Labels, pbgen.LabelRepeated)
+		} else if a.isOptional {
+			// Presence of "repeated" fields are not tracked.
+			d.Options = append(d.Options, pbgen.FeatureFieldPresenceExplicit)
+		}
+
+		return d
+	})...)
+
+	return v
+}
+
+type proto3Printer struct {
+	printerUtils
+}
+
+func (p *proto3Printer) Print(b *Build, fs Fs) error {
+	return p.print(b, fs, p.printFile)
+}
+
+func (p *proto3Printer) printFile(f *ProtoFile) pbgen.ProtoFile {
+	v := pbgen.ProtoFile{
+		Edition: pbgen.SyntaxProto3,
+		Package: f.pbPackage,
+		Imports: p.importPaths(f),
+	}
+	if f.goPackage != "" {
+		v.Options = append(v.Options, pbgen.OptionGoPackage(f.goPackage))
+	}
+
+	a := func(ds ...pbgen.TopLevelDef) {
+		v.TopLevelDefinitions = append(v.TopLevelDefinitions, ds...)
+	}
+
+	a(p.printServices(f)...)
+	a(p.printEnums(f, func(enum *enum) pbgen.Enum {
+		return pbgen.Enum{}
+	})...)
+	a(p.printMessages(f, func(a *messageFieldAnnotation) pbgen.MessageField {
+		d := pbgen.MessageField{
+			Type:   a.pb_type.ReferencedIn(f.pbPackage),
+			Name:   a.Ident,
+			Number: a.Number,
+		}
+		if a.isRepeated {
+			d.Labels = append(d.Labels, pbgen.LabelRepeated)
+		} else if a.isOptional {
+			d.Labels = append(d.Labels, pbgen.LabelOptional)
+		}
+
+		return d
+	})...)
+
+	return v
+}
+
+type printerUtils struct{}
+
+func (u *printerUtils) importPaths(f *ProtoFile) []pbgen.Import {
+	paths := f.ImportPaths()
+	slices.Sort(paths)
+
+	v := make([]pbgen.Import, len(paths))
+	for i, p := range paths {
+		v[i] = pbgen.Import{Name: p}
+	}
+
+	return v
+}
+
+func (p *printerUtils) print(b *Build, fs Fs, print_file func(*ProtoFile) pbgen.ProtoFile) error {
+	errs := []error{}
+	for path, f := range b.files {
+		if f.path != path {
 			// Link by alias.
 			continue
 		}
 
-		proto_file := pbgen.ProtoFile{
-			Edition: pbgen.Edition2023,
-			Package: f.pbPackage,
-			Options: []pbgen.Option{pbgen.FeatureFieldPresenceImplicit},
-		}
-		if f.goPackage != "" {
-			proto_file.Options = append(proto_file.Options, pbgen.OptionGoPackage(f.goPackage))
-		}
-
-		// Collect imports.
-		{
-			imports := map[string]struct{}{}
-			for _, message := range f.messages {
-				for _, field := range message.fields {
-					imports[field.pb_type.Import] = struct{}{}
-				}
-			}
-			for _, service := range f.services {
-				for _, rpc := range service.Rpcs {
-					imports[rpc.Req.Import] = struct{}{}
-					imports[rpc.Res.Import] = struct{}{}
-				}
-			}
-			delete(imports, "")
-			delete(imports, f.path)
-
-			paths := maps.Keys(imports)
-			slices.Sort(paths)
-			for _, p := range paths {
-				proto_file.Imports = append(proto_file.Imports, pbgen.Import{Name: p})
-			}
-		}
-
-		//
-		// Service definitions.
-		//
-		services := maps.Values(f.services)
-		slices.SortFunc(services, func(a, b *service) int {
-			return cmp.Compare(a.Name, b.Name)
-		})
-		for _, service := range services {
-			d := pbgen.Service{Name: service.Name}
-
-			rpcs := maps.Values(service.Rpcs)
-			slices.SortFunc(rpcs, func(a, b *Rpc) int {
-				return cmp.Compare(a.Name, b.Name)
-			})
-			for _, v := range rpcs {
-				if v.Comment != "" {
-					d.Body = append(d.Body, pbgen.Comment{Value: v.Comment})
-				}
-
-				elem := pbgen.Rpc{Name: v.Name}
-				elem.Request.Type = v.Req.ReferencedIn(f.pbPackage)
-				elem.Response.Type = v.Res.ReferencedIn(f.pbPackage)
-				switch v.Stream {
-				case StreamNone:
-				case StreamClient:
-					elem.Request.Stream = true
-				case StreamServer:
-					elem.Response.Stream = true
-				case StreamBoth:
-					elem.Request.Stream = true
-					elem.Response.Stream = true
-
-				default:
-					// ignore
-				}
-
-				d.Body = append(d.Body, elem)
-			}
-
-			proto_file.TopLevelDefinitions = append(proto_file.TopLevelDefinitions, d)
-		}
-
-		//
-		// Enum definitions
-		//
-		enums := maps.Values(f.enums)
-		slices.SortFunc(enums, func(a, b *enum) int {
-			return cmp.Compare(a.t.Name(), b.t.Name())
-		})
-		for _, enum := range enums {
-			// TODO: comment for enum
-
-			//
-			// Field definitions
-			//
-			d := pbgen.Enum{Name: enum.t.Name()}
-			if enum.is_closed {
-				d.Options = append(d.Options, pbgen.FeatureEnumTypeClosed)
-			}
-			fields := slices.Clone(enum.vs)
-			slices.SortFunc(fields, func(a, b EnumField) int {
-				return cmp.Compare(a.Number, b.Number)
-			})
-			for _, v := range fields {
-				if v.Comment != "" {
-					d.Body = append(d.Body, pbgen.Comment{Value: v.Comment})
-				}
-				d.Body = append(d.Body, pbgen.EnumField{Name: v.Name, Number: v.Number})
-			}
-
-			proto_file.TopLevelDefinitions = append(proto_file.TopLevelDefinitions, d)
-		}
-
-		//
-		// Message definitions
-		//
-		messages := maps.Values(f.messages)
-		slices.SortFunc(messages, func(a, b *messageAnnotation) int {
-			return cmp.Compare(a.name, b.name)
-		})
-		for _, message := range messages {
-			if message.comment != "" {
-				proto_file.TopLevelDefinitions = append(proto_file.TopLevelDefinitions, pbgen.Comment{Value: message.comment})
-			}
-
-			//
-			// Field definitions
-			//
-			d := pbgen.Message{Name: message.name}
-			fields := slices.Clone(message.fields)
-			slices.SortFunc(fields, func(a, b *fieldAnnotation) int {
-				return cmp.Compare(a.Number, b.Number)
-			})
-			for _, v := range fields {
-				if v.comment != "" {
-					d.Body = append(d.Body, pbgen.Comment{Value: v.comment})
-				}
-
-				elem := pbgen.MessageField{
-					Type:   v.pb_type.ReferencedIn(f.pbPackage),
-					Name:   v.name,
-					Number: v.Number,
-				}
-				if v.isRepeated {
-					elem.Labels = append(elem.Labels, pbgen.LabelRepeated)
-				} else if v.isOptional {
-					// Presence of "repeated" fields are not tracked.
-					elem.Options = append(elem.Options, pbgen.FeatureFieldPresenceExplicit)
-				}
-
-				d.Body = append(d.Body, elem)
-			}
-
-			proto_file.TopLevelDefinitions = append(proto_file.TopLevelDefinitions, d)
-		}
-
-		if err := fs.MkdirAll(filepath.Dir(p), 0755); err != nil {
+		if err := fs.MkdirAll(filepath.Dir(path), 0755); err != nil {
 			return fmt.Errorf(`create directory for proto files: %w`, err)
 		}
 
-		w, err := fs.Create(p)
+		w, err := fs.Create(path)
 		if err != nil {
 			return fmt.Errorf(`create proto file: %w`, err)
 		}
-
 		defer w.Close()
-		if err := pbgen.Execute(w, proto_file); err != nil {
-			return fmt.Errorf(`generate proto file for "%s": %w`, p, err)
+
+		v := print_file(f)
+		if err := pbgen.Execute(w, v); err != nil {
+			return fmt.Errorf(`generate proto file for "%s": %w`, path, err)
 		}
+	}
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
 
 	return nil
+}
+
+func (u *printerUtils) printServices(f *ProtoFile) []pbgen.TopLevelDef {
+	ds := []pbgen.TopLevelDef{}
+
+	services := maps.Values(f.services)
+	slices.SortFunc(services, func(a, b *service) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
+	for _, service := range services {
+		d := pbgen.Service{Name: service.Name}
+
+		rpcs := maps.Values(service.Rpcs)
+		slices.SortFunc(rpcs, func(a, b *Rpc) int {
+			return cmp.Compare(a.Name, b.Name)
+		})
+		for _, rpc := range rpcs {
+			if rpc.Comment != "" {
+				d.Body = append(d.Body, pbgen.Comment{Value: rpc.Comment})
+			}
+
+			v := pbgen.Rpc{
+				Name: rpc.Name,
+				Request: pbgen.RpcType{
+					Type:   rpc.Req.ReferencedIn(f.pbPackage),
+					Stream: (rpc.Stream & StreamClient) > 0,
+				},
+				Response: pbgen.RpcType{
+					Type:   rpc.Res.ReferencedIn(f.pbPackage),
+					Stream: (rpc.Stream & StreamServer) > 0,
+				},
+			}
+
+			d.Body = append(d.Body, v)
+		}
+
+		ds = append(ds, d)
+	}
+
+	return ds
+}
+
+func (u *printerUtils) printEnums(f *ProtoFile, new_enum_def func(*enum) pbgen.Enum) []pbgen.TopLevelDef {
+	ds := []pbgen.TopLevelDef{}
+
+	enums := maps.Values(f.enums)
+	slices.SortFunc(enums, func(a, b *enum) int {
+		return cmp.Compare(a.ident, b.ident)
+	})
+	for _, enum := range enums {
+		if enum.comment != "" {
+			ds = append(ds, pbgen.Comment{Value: enum.comment})
+		}
+
+		//
+		// Field definitions
+		//
+		d := new_enum_def(enum)
+		d.Name = enum.ident
+		fields := slices.Clone(enum.vs)
+		slices.SortFunc(fields, func(a, b EnumField) int {
+			return cmp.Compare(a.Number, b.Number)
+		})
+		for _, v := range fields {
+			if v.Comment != "" {
+				d.Body = append(d.Body, pbgen.Comment{Value: v.Comment})
+			}
+			d.Body = append(d.Body, pbgen.EnumField{Name: v.Name, Number: v.Number})
+		}
+
+		ds = append(ds, d)
+	}
+
+	return ds
+}
+
+func (u *printerUtils) printMessages(f *ProtoFile, print_field func(*messageFieldAnnotation) pbgen.MessageField) []pbgen.TopLevelDef {
+	ds := []pbgen.TopLevelDef{}
+
+	messages := maps.Values(f.messages)
+	slices.SortFunc(messages, func(a, b *messageAnnotation) int {
+		return cmp.Compare(a.Ident, b.Ident)
+	})
+	for _, message := range messages {
+		if message.comment != "" {
+			ds = append(ds, pbgen.Comment{Value: message.comment})
+		}
+
+		//
+		// Field definitions
+		//
+		d := pbgen.Message{Name: message.Ident}
+		fields := slices.Clone(message.fields)
+		slices.SortFunc(fields, func(a, b *messageFieldAnnotation) int {
+			return cmp.Compare(a.Number, b.Number)
+		})
+		for _, field := range fields {
+			if field.comment != "" {
+				d.Body = append(d.Body, pbgen.Comment{Value: field.comment})
+			}
+
+			d.Body = append(d.Body, print_field(field))
+		}
+
+		ds = append(ds, d)
+	}
+
+	return ds
 }

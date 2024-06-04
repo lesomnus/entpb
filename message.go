@@ -25,17 +25,18 @@ type messageAnnotation struct {
 	Filepath string
 	Service  *service
 
+	Ident ident.Ident
+
 	file   *ProtoFile
 	schema *load.Schema
-	fields []*fieldAnnotation
+	fields []*messageFieldAnnotation
 
-	name    ident.Ident
 	comment string
 }
 
 func (a *messageAnnotation) pbType() PbType {
 	t := PbType{
-		Name:   a.name,
+		Name:   a.Ident,
 		Import: a.Filepath,
 	}
 	if f := a.file; f != nil {
