@@ -21,15 +21,15 @@ type Fs interface {
 type Printer interface {
 	// Prints out build result into `fs`.
 	// `fs` must be subtree by desired output root directory.
-	Print(b *Build, fs Fs) error
+	Print(b *Build) error
 }
 
-func NewPrinter(edition pbgen.Edition) (Printer, error) {
+func NewProtoPrinter(fs Fs, edition pbgen.Edition) (Printer, error) {
 	switch edition {
 	case pbgen.Edition2023:
-		return &edition2023Printer{}, nil
+		return &edition2023Printer{printerUtils{fs}}, nil
 	case pbgen.SyntaxProto3:
-		return &proto3Printer{}, nil
+		return &proto3Printer{printerUtils{fs}}, nil
 
 	case pbgen.SyntaxProto2:
 		fallthrough
@@ -42,8 +42,8 @@ type edition2023Printer struct {
 	printerUtils
 }
 
-func (p *edition2023Printer) Print(b *Build, fs Fs) error {
-	return p.print(b, fs, p.printFile)
+func (p *edition2023Printer) Print(b *Build) error {
+	return p.print(b, p.printFile)
 }
 
 func (p *edition2023Printer) printFile(f *ProtoFile) pbgen.ProtoFile {
@@ -93,8 +93,8 @@ type proto3Printer struct {
 	printerUtils
 }
 
-func (p *proto3Printer) Print(b *Build, fs Fs) error {
-	return p.print(b, fs, p.printFile)
+func (p *proto3Printer) Print(b *Build) error {
+	return p.print(b, p.printFile)
 }
 
 func (p *proto3Printer) printFile(f *ProtoFile) pbgen.ProtoFile {
@@ -133,7 +133,9 @@ func (p *proto3Printer) printFile(f *ProtoFile) pbgen.ProtoFile {
 	return v
 }
 
-type printerUtils struct{}
+type printerUtils struct {
+	fs Fs
+}
 
 func (u *printerUtils) importPaths(f *ProtoFile) []pbgen.Import {
 	paths := f.ImportPaths()
@@ -147,19 +149,14 @@ func (u *printerUtils) importPaths(f *ProtoFile) []pbgen.Import {
 	return v
 }
 
-func (p *printerUtils) print(b *Build, fs Fs, print_file func(*ProtoFile) pbgen.ProtoFile) error {
+func (p *printerUtils) print(b *Build, print_file func(*ProtoFile) pbgen.ProtoFile) error {
 	errs := []error{}
 	for path, f := range b.files {
-		if f.path != path {
-			// Link by alias.
-			continue
-		}
-
-		if err := fs.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		if err := p.fs.MkdirAll(filepath.Dir(path), 0755); err != nil {
 			return fmt.Errorf(`create directory for proto files: %w`, err)
 		}
 
-		w, err := fs.Create(path)
+		w, err := p.fs.Create(path)
 		if err != nil {
 			return fmt.Errorf(`create proto file: %w`, err)
 		}

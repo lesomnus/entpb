@@ -61,17 +61,18 @@ func main() {
 
 		proto_file_init := entpb.ProtoFileInit{
 			PbPackage: ident.Full{"entpb", "directory"},
-			GoPackage: "github.com/lesomnus/entpb/_pb",
+			GoPackage: "github.com/lesomnus/entpb/example/pb",
 		}
 		err = entc.Generate(
 			filepath.Join(wd, "schema"),
 			&gen.Config{
-				Package: "gtihub.com/lesomnus/entpb/ent",
-				Target:  filepath.Join(wd, "_ent"),
+				Package: "github.com/lesomnus/entpb/example/ent",
+				Target:  filepath.Join(wd, "ent"),
 			},
 			entc.Extensions(entpb_ext),
 			entc.Annotations(
 				entpb.ProtoFiles{
+					"entpb/directory/service.proto": entpb.NewProtoFile(proto_file_init),
 					"entpb/directory/common.proto": entpb.NewProtoFile(proto_file_init).
 						AddEnum(example.Role(""), []entpb.EnumField{
 							{Name: example.RoleOwner, Number: 10, Comment: "Holds full control for the group."},
@@ -80,8 +81,6 @@ func main() {
 							entpb.WithName("GroupRole"),
 							entpb.WithComment("Role for the group."),
 						),
-					"entpb/directory/service.proto": entpb.NewProtoFile(proto_file_init).
-						AliasAs("svc"),
 				},
 			),
 		)

@@ -34,7 +34,7 @@ func (BaseMixin) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entpb.Message(
 			"entpb/directory/common.proto",
-			&entpb.Service{Filepath: "svc"},
+			&entpb.Service{Filepath: "entpb/directory/service.proto"},
 			entpb.RpcEntCreate(),
 		),
 	}

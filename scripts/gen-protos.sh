@@ -12,7 +12,7 @@ __root="$(cd "$(dirname "${__dir}")" && pwd)"         # Root directory of projec
 
 
 
-MODULE_NAME=github.com/lesomnus/entpb
+MODULE_NAME=github.com/lesomnus/entpb/example
 PROTO_ROOT="${__root}/example/protos/syntax_proto3"
 OUTPUT_DIR="${__root}/example"
 cd "${PROTO_ROOT}"
@@ -25,5 +25,11 @@ protoc \
 	\
 	--go-grpc_out="${OUTPUT_DIR}" \
 	--go-grpc_opt=module="${MODULE_NAME}" \
+	\
+	--entpb_out="${OUTPUT_DIR}" \
+	--entpb_opt=module="${MODULE_NAME}" \
+	--entpb_opt=schema_path="${__root}/example/schema" \
+	--entpb_opt=ent_package="${MODULE_NAME}/ent" \
+	--entpb_opt=package="${MODULE_NAME}/bare" \
 	\
 	"${PROTO_ROOT}"/**/*.proto

@@ -12,7 +12,6 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
 	"github.com/lesomnus/entpb/pbgen/ident"
-	"github.com/mitchellh/mapstructure"
 )
 
 type Build struct {
@@ -49,34 +48,21 @@ func NewBuild(graph *gen.Graph) (*Build, error) {
 }
 
 func (b *Build) parse(graph *gen.Graph) error {
-	var d map[string]*ProtoFile
-	if a, ok := graph.Annotations[ProtoFilesAnnotation]; !ok {
+	if d, ok := decodeAnnotation(&ProtoFiles{}, graph.Annotations); !ok {
 		return nil
-	} else if err := mapstructure.Decode(a, &d); err != nil {
-		panic(fmt.Errorf("decode %s: %w", ProtoFilesAnnotation, err))
-	}
+	} else {
+		for p, f := range *d {
+			for name := range f.enums {
+				if _, ok := b.enum_holders[name]; ok {
+					return fmt.Errorf(`multiple definition of enum for same Go type "%s"`, name)
+				}
 
-	for p, f := range d {
-		if l, ok := d[f.alias]; ok {
-			if f == l {
-				// Note that the map is mutated while it is iterated,
-				// so newly added element can be visited.
-				continue
-			}
-			return fmt.Errorf(`duplicated alias "%s" for "%s"`, f.alias, p)
-		}
-
-		for name := range f.enums {
-			if _, ok := b.enum_holders[name]; ok {
-				return fmt.Errorf(`multiple definition of enum for same Go type "%s"`, name)
+				b.enum_holders[name] = f
 			}
 
-			b.enum_holders[name] = f
+			f.path = p
+			b.files[p] = f
 		}
-
-		f.path = p
-		b.files[p] = f
-		b.files[f.alias] = f
 	}
 
 	errs := []error{}
@@ -296,7 +282,7 @@ func (p *Build) parseService(d *messageAnnotation) error {
 
 	f, ok := p.files[s.Filepath]
 	if !ok {
-		return fmt.Errorf(`service "%s" references non-exists proto file "%s"`, d.Ident, d.Filepath)
+		return fmt.Errorf(`service "%s" references non-exists proto file "%s"`, d.Ident, s.Filepath)
 	}
 	if s.Name == "" {
 		s.Name = ident.Ident(fmt.Sprintf("%sService", d.Ident))

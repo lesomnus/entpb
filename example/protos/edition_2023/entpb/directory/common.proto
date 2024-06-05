@@ -7,7 +7,7 @@ package entpb.directory;
 import "google/protobuf/timestamp.proto";
 
 option features.field_presence = IMPLICIT;
-option go_package = "github.com/lesomnus/entpb/_pb";
+option go_package = "github.com/lesomnus/entpb/example/pb";
 
 // Role for the group.
 enum GroupRole {
@@ -44,6 +44,5 @@ message Identity {
 
 message Membership {
 	bytes id = 1;
-	Actor owner = 2;
 	google.protobuf.Timestamp date_created = 15;
 }

@@ -7,7 +7,7 @@ package entpb.directory;
 import "entpb/directory/common.proto";
 import "google/protobuf/empty.proto";
 
-option go_package = "github.com/lesomnus/entpb/_pb";
+option go_package = "github.com/lesomnus/entpb/example/pb";
 
 service AccountService {
 	rpc Create (Account) returns (Account);

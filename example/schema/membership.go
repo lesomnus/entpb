@@ -3,8 +3,6 @@ package schema
 import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema"
-	"entgo.io/ent/schema/edge"
-	"github.com/lesomnus/entpb"
 )
 
 type Membership struct {
@@ -22,14 +20,7 @@ func (Membership) Fields() []ent.Field {
 }
 
 func (Membership) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.From("owner", User.Type).
-			Annotations(entpb.Field(2)).
-			Ref("memberships").
-			Immutable().
-			Unique().
-			Required(),
-	}
+	return []ent.Edge{}
 }
 
 func (Membership) Annotations() []schema.Annotation {
