@@ -23,15 +23,15 @@ func Message(filepath string, opts ...MessageOption) schema.Annotation {
 
 type messageAnnotation struct {
 	Filepath string
-	Service  *service
 
-	Ident ident.Ident
+	Ident   ident.Ident
+	Comment string `mapstructure:"-"`
 
-	file   *ProtoFile
-	schema *load.Schema
-	fields []*messageFieldAnnotation
+	Service *service
 
-	comment string
+	File   *ProtoFile         `mapstructure:"-"`
+	Schema *load.Schema       `mapstructure:"-"`
+	Fields []*fieldAnnotation `mapstructure:"-"`
 }
 
 func (a *messageAnnotation) pbType() PbType {
@@ -39,7 +39,7 @@ func (a *messageAnnotation) pbType() PbType {
 		Name:   a.Ident,
 		Import: a.Filepath,
 	}
-	if f := a.file; f != nil {
+	if f := a.File; f != nil {
 		t.Package = f.pbPackage
 	}
 

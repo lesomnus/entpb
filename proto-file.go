@@ -49,8 +49,8 @@ func (ProtoFiles) Name() string {
 func (f *ProtoFile) ImportPaths() []string {
 	ps := map[string]struct{}{}
 	for _, message := range f.messages {
-		for _, field := range message.fields {
-			ps[field.pb_type.Import] = struct{}{}
+		for _, field := range message.Fields {
+			ps[field.PbType.Import] = struct{}{}
 		}
 	}
 	for _, service := range f.services {
@@ -98,7 +98,7 @@ func ForwardDeclarations(files map[string]*protogen.File, graph *gen.Graph) {
 				// Not an external type such as `example.Role`
 				continue
 			}
-			if _, ok := decodeAnnotation(&messageFieldAnnotation{}, f.Annotations); !ok {
+			if _, ok := decodeAnnotation(&fieldAnnotation{}, f.Annotations); !ok {
 				continue
 			}
 

@@ -2,35 +2,52 @@ package entpb
 
 import (
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/field"
 	"github.com/lesomnus/entpb/pbgen/ident"
 )
 
 const FieldAnnotation = "ProtoField"
 
-type MessageFieldOption interface {
-	messageFieldOpt(*messageFieldAnnotation)
+type FieldOption interface {
+	fieldOpt(*fieldAnnotation)
 }
 
-func Field(num int, opts ...MessageFieldOption) schema.Annotation {
-	a := &messageFieldAnnotation{Number: num}
+func Field(num int, opts ...FieldOption) schema.Annotation {
+	a := &fieldAnnotation{Number: num}
 	for _, opt := range opts {
-		opt.messageFieldOpt(a)
+		opt.fieldOpt(a)
 	}
 	return a
 }
 
-type messageFieldAnnotation struct {
-	Ident  ident.Ident
-	Number int
+type fieldAnnotation struct {
+	Ident   ident.Ident
+	Number  int
+	Comment string `mapstructure:"-"`
 
-	pb_type PbType
+	EntName string          `mapstructure:"-"`
+	EntType *field.TypeInfo `mapstructure:"-"`
+	EntRef  string          `mapstructure:"-"` // Name of the schema that this edge references.
+	PbType  PbType          `mapstructure:"-"`
 
-	comment string
-
-	isOptional bool
-	isRepeated bool
+	HasDefault bool `mapstructure:"-"`
+	IsOptional bool `mapstructure:"-"`
+	IsRepeated bool `mapstructure:"-"`
+	IsReadOnly bool // Make this field cannot be set manually.
 }
 
-func (messageFieldAnnotation) Name() string {
+func (a *fieldAnnotation) IsEdge() bool {
+	return a.EntType == nil
+}
+
+func (fieldAnnotation) Name() string {
 	return FieldAnnotation
 }
+
+type fieldOptReadonly struct{}
+
+func (o *fieldOptReadonly) fieldOpt(t *fieldAnnotation) {
+	t.IsReadOnly = true
+}
+
+func WithReadOnly() FieldOption { return &fieldOptReadonly{} }

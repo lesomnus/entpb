@@ -21,12 +21,12 @@ func (BaseMixin) Fields() []ent.Field {
 			Unique().
 			Immutable().
 			Default(uuid.New).
-			Annotations(entpb.Field(1)),
+			Annotations(entpb.Field(1, entpb.WithReadOnly())),
 
 		field.Time("date_created").
 			Immutable().
 			Default(time.Now).
-			Annotations(entpb.Field(15)),
+			Annotations(entpb.Field(15, entpb.WithReadOnly())),
 	}
 }
 

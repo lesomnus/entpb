@@ -70,15 +70,15 @@ func (p *edition2023Printer) printFile(f *ProtoFile) pbgen.ProtoFile {
 
 		return d
 	})...)
-	a(p.printMessages(f, func(a *messageFieldAnnotation) pbgen.MessageField {
+	a(p.printMessages(f, func(a *fieldAnnotation) pbgen.MessageField {
 		d := pbgen.MessageField{
-			Type:   a.pb_type.ReferencedIn(f.pbPackage),
+			Type:   a.PbType.ReferencedIn(f.pbPackage),
 			Name:   a.Ident,
 			Number: a.Number,
 		}
-		if a.isRepeated {
+		if a.IsRepeated {
 			d.Labels = append(d.Labels, pbgen.LabelRepeated)
-		} else if a.isOptional {
+		} else if a.IsOptional {
 			// Presence of "repeated" fields are not tracked.
 			d.Options = append(d.Options, pbgen.FeatureFieldPresenceExplicit)
 		}
@@ -115,15 +115,15 @@ func (p *proto3Printer) printFile(f *ProtoFile) pbgen.ProtoFile {
 	a(p.printEnums(f, func(enum *enum) pbgen.Enum {
 		return pbgen.Enum{}
 	})...)
-	a(p.printMessages(f, func(a *messageFieldAnnotation) pbgen.MessageField {
+	a(p.printMessages(f, func(a *fieldAnnotation) pbgen.MessageField {
 		d := pbgen.MessageField{
-			Type:   a.pb_type.ReferencedIn(f.pbPackage),
+			Type:   a.PbType.ReferencedIn(f.pbPackage),
 			Name:   a.Ident,
 			Number: a.Number,
 		}
-		if a.isRepeated {
+		if a.IsRepeated {
 			d.Labels = append(d.Labels, pbgen.LabelRepeated)
-		} else if a.isOptional {
+		} else if a.IsOptional {
 			d.Labels = append(d.Labels, pbgen.LabelOptional)
 		}
 
@@ -248,7 +248,7 @@ func (u *printerUtils) printEnums(f *ProtoFile, new_enum_def func(*enum) pbgen.E
 	return ds
 }
 
-func (u *printerUtils) printMessages(f *ProtoFile, print_field func(*messageFieldAnnotation) pbgen.MessageField) []pbgen.TopLevelDef {
+func (u *printerUtils) printMessages(f *ProtoFile, print_field func(*fieldAnnotation) pbgen.MessageField) []pbgen.TopLevelDef {
 	ds := []pbgen.TopLevelDef{}
 
 	messages := maps.Values(f.messages)
@@ -256,21 +256,21 @@ func (u *printerUtils) printMessages(f *ProtoFile, print_field func(*messageFiel
 		return cmp.Compare(a.Ident, b.Ident)
 	})
 	for _, message := range messages {
-		if message.comment != "" {
-			ds = append(ds, pbgen.Comment{Value: message.comment})
+		if message.Comment != "" {
+			ds = append(ds, pbgen.Comment{Value: message.Comment})
 		}
 
 		//
 		// Field definitions
 		//
 		d := pbgen.Message{Name: message.Ident}
-		fields := slices.Clone(message.fields)
-		slices.SortFunc(fields, func(a, b *messageFieldAnnotation) int {
+		fields := slices.Clone(message.Fields)
+		slices.SortFunc(fields, func(a, b *fieldAnnotation) int {
 			return cmp.Compare(a.Number, b.Number)
 		})
 		for _, field := range fields {
-			if field.comment != "" {
-				d.Body = append(d.Body, pbgen.Comment{Value: field.comment})
+			if field.Comment != "" {
+				d.Body = append(d.Body, pbgen.Comment{Value: field.Comment})
 			}
 
 			d.Body = append(d.Body, print_field(field))

@@ -3,11 +3,30 @@
 package bare
 
 import (
+	context "context"
+	runtime "github.com/lesomnus/entpb/cmd/protoc-gen-entpb/runtime"
 	ent "github.com/lesomnus/entpb/example/ent"
 	pb "github.com/lesomnus/entpb/example/pb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type MembershipServiceServer struct {
 	db *ent.Client
 	pb.UnimplementedMembershipServiceServer
+}
+
+func (s *MembershipServiceServer) Create(ctx context.Context, req *pb.Membership) (*pb.Membership, error) {
+	q := s.db.Membership.Create()
+	res, err := q.Save(ctx)
+	if err != nil {
+		return nil, runtime.EntErrorToStatus(err)
+	}
+
+	return toProtoMembership(res), nil
+}
+func toProtoMembership(v *ent.Membership) *pb.Membership {
+	m := &pb.Membership{}
+	m.Id = v.ID[:]
+	m.DateCreated = timestamppb.New(v.DateCreated)
+	return m
 }

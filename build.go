@@ -95,7 +95,7 @@ func (b *Build) parse(graph *gen.Graph) error {
 			errs_ = append(errs_, fmt.Errorf(`parse service: %w`, err))
 		}
 		if len(errs_) > 0 {
-			errs = append(errs, fmt.Errorf(`schema "%s": %w`, msg.schema.Name, errors.Join(errs_...)))
+			errs = append(errs, fmt.Errorf(`schema "%s": %w`, msg.Schema.Name, errors.Join(errs_...)))
 		}
 	}
 	if len(errs) > 0 {
@@ -114,7 +114,7 @@ func (b *Build) parseMessage(r *load.Schema) error {
 		d.Ident = ident.Ident(r.Name)
 	}
 	if a, ok := decodeAnnotation(&schema.CommentAnnotation{}, r.Annotations); ok {
-		d.comment = a.Text
+		d.Comment = a.Text
 	}
 
 	f, ok := b.files[d.Filepath]
@@ -126,8 +126,8 @@ func (b *Build) parseMessage(r *load.Schema) error {
 		return fmt.Errorf(`message name "%s" duplicated with proto file "%s"`, d.Ident, d.Filepath)
 	}
 
-	d.file = f
-	d.schema = r
+	d.File = f
+	d.Schema = r
 	f.messages[d.Ident] = d
 	b.messages[r.Name] = d
 	return nil
@@ -167,7 +167,7 @@ func (p *Build) normalizeEnum(enum *enum) error {
 
 func (b *Build) parseFields(m *messageAnnotation) error {
 	errs := []error{}
-	for _, field := range m.schema.Fields {
+	for _, field := range m.Schema.Fields {
 		d, err := b.parseEntField(field)
 		if err != nil {
 			errs = append(errs, fmt.Errorf(`field "%s": %w`, field.Name, err))
@@ -177,11 +177,11 @@ func (b *Build) parseFields(m *messageAnnotation) error {
 			continue
 		}
 
-		m.fields = append(m.fields, d)
+		m.Fields = append(m.Fields, d)
 	}
 
-	edges := slices.Clone(m.schema.Edges)
-	for _, edge := range m.schema.Edges {
+	edges := slices.Clone(m.Schema.Edges)
+	for _, edge := range m.Schema.Edges {
 		if edge.Ref == nil {
 			continue
 		}
@@ -199,7 +199,7 @@ func (b *Build) parseFields(m *messageAnnotation) error {
 			continue
 		}
 
-		m.fields = append(m.fields, d)
+		m.Fields = append(m.Fields, d)
 	}
 
 	if len(errs) > 0 {
@@ -209,8 +209,8 @@ func (b *Build) parseFields(m *messageAnnotation) error {
 	return nil
 }
 
-func (p *Build) parseEntField(r *load.Field) (*messageFieldAnnotation, error) {
-	d, ok := decodeAnnotation(&messageFieldAnnotation{}, r.Annotations)
+func (p *Build) parseEntField(r *load.Field) (*fieldAnnotation, error) {
+	d, ok := decodeAnnotation(&fieldAnnotation{}, r.Annotations)
 	if !ok {
 		return nil, nil
 	}
@@ -230,7 +230,7 @@ func (p *Build) parseEntField(r *load.Field) (*messageFieldAnnotation, error) {
 			panic(fmt.Errorf(`invalid state of Parser: enum does not exist on file: "%s"`, name))
 		}
 
-		d.pb_type = PbType{
+		d.PbType = PbType{
 			Name:    enum.ident,
 			Package: f.pbPackage,
 			Import:  f.path,
@@ -238,17 +238,20 @@ func (p *Build) parseEntField(r *load.Field) (*messageFieldAnnotation, error) {
 	} else if t := pb_types[int(r.Info.Type)]; t.Name == "" {
 		return nil, fmt.Errorf("unsupported type: %s", r.Info.Type.String())
 	} else {
-		d.pb_type = t
+		d.PbType = t
 	}
 
-	d.comment = r.Comment
-	d.isOptional = r.Nillable
+	d.Comment = r.Comment
+	d.EntName = r.Name
+	d.EntType = r.Info
+	d.HasDefault = r.Default
+	d.IsOptional = r.Nillable
 
 	return d, nil
 }
 
-func (p *Build) parseEntEdge(r *load.Edge) (*messageFieldAnnotation, error) {
-	d, ok := decodeAnnotation(&messageFieldAnnotation{}, r.Annotations)
+func (p *Build) parseEntEdge(r *load.Edge) (*fieldAnnotation, error) {
+	d, ok := decodeAnnotation(&fieldAnnotation{}, r.Annotations)
 	if !ok {
 		return nil, nil
 	}
@@ -261,10 +264,12 @@ func (p *Build) parseEntEdge(r *load.Edge) (*messageFieldAnnotation, error) {
 		return nil, fmt.Errorf(`edge "%s" references a schema "%s" that is not a proto message`, r.Name, r.Type)
 	}
 
-	d.pb_type = message.pbType()
-	d.comment = r.Comment
-	d.isOptional = !r.Required
-	d.isRepeated = !r.Unique
+	d.Comment = r.Comment
+	d.EntName = r.Name
+	d.EntRef = r.Type
+	d.PbType = message.pbType()
+	d.IsOptional = !r.Required
+	d.IsRepeated = !r.Unique
 
 	return d, nil
 }

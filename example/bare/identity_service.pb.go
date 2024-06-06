@@ -3,11 +3,47 @@
 package bare
 
 import (
+	context "context"
+	uuid "github.com/google/uuid"
+	runtime "github.com/lesomnus/entpb/cmd/protoc-gen-entpb/runtime"
 	ent "github.com/lesomnus/entpb/example/ent"
 	pb "github.com/lesomnus/entpb/example/pb"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type IdentityServiceServer struct {
 	db *ent.Client
 	pb.UnimplementedIdentityServiceServer
+}
+
+func (s *IdentityServiceServer) Create(ctx context.Context, req *pb.Identity) (*pb.Identity, error) {
+	q := s.db.Identity.Create()
+	q.SetName(req.Name)
+	if v := req.Email; v != nil {
+		q.SetEmail(*v)
+	}
+	if v, err := uuid.FromBytes(req.Owner.GetId()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "owner: %s", err)
+	} else {
+		q.SetOwnerID(v)
+	}
+	res, err := q.Save(ctx)
+	if err != nil {
+		return nil, runtime.EntErrorToStatus(err)
+	}
+
+	return toProtoIdentity(res), nil
+}
+func toProtoIdentity(v *ent.Identity) *pb.Identity {
+	m := &pb.Identity{}
+	m.Id = v.ID[:]
+	m.DateCreated = timestamppb.New(v.DateCreated)
+	m.Name = v.Name
+	m.Email = v.Email
+	if v := v.Edges.Owner; v != nil {
+		m.Owner = &pb.Actor{Id: v.ID[:]}
+	}
+	return m
 }

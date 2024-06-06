@@ -4,11 +4,13 @@ package bare
 
 import (
 	context "context"
+	uuid "github.com/google/uuid"
+	runtime "github.com/lesomnus/entpb/cmd/protoc-gen-entpb/runtime"
 	ent "github.com/lesomnus/entpb/example/ent"
 	pb "github.com/lesomnus/entpb/example/pb"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type AccountServiceServer struct {
@@ -16,6 +18,30 @@ type AccountServiceServer struct {
 	pb.UnimplementedAccountServiceServer
 }
 
-func (s *AccountServiceServer) Lock(context.Context, *pb.Account) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method not implemented")
+func (s *AccountServiceServer) Create(ctx context.Context, req *pb.Account) (*pb.Account, error) {
+	q := s.db.Account.Create()
+	if v := req.Role; v != nil {
+		q.SetRole(v)
+	}
+	if v, err := uuid.FromBytes(req.Owner.GetId()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "owner: %s", err)
+	} else {
+		q.SetOwnerID(v)
+	}
+	res, err := q.Save(ctx)
+	if err != nil {
+		return nil, runtime.EntErrorToStatus(err)
+	}
+
+	return toProtoAccount(res), nil
+}
+func toProtoAccount(v *ent.Account) *pb.Account {
+	m := &pb.Account{}
+	m.Id = v.ID[:]
+	m.DateCreated = timestamppb.New(v.DateCreated)
+	m.Role = v.Role
+	if v := v.Edges.Owner; v != nil {
+		m.Owner = &pb.Actor{Id: v.ID[:]}
+	}
+	return m
 }

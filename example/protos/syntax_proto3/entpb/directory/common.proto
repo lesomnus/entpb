@@ -29,6 +29,7 @@ message Actor {
 	bytes id = 1;
 	repeated Actor children = 2;
 	optional Actor referer = 3;
+	repeated Identity identities = 4;
 	google.protobuf.Timestamp date_created = 15;
 }
 

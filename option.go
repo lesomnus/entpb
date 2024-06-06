@@ -10,9 +10,9 @@ func WithName(v ident.Ident) *nameOption {
 	return &nameOption{v}
 }
 
-func (o *nameOption) messageOpt(t *messageAnnotation)           { t.Ident = o.v }
-func (o *nameOption) messageFieldOpt(t *messageFieldAnnotation) { t.Ident = o.v }
-func (o *nameOption) enumOpt(t *enum)                           { t.ident = o.v }
+func (o *nameOption) messageOpt(t *messageAnnotation) { t.Ident = o.v }
+func (o *nameOption) fieldOpt(t *fieldAnnotation)     { t.Ident = o.v }
+func (o *nameOption) enumOpt(t *enum)                 { t.ident = o.v }
 
 type commentOption struct{ v string }
 
