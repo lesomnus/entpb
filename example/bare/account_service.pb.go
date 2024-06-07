@@ -20,9 +20,7 @@ type AccountServiceServer struct {
 
 func (s *AccountServiceServer) Create(ctx context.Context, req *pb.Account) (*pb.Account, error) {
 	q := s.db.Account.Create()
-	if v := req.Role; v != nil {
-		q.SetRole(v)
-	}
+	q.SetRole(toEntRole(req.Role))
 	if v, err := uuid.FromBytes(req.Owner.GetId()); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "owner: %s", err)
 	} else {
@@ -39,7 +37,7 @@ func toProtoAccount(v *ent.Account) *pb.Account {
 	m := &pb.Account{}
 	m.Id = v.ID[:]
 	m.DateCreated = timestamppb.New(v.DateCreated)
-	m.Role = v.Role
+	m.Role = toPbGroupRole(v.Role)
 	if v := v.Edges.Owner; v != nil {
 		m.Owner = &pb.Actor{Id: v.ID[:]}
 	}

@@ -1,5 +1,4 @@
-{{ $serverName := (print $.Service.GoName "Server")  -}}
-func (s *{{ $serverName }}) {{ $.Method.GoName }}(ctx {{ ident "context" "Context" }}, req *{{ goident $.Method.Input.GoIdent }}) (*{{ goident $.Method.Output.GoIdent }}, error) {
+func (s *{{ print $.Service.GoName "Server" }}) {{ $.Method.GoName }}(ctx {{ import "context" | ident "Context" }}, req *{{ $.Method.Input.GoIdent | use }}) (*{{ $.Method.Output.GoIdent | use }}, error) {
 	q := s.db.{{ $.Message.Schema.Name }}.Create()
 	{{ range $.Message.Fields -}}
 	{{ if .IsReadOnly -}}
@@ -16,6 +15,8 @@ func (s *{{ $serverName }}) {{ $.Method.GoName }}(ctx {{ ident "context" "Contex
 		{{ else -}}
 		{{ to_ent . (print $field ".GetId()" ) "v" (print $setter "ID(@)") }}
 		{{ end -}}
+	{{ else if .IsEnum -}}
+	{{ to_ent . ($field) "w" (print $setter "(@)") }}
 	{{ else if .PbType.IsMessage -}}
 	if v := {{ $field }}; v != nil {
 		{{ to_ent . "v" "w" (print $setter "(@)") }}
@@ -31,7 +32,7 @@ func (s *{{ $serverName }}) {{ $.Method.GoName }}(ctx {{ ident "context" "Contex
 
 	res, err := q.Save(ctx)
 	if err != nil {
-		return nil, {{ ident $.Runtime "EntErrorToStatus" }}(err)
+		return nil, {{ $.Runtime.Ident "EntErrorToStatus" | use }}(err)
 	}
 
 	return toProto{{ $.Message.Schema.Name }}(res), nil

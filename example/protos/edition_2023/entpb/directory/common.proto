@@ -11,10 +11,10 @@ option go_package = "github.com/lesomnus/entpb/example/pb";
 
 // Role for the group.
 enum GroupRole {
-	GROUPROLE_UNSPECIFIED = 0;
+	GROUP_ROLE_UNSPECIFIED = 0;
 	// Holds full control for the group.
-	GROUPROLE_OWNER = 10;
-	GROUPROLE_MEMBER = 20;
+	GROUP_ROLE_OWNER = 10;
+	GROUP_ROLE_MEMBER = 20;
 }
 
 message Account {

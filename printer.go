@@ -64,7 +64,7 @@ func (p *edition2023Printer) printFile(f *ProtoFile) pbgen.ProtoFile {
 	a(p.printServices(f)...)
 	a(p.printEnums(f, func(enum *enum) pbgen.Enum {
 		d := pbgen.Enum{}
-		if enum.is_closed {
+		if enum.IsClosed {
 			d.Options = append(d.Options, pbgen.FeatureEnumTypeClosed)
 		}
 
@@ -219,20 +219,20 @@ func (u *printerUtils) printEnums(f *ProtoFile, new_enum_def func(*enum) pbgen.E
 
 	enums := maps.Values(f.enums)
 	slices.SortFunc(enums, func(a, b *enum) int {
-		return cmp.Compare(a.ident, b.ident)
+		return cmp.Compare(a.Ident, b.Ident)
 	})
 	for _, enum := range enums {
-		if enum.comment != "" {
-			ds = append(ds, pbgen.Comment{Value: enum.comment})
+		if enum.Comment != "" {
+			ds = append(ds, pbgen.Comment{Value: enum.Comment})
 		}
 
 		//
 		// Field definitions
 		//
 		d := new_enum_def(enum)
-		d.Name = enum.ident
-		fields := slices.Clone(enum.vs)
-		slices.SortFunc(fields, func(a, b EnumField) int {
+		d.Name = enum.Ident
+		fields := slices.Clone(enum.Fields)
+		slices.SortFunc(fields, func(a, b *EnumField) int {
 			return cmp.Compare(a.Number, b.Number)
 		})
 		for _, v := range fields {

@@ -36,7 +36,7 @@ type messageAnnotation struct {
 
 func (a *messageAnnotation) pbType() PbType {
 	t := PbType{
-		Name:   a.Ident,
+		Ident:  a.Ident,
 		Import: a.Filepath,
 	}
 	if f := a.File; f != nil {

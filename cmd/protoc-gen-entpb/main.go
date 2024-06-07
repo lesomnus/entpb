@@ -20,7 +20,6 @@ type Config struct {
 
 func main() {
 	conf := Config{}
-
 	var flags flag.FlagSet
 	flags.StringVar(&conf.EntSchemaPath, "schema_path", "", "ent schema path")
 	flags.StringVar(&conf.EntPackage, "ent_package", "", "full package name of generate code by Ent")
@@ -54,11 +53,20 @@ func run(plugin *protogen.Plugin, conf Config) error {
 	}
 
 	errs := []error{}
+	{
+		printer := entpb.GrpcEnumPrinter{
+			GrpcPrinterConfig: conf.GrpcPrinterConfig,
+
+			Plugin: plugin,
+		}
+		if err := printer.Print(build); err != nil {
+			errs = append(errs, fmt.Errorf(`generate enum: %w`, err))
+		}
+	}
 	for _, file := range plugin.FilesByPath {
 		if !file.Generate {
 			continue
 		}
-
 		for _, service := range file.Services {
 			printer := entpb.GrpcPrinter{
 				GrpcPrinterConfig: conf.GrpcPrinterConfig,

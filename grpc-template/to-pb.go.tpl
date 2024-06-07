@@ -1,11 +1,12 @@
-func toProto{{ $.Schema.Name }}(v *{{ ident $.Ent (print $.Schema.Name) }}) *{{ ident $.Pb (print $.Ident) }} {
-	m := &{{ ident $.Pb (print .Ident) }}{}
+{{ $pb_type := print $.Ident | $.Pb.Ident | use -}}
+func toProto{{ $.Schema.Name }}(v *{{ $.Ent.Ident $.Schema.Name | use }}) *{{ $pb_type }} {
+	m := &{{ $pb_type }}{}
 	{{ range $.Fields -}}
 	{{ $pb_field := print "m." (pascal (print .Ident)) -}}
 	{{ $ent_field := print "v." (entname .EntName) -}}
 	{{ if .IsEdge -}}
 		{{ $ent_field = print "v.Edges." (entname .EntName) -}}
-		{{ $ref_type := ident $.Pb (print .PbType.Name) -}}
+		{{ $ref_type := print .PbType.Ident | $.Pb.Ident | use -}}
 		{{ if .IsRepeated -}}
 		for _, v := range {{ $ent_field }} {
 			{{ $pb_field }} = append({{ $pb_field }}, &{{ $ref_type }}{Id: v.ID[:]})

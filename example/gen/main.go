@@ -73,14 +73,15 @@ func main() {
 			entc.Annotations(
 				entpb.ProtoFiles{
 					"entpb/directory/service.proto": entpb.NewProtoFile(proto_file_init),
-					"entpb/directory/common.proto": entpb.NewProtoFile(proto_file_init).
-						AddEnum(example.Role(""), []entpb.EnumField{
-							{Name: example.RoleOwner, Number: 10, Comment: "Holds full control for the group."},
-							{Name: example.RoleMember, Number: 20},
+					"entpb/directory/common.proto": entpb.NewProtoFile(proto_file_init,
+						entpb.WithEnum(map[example.Role]entpb.EnumDesc{
+							example.RoleOwner:  {Number: 10, Comment: "Holds full control for the group."},
+							example.RoleMember: {Number: 20},
 						},
 							entpb.WithName("GroupRole"),
 							entpb.WithComment("Role for the group."),
 						),
+					),
 				},
 			),
 		)

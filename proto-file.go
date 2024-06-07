@@ -5,13 +5,19 @@ import (
 
 	"entgo.io/ent/entc/gen"
 	"entgo.io/ent/schema/field"
+	"github.com/iancoleman/strcase"
 	"github.com/lesomnus/entpb/pbgen/ident"
+	"github.com/lesomnus/entpb/utils"
 	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 const ProtoFilesAnnotation = "ProtoFiles"
+
+type ProtoFileOption interface {
+	protoFileOpt(*ProtoFile)
+}
 
 type ProtoFile struct {
 	path string
@@ -29,8 +35,8 @@ type ProtoFileInit struct {
 	GoPackage string
 }
 
-func NewProtoFile(init ProtoFileInit) *ProtoFile {
-	return &ProtoFile{
+func NewProtoFile(init ProtoFileInit, opts ...ProtoFileOption) *ProtoFile {
+	v := &ProtoFile{
 		pbPackage: init.PbPackage,
 		goPackage: init.GoPackage,
 
@@ -38,6 +44,11 @@ func NewProtoFile(init ProtoFileInit) *ProtoFile {
 		messages: map[ident.Ident]*messageAnnotation{},
 		services: map[ident.Ident]*service{},
 	}
+	for _, opt := range opts {
+		opt.protoFileOpt(v)
+	}
+
+	return v
 }
 
 type ProtoFiles map[string]*ProtoFile
@@ -83,6 +94,8 @@ func ForwardDeclarations(files map[string]*protogen.File, graph *gen.Graph) {
 			continue
 		}
 
+		// FIXME: it maybe overwrites existing file.
+		// I think above continue must be fixed first.
 		if s := d_m.Service; s != nil {
 			d[s.Filepath] = NewProtoFile(ProtoFileInit{})
 		}
@@ -90,29 +103,28 @@ func ForwardDeclarations(files map[string]*protogen.File, graph *gen.Graph) {
 		file := NewProtoFile(ProtoFileInit{})
 		d[d_m.Filepath] = file
 
-		for _, f := range s.Fields {
-			if f.Info.Type != field.TypeEnum {
+		for _, ent_field := range s.Fields {
+			if ent_field.Info.Type != field.TypeEnum {
 				continue
 			}
-			if f.Info.RType == nil {
+			if ent_field.Info.RType == nil {
 				// Not an external type such as `example.Role`
 				continue
 			}
-			if _, ok := decodeAnnotation(&fieldAnnotation{}, f.Annotations); !ok {
+			if _, ok := decodeAnnotation(&fieldAnnotation{}, ent_field.Annotations); !ok {
 				continue
 			}
 
 			// Resolve name of the enum from the proto file.
 			// We cannot use `f.Info.RType.Name` since it can be renamed.
-			proto_file, ok := files[d_m.Filepath]
+			pb_file, ok := files[d_m.Filepath]
 			if !ok {
 				// Maybe the file is not given as a protoc input?
 				continue
 			}
 
-			var proto_enum *protogen.Enum
-		L:
-			for _, message := range proto_file.Messages {
+			var pb_enum *protogen.Enum
+			for _, message := range pb_file.Messages {
 				name := string(d_m.Ident)
 				if name == "" {
 					name = s.Name
@@ -122,33 +134,59 @@ func ForwardDeclarations(files map[string]*protogen.File, graph *gen.Graph) {
 				}
 
 				for _, field := range message.Fields {
-					if field.Desc.Name() != protoreflect.Name(f.Name) {
+					if field.Desc.Name() != protoreflect.Name(ent_field.Name) {
 						continue
 					}
 					if field.Desc.Kind() != protoreflect.EnumKind {
 						panic("looking for the enum but type in the proto file is not an enum")
 					}
 
-					proto_enum = field.Enum
-					break L
+					pb_enum = field.Enum
+					break
+				}
+				if pb_enum != nil {
+					break
 				}
 			}
-			if proto_enum == nil {
+			if pb_enum == nil {
 				panic("enum not found")
 			}
 
 			z := ""
-			r := f.Info.RType
+			r := ent_field.Info.RType
 			enum := &enum{
-				ident: ident.Ident(r.Name),
+				GoType: *r,
+
+				Ident: ident.Ident(pb_enum.Desc.Name()),
+
+				File: file,
 
 				// Values come from proto file so the keys are already prefixed.
-				prefix: &z,
+				Prefix: &z,
 			}
-			for _, v := range proto_enum.Values {
-				enum.vs = append(enum.vs, EnumField{
-					Name:   string(v.Desc.Name()),
+			if len(pb_enum.Values) == 0 {
+				panic("proto doest not have enum values")
+			}
+			if len(ent_field.Enums) == 0 {
+				panic("ent does not have enum values")
+			}
+
+			// TODO: this is naive implementation.
+			prefix := utils.GuessPrefix(
+				utils.Map(pb_enum.Values, func(v *protogen.EnumValue) string { return string(v.Desc.Name()) }),
+				utils.Map(ent_field.Enums, func(v struct{ N, V string }) string { return strings.ToUpper(strcase.ToSnake(v.V)) }),
+			)
+			for _, v := range pb_enum.Values {
+				name := string(v.Desc.Name())
+				remain, ok := strings.CutPrefix(name, prefix)
+				if !ok {
+					panic("guessing prefix failed?")
+				}
+
+				enum.Fields = append(enum.Fields, &EnumField{
+					Name:   name,
 					Number: int(v.Desc.Number()),
+					Value:  remain,
 				})
 			}
 

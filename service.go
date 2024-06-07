@@ -81,9 +81,20 @@ func RpcEntCreate() *Rpc {
 	}
 }
 
+func RpcEntGet() *Rpc {
+	return &Rpc{
+		Name: "Get",
+		Req:  PbThis,
+		Res:  PbType{Ident: "@Ident@NameRequest"},
+
+		builtin: rpcBuiltInGet,
+	}
+}
+
 type rpc_built_in int
 
 const (
 	rpcBuiltInUnspecified rpc_built_in = iota
 	rpcBuiltInCreate
+	rpcBuiltInGet
 )

@@ -11,7 +11,7 @@ import (
 )
 
 type PbType struct {
-	Name    ident.Ident // Type name.
+	Ident   ident.Ident // Type name.
 	Package ident.Full  // Package name of the type.
 	Import  string      // Import path for this type.
 
@@ -25,45 +25,45 @@ func (t *PbType) IsMessage() bool {
 }
 
 func (t *PbType) FullIdent() ident.Full {
-	return append(t.Package, t.Name)
+	return append(t.Package, t.Ident)
 }
 
 func (t *PbType) ReferencedIn(other ident.Full) ident.Full {
 	if slices.Equal(t.Package, other) {
-		return ident.Full{t.Name}
+		return ident.Full{t.Ident}
 	}
 
-	return append(t.Package, t.Name)
+	return append(t.Package, t.Ident)
 }
 
 func (t *PbType) Equal(other *PbType) bool {
-	return t.Name == other.Name && t.Import == other.Import
+	return t.Ident == other.Ident && t.Import == other.Import
 }
 
 var (
-	PbThis = PbType{Name: "$this"}
+	PbThis = PbType{Ident: "$this"}
 
-	PbUuid      = PbType{Name: "bytes"}
-	PbEmpty     = PbType{Name: "Empty", Package: ident.Full{"google", "protobuf"}, Import: "google/protobuf/empty.proto"}
-	PbTimestamp = PbType{Name: "Timestamp", Package: ident.Full{"google", "protobuf"}, Import: "google/protobuf/timestamp.proto"}
+	PbUuid      = PbType{Ident: "bytes"}
+	PbEmpty     = PbType{Ident: "Empty", Package: ident.Full{"google", "protobuf"}, Import: "google/protobuf/empty.proto"}
+	PbTimestamp = PbType{Ident: "Timestamp", Package: ident.Full{"google", "protobuf"}, Import: "google/protobuf/timestamp.proto"}
 )
 
 var pb_types = [...]PbType{
-	ent.TypeBool:    {Name: "bool"},
-	ent.TypeInt8:    {Name: "sint32"},
-	ent.TypeInt16:   {Name: "sint32"},
-	ent.TypeInt32:   {Name: "sint32"},
-	ent.TypeInt:     {Name: "sint64"},
-	ent.TypeInt64:   {Name: "sint64"},
-	ent.TypeUint8:   {Name: "uint32"},
-	ent.TypeUint16:  {Name: "uint32"},
-	ent.TypeUint32:  {Name: "uint32"},
-	ent.TypeUint:    {Name: "uint64"},
-	ent.TypeUint64:  {Name: "uint64"},
-	ent.TypeFloat32: {Name: "float"},
-	ent.TypeFloat64: {Name: "double"},
-	ent.TypeBytes:   {Name: "bytes"},
-	ent.TypeString:  {Name: "string"},
+	ent.TypeBool:    {Ident: "bool"},
+	ent.TypeInt8:    {Ident: "sint32"},
+	ent.TypeInt16:   {Ident: "sint32"},
+	ent.TypeInt32:   {Ident: "sint32"},
+	ent.TypeInt:     {Ident: "sint64"},
+	ent.TypeInt64:   {Ident: "sint64"},
+	ent.TypeUint8:   {Ident: "uint32"},
+	ent.TypeUint16:  {Ident: "uint32"},
+	ent.TypeUint32:  {Ident: "uint32"},
+	ent.TypeUint:    {Ident: "uint64"},
+	ent.TypeUint64:  {Ident: "uint64"},
+	ent.TypeFloat32: {Ident: "float"},
+	ent.TypeFloat64: {Ident: "double"},
+	ent.TypeBytes:   {Ident: "bytes"},
+	ent.TypeString:  {Ident: "string"},
 
 	ent.TypeUUID: PbUuid,
 	ent.TypeTime: PbTimestamp,

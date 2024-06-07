@@ -3,7 +3,6 @@ package entpb
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"slices"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 	"entgo.io/ent/entc/load"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
+	"github.com/iancoleman/strcase"
 	"github.com/lesomnus/entpb/pbgen/ident"
 )
 
@@ -18,15 +18,14 @@ type Build struct {
 	// Filepath or alias to proto file to be output.
 	files map[string]*ProtoFile
 
-	// Holds proto file that contains the enum definition.
 	// Key is global name of the Go type that bound to enum.
 	// e.g. for enum "Role" that bound to Go type "Role" in package "github.com/lesomnus/entpb/example",
 	// the key would be its global name, "github.com/lesomnus/entpb/example:example.Role".
-	// Global name can be build using following functions:
+	// Global name can be built using following functions:
 	//   - globalTypeName
 	//   - globalTypeNameFromReflect
 	//   - globalTypeNameFromEntTypeInfo
-	enum_holders map[string]*ProtoFile
+	enums map[string]*enum
 
 	// Holds message definitions.
 	// Key is name of Ent Schema.
@@ -36,9 +35,9 @@ type Build struct {
 
 func NewBuild(graph *gen.Graph) (*Build, error) {
 	b := &Build{
-		files:        map[string]*ProtoFile{},
-		enum_holders: map[string]*ProtoFile{},
-		messages:     map[string]*messageAnnotation{},
+		files:    map[string]*ProtoFile{},
+		enums:    map[string]*enum{},
+		messages: map[string]*messageAnnotation{},
 	}
 	if err := b.parse(graph); err != nil {
 		return nil, err
@@ -52,12 +51,13 @@ func (b *Build) parse(graph *gen.Graph) error {
 		return nil
 	} else {
 		for p, f := range *d {
-			for name := range f.enums {
-				if _, ok := b.enum_holders[name]; ok {
+			for name, enum := range f.enums {
+				if _, ok := b.enums[name]; ok {
 					return fmt.Errorf(`multiple definition of enum for same Go type "%s"`, name)
 				}
 
-				b.enum_holders[name] = f
+				enum.File = f
+				b.enums[name] = enum
 			}
 
 			f.path = p
@@ -79,11 +79,9 @@ func (b *Build) parse(graph *gen.Graph) error {
 	}
 
 	errs = []error{}
-	for _, f := range b.enum_holders {
-		for _, enum := range f.enums {
-			if err := b.normalizeEnum(enum); err != nil {
-				errs = append(errs, fmt.Errorf(`normalize enum "%s": %w`, enum.ident, err))
-			}
+	for _, enum := range b.enums {
+		if err := b.normalizeEnum(enum); err != nil {
+			errs = append(errs, fmt.Errorf(`normalize enum "%s": %w`, enum.Ident, err))
 		}
 	}
 	for _, msg := range b.messages {
@@ -136,30 +134,31 @@ func (b *Build) parseMessage(r *load.Schema) error {
 func (p *Build) normalizeEnum(enum *enum) error {
 	prefix := ""
 	has_zero := false
-	if enum.prefix == nil {
+	if enum.Prefix == nil {
 		// no prefix
-	} else if *enum.prefix == "" {
-		prefix = fmt.Sprintf("%s_", enum.ident)
+	} else if *enum.Prefix == "" {
+		prefix = fmt.Sprintf("%s_", enum.Ident)
 	} else {
-		prefix = fmt.Sprintf("%s_", *enum.prefix)
+		prefix = fmt.Sprintf("%s_", *enum.Prefix)
 	}
-	prefix = strings.ToUpper(prefix)
 
-	for k, v := range enum.vs {
+	for _, v := range enum.Fields {
 		if v.Number == 0 {
 			has_zero = true
+			break
 		}
-
-		name := regexp.MustCompile(`([a-z])([A-Z])`).ReplaceAllString(v.Name, `${1}_${2}`)
-		name = strings.ToUpper(name)
-		name = fmt.Sprintf("%s%s", prefix, name)
-		enum.vs[k].Name = name
 	}
-	if !enum.is_closed && !has_zero {
-		enum.vs = append(enum.vs, EnumField{
-			Name:   fmt.Sprintf("%sUNSPECIFIED", prefix),
+	if !enum.IsClosed && !has_zero {
+		enum.Fields = append(enum.Fields, &EnumField{
 			Number: 0,
+			Value:  "Unspecified",
 		})
+	}
+	for _, v := range enum.Fields {
+		name := fmt.Sprintf("%s%s", prefix, v.Value)
+		name = strcase.ToSnake(name)
+		name = strings.ToUpper(name)
+		v.Name = name
 	}
 
 	return nil
@@ -220,22 +219,17 @@ func (p *Build) parseEntField(r *load.Field) (*fieldAnnotation, error) {
 
 	if r.Info.Type == field.TypeEnum {
 		name := globalTypeNameFromEntTypeInfo(r.Info)
-		f, ok := p.enum_holders[name]
+		enum, ok := p.enums[name]
 		if !ok {
 			return nil, fmt.Errorf(`unregistered enum type: "%s"`, name)
 		}
 
-		enum, ok := f.enums[name]
-		if !ok {
-			panic(fmt.Errorf(`invalid state of Parser: enum does not exist on file: "%s"`, name))
-		}
-
 		d.PbType = PbType{
-			Name:    enum.ident,
-			Package: f.pbPackage,
-			Import:  f.path,
+			Ident:   enum.Ident,
+			Package: enum.File.pbPackage,
+			Import:  enum.File.path,
 		}
-	} else if t := pb_types[int(r.Info.Type)]; t.Name == "" {
+	} else if t := pb_types[int(r.Info.Type)]; t.Ident == "" {
 		return nil, fmt.Errorf("unsupported type: %s", r.Info.Type.String())
 	} else {
 		d.PbType = t
@@ -243,7 +237,7 @@ func (p *Build) parseEntField(r *load.Field) (*fieldAnnotation, error) {
 
 	d.Comment = r.Comment
 	d.EntName = r.Name
-	d.EntType = r.Info
+	d.EntInfo = r.Info
 	d.HasDefault = r.Default
 	d.IsOptional = r.Nillable
 

@@ -1,5 +1,5 @@
-{{ $serverName := (print .GoName "Server")  -}}
+{{ $serverName := (print $.GoName "Server")  -}}
 type {{ $serverName }} struct {
-	db *{{ ident .Ent "Client" }}
-	{{ ident $.Pb (print "Unimplemented" $serverName ) }}
+	db *{{ $.Ent.Ident "Client" | use }}
+	{{ print "Unimplemented" $serverName | $.Pb.Ident | use }}
 }

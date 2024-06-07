@@ -26,7 +26,7 @@ type fieldAnnotation struct {
 	Comment string `mapstructure:"-"`
 
 	EntName string          `mapstructure:"-"`
-	EntType *field.TypeInfo `mapstructure:"-"`
+	EntInfo *field.TypeInfo `mapstructure:"-"`
 	EntRef  string          `mapstructure:"-"` // Name of the schema that this edge references.
 	PbType  PbType          `mapstructure:"-"`
 
@@ -36,8 +36,15 @@ type fieldAnnotation struct {
 	IsReadOnly bool // Make this field cannot be set manually.
 }
 
+func (a *fieldAnnotation) IsEnum() bool {
+	if a.EntInfo == nil {
+		return false
+	}
+	return a.EntInfo.Type == field.TypeEnum
+}
+
 func (a *fieldAnnotation) IsEdge() bool {
-	return a.EntType == nil
+	return a.EntInfo == nil
 }
 
 func (fieldAnnotation) Name() string {
