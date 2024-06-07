@@ -1,11 +1,8 @@
 package entpb
 
 import (
-	"fmt"
-	"reflect"
 	"slices"
 
-	"entgo.io/ent/schema/field"
 	ent "entgo.io/ent/schema/field"
 	"github.com/lesomnus/entpb/pbgen/ident"
 )
@@ -67,16 +64,4 @@ var pb_types = [...]PbType{
 
 	ent.TypeUUID: PbUuid,
 	ent.TypeTime: PbTimestamp,
-}
-
-func globalTypeName(path string, ident string) string {
-	return fmt.Sprintf("%s:%s", path, ident)
-}
-
-func globalTypeNameFromReflect(t reflect.Type) string {
-	return globalTypeName(t.PkgPath(), t.String())
-}
-
-func globalTypeNameFromEntTypeInfo(t *field.TypeInfo) string {
-	return globalTypeName(t.PkgPath, t.Ident)
 }

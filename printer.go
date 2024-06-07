@@ -49,12 +49,12 @@ func (p *edition2023Printer) Print(b *Build) error {
 func (p *edition2023Printer) printFile(f *ProtoFile) pbgen.ProtoFile {
 	v := pbgen.ProtoFile{
 		Edition: pbgen.Edition2023,
-		Package: f.pbPackage,
+		Package: f.PbPackage,
 		Imports: p.importPaths(f),
 		Options: []pbgen.Option{pbgen.FeatureFieldPresenceImplicit},
 	}
-	if f.goPackage != "" {
-		v.Options = append(v.Options, pbgen.OptionGoPackage(f.goPackage))
+	if f.GoPackage != "" {
+		v.Options = append(v.Options, pbgen.OptionGoPackage(f.GoPackage))
 	}
 
 	a := func(ds ...pbgen.TopLevelDef) {
@@ -62,7 +62,7 @@ func (p *edition2023Printer) printFile(f *ProtoFile) pbgen.ProtoFile {
 	}
 
 	a(p.printServices(f)...)
-	a(p.printEnums(f, func(enum *enum) pbgen.Enum {
+	a(p.printEnums(f, func(enum *Enum) pbgen.Enum {
 		d := pbgen.Enum{}
 		if enum.IsClosed {
 			d.Options = append(d.Options, pbgen.FeatureEnumTypeClosed)
@@ -70,9 +70,9 @@ func (p *edition2023Printer) printFile(f *ProtoFile) pbgen.ProtoFile {
 
 		return d
 	})...)
-	a(p.printMessages(f, func(a *fieldAnnotation) pbgen.MessageField {
+	a(p.printMessages(f, func(a *FieldAnnotation) pbgen.MessageField {
 		d := pbgen.MessageField{
-			Type:   a.PbType.ReferencedIn(f.pbPackage),
+			Type:   a.PbType.ReferencedIn(f.PbPackage),
 			Name:   a.Ident,
 			Number: a.Number,
 		}
@@ -100,11 +100,11 @@ func (p *proto3Printer) Print(b *Build) error {
 func (p *proto3Printer) printFile(f *ProtoFile) pbgen.ProtoFile {
 	v := pbgen.ProtoFile{
 		Edition: pbgen.SyntaxProto3,
-		Package: f.pbPackage,
+		Package: f.PbPackage,
 		Imports: p.importPaths(f),
 	}
-	if f.goPackage != "" {
-		v.Options = append(v.Options, pbgen.OptionGoPackage(f.goPackage))
+	if f.GoPackage != "" {
+		v.Options = append(v.Options, pbgen.OptionGoPackage(f.GoPackage))
 	}
 
 	a := func(ds ...pbgen.TopLevelDef) {
@@ -112,12 +112,12 @@ func (p *proto3Printer) printFile(f *ProtoFile) pbgen.ProtoFile {
 	}
 
 	a(p.printServices(f)...)
-	a(p.printEnums(f, func(enum *enum) pbgen.Enum {
+	a(p.printEnums(f, func(enum *Enum) pbgen.Enum {
 		return pbgen.Enum{}
 	})...)
-	a(p.printMessages(f, func(a *fieldAnnotation) pbgen.MessageField {
+	a(p.printMessages(f, func(a *FieldAnnotation) pbgen.MessageField {
 		d := pbgen.MessageField{
-			Type:   a.PbType.ReferencedIn(f.pbPackage),
+			Type:   a.PbType.ReferencedIn(f.PbPackage),
 			Name:   a.Ident,
 			Number: a.Number,
 		}
@@ -151,7 +151,7 @@ func (u *printerUtils) importPaths(f *ProtoFile) []pbgen.Import {
 
 func (p *printerUtils) print(b *Build, print_file func(*ProtoFile) pbgen.ProtoFile) error {
 	errs := []error{}
-	for path, f := range b.files {
+	for path, f := range b.Files {
 		if err := p.fs.MkdirAll(filepath.Dir(path), 0755); err != nil {
 			return fmt.Errorf(`create directory for proto files: %w`, err)
 		}
@@ -177,16 +177,16 @@ func (p *printerUtils) print(b *Build, print_file func(*ProtoFile) pbgen.ProtoFi
 func (u *printerUtils) printServices(f *ProtoFile) []pbgen.TopLevelDef {
 	ds := []pbgen.TopLevelDef{}
 
-	services := maps.Values(f.services)
-	slices.SortFunc(services, func(a, b *service) int {
-		return cmp.Compare(a.Name, b.Name)
+	services := maps.Values(f.Services)
+	slices.SortFunc(services, func(a, b *Service) int {
+		return cmp.Compare(a.Ident, b.Ident)
 	})
 	for _, service := range services {
-		d := pbgen.Service{Name: service.Name}
+		d := pbgen.Service{Name: service.Ident}
 
 		rpcs := maps.Values(service.Rpcs)
 		slices.SortFunc(rpcs, func(a, b *Rpc) int {
-			return cmp.Compare(a.Name, b.Name)
+			return cmp.Compare(a.Ident, b.Ident)
 		})
 		for _, rpc := range rpcs {
 			if rpc.Comment != "" {
@@ -194,13 +194,13 @@ func (u *printerUtils) printServices(f *ProtoFile) []pbgen.TopLevelDef {
 			}
 
 			v := pbgen.Rpc{
-				Name: rpc.Name,
+				Name: rpc.Ident,
 				Request: pbgen.RpcType{
-					Type:   rpc.Req.ReferencedIn(f.pbPackage),
+					Type:   rpc.Req.ReferencedIn(f.PbPackage),
 					Stream: (rpc.Stream & StreamClient) > 0,
 				},
 				Response: pbgen.RpcType{
-					Type:   rpc.Res.ReferencedIn(f.pbPackage),
+					Type:   rpc.Res.ReferencedIn(f.PbPackage),
 					Stream: (rpc.Stream & StreamServer) > 0,
 				},
 			}
@@ -214,11 +214,11 @@ func (u *printerUtils) printServices(f *ProtoFile) []pbgen.TopLevelDef {
 	return ds
 }
 
-func (u *printerUtils) printEnums(f *ProtoFile, new_enum_def func(*enum) pbgen.Enum) []pbgen.TopLevelDef {
+func (u *printerUtils) printEnums(f *ProtoFile, new_enum_def func(*Enum) pbgen.Enum) []pbgen.TopLevelDef {
 	ds := []pbgen.TopLevelDef{}
 
-	enums := maps.Values(f.enums)
-	slices.SortFunc(enums, func(a, b *enum) int {
+	enums := maps.Values(f.Enums)
+	slices.SortFunc(enums, func(a, b *Enum) int {
 		return cmp.Compare(a.Ident, b.Ident)
 	})
 	for _, enum := range enums {
@@ -248,11 +248,11 @@ func (u *printerUtils) printEnums(f *ProtoFile, new_enum_def func(*enum) pbgen.E
 	return ds
 }
 
-func (u *printerUtils) printMessages(f *ProtoFile, print_field func(*fieldAnnotation) pbgen.MessageField) []pbgen.TopLevelDef {
+func (u *printerUtils) printMessages(f *ProtoFile, print_field func(*FieldAnnotation) pbgen.MessageField) []pbgen.TopLevelDef {
 	ds := []pbgen.TopLevelDef{}
 
-	messages := maps.Values(f.messages)
-	slices.SortFunc(messages, func(a, b *messageAnnotation) int {
+	messages := maps.Values(f.Messages)
+	slices.SortFunc(messages, func(a, b *MessageAnnotation) int {
 		return cmp.Compare(a.Ident, b.Ident)
 	})
 	for _, message := range messages {
@@ -265,7 +265,7 @@ func (u *printerUtils) printMessages(f *ProtoFile, print_field func(*fieldAnnota
 		//
 		d := pbgen.Message{Name: message.Ident}
 		fields := slices.Clone(message.Fields)
-		slices.SortFunc(fields, func(a, b *fieldAnnotation) int {
+		slices.SortFunc(fields, func(a, b *FieldAnnotation) int {
 			return cmp.Compare(a.Number, b.Number)
 		})
 		for _, field := range fields {

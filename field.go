@@ -6,21 +6,21 @@ import (
 	"github.com/lesomnus/entpb/pbgen/ident"
 )
 
-const FieldAnnotation = "ProtoField"
+const FieldAnnotationLabel = "ProtoField"
 
 type FieldOption interface {
-	fieldOpt(*fieldAnnotation)
+	fieldOpt(*FieldAnnotation)
 }
 
 func Field(num int, opts ...FieldOption) schema.Annotation {
-	a := &fieldAnnotation{Number: num}
+	a := &FieldAnnotation{Number: num}
 	for _, opt := range opts {
 		opt.fieldOpt(a)
 	}
 	return a
 }
 
-type fieldAnnotation struct {
+type FieldAnnotation struct {
 	Ident   ident.Ident
 	Number  int
 	Comment string `mapstructure:"-"`
@@ -36,24 +36,24 @@ type fieldAnnotation struct {
 	IsReadOnly bool // Make this field cannot be set manually.
 }
 
-func (a *fieldAnnotation) IsEnum() bool {
+func (a *FieldAnnotation) IsEnum() bool {
 	if a.EntInfo == nil {
 		return false
 	}
 	return a.EntInfo.Type == field.TypeEnum
 }
 
-func (a *fieldAnnotation) IsEdge() bool {
+func (a *FieldAnnotation) IsEdge() bool {
 	return a.EntInfo == nil
 }
 
-func (fieldAnnotation) Name() string {
-	return FieldAnnotation
+func (FieldAnnotation) Name() string {
+	return FieldAnnotationLabel
 }
 
 type fieldOptReadonly struct{}
 
-func (o *fieldOptReadonly) fieldOpt(t *fieldAnnotation) {
+func (o *fieldOptReadonly) fieldOpt(t *FieldAnnotation) {
 	t.IsReadOnly = true
 }
 

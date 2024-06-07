@@ -7,7 +7,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-func decodeAnnotation[T schema.Annotation](v T, annotations map[string]any) (T, bool) {
+func DecodeAnnotation[T schema.Annotation](v T, annotations map[string]any) (T, bool) {
 	a, ok := annotations[v.Name()]
 	if !ok {
 		return v, false

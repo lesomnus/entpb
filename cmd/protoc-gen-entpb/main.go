@@ -1,89 +1,64 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
+	"path/filepath"
 
 	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
 	"github.com/lesomnus/entpb"
+	"github.com/lesomnus/entpb/cmd/protoc-gen-entpb/cmd"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
-type Config struct {
-	EntSchemaPath string
-	entpb.GrpcPrinterConfig
-}
-
 func main() {
-	conf := Config{}
+	var (
+		schema_path string
+		ent_package string
+		import_path string
+	)
+
 	var flags flag.FlagSet
-	flags.StringVar(&conf.EntSchemaPath, "schema_path", "", "ent schema path")
-	flags.StringVar(&conf.EntPackage, "ent_package", "", "full package name of generate code by Ent")
-	flags.StringVar(&conf.ImportPath, "package", "", "full package name of generated code")
+	flags.StringVar(&schema_path, "schema_path", "", "ent schema path")
+	flags.StringVar(&ent_package, "ent_package", "", "full package name of generate code by Ent")
+	flags.StringVar(&import_path, "package", "", "full package name of generated code")
 
-	opts := protogen.Options{
+	protogen.Options{
 		ParamFunc: flags.Set,
-	}
-	opts.Run(func(plugin *protogen.Plugin) error {
-		return run(plugin, conf)
-	})
-}
+	}.Run(func(plugin *protogen.Plugin) error {
+		graph, err := entc.LoadGraph(schema_path, &gen.Config{})
+		if err != nil {
+			return fmt.Errorf("load Ent graph: %w", err)
+		}
 
-func run(plugin *protogen.Plugin, conf Config) error {
-	plugin.SupportedEditionsMinimum = descriptorpb.Edition_EDITION_PROTO3
-	plugin.SupportedEditionsMaximum = descriptorpb.Edition_EDITION_2023
-	plugin.SupportedFeatures = uint64(0 |
-		pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL |
-		pluginpb.CodeGeneratorResponse_FEATURE_SUPPORTS_EDITIONS)
+		entpb.ForwardDeclarations(plugin.FilesByPath, graph)
 
-	graph, err := entc.LoadGraph(conf.EntSchemaPath, &gen.Config{})
-	if err != nil {
-		return fmt.Errorf("load Ent graph: %w", err)
-	}
+		build, err := entpb.NewBuild(graph)
+		if err != nil {
+			return fmt.Errorf("parse Ent graph: %w", err)
+		}
 
-	entpb.ForwardDeclarations(plugin.FilesByPath, graph)
+		plugin.SupportedEditionsMinimum = descriptorpb.Edition_EDITION_PROTO3
+		plugin.SupportedEditionsMaximum = descriptorpb.Edition_EDITION_2023
+		plugin.SupportedFeatures = uint64(0 |
+			pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL |
+			pluginpb.CodeGeneratorResponse_FEATURE_SUPPORTS_EDITIONS)
 
-	build, err := entpb.NewBuild(graph)
-	if err != nil {
-		return fmt.Errorf("parse Ent graph: %w", err)
-	}
+		_, name := filepath.Split(import_path)
+		p := cmd.Printer{
+			EntPackage:  protogen.GoImportPath(ent_package),
+			ImportPath:  protogen.GoImportPath(import_path),
+			PackageName: name,
 
-	errs := []error{}
-	{
-		printer := entpb.GrpcEnumPrinter{
-			GrpcPrinterConfig: conf.GrpcPrinterConfig,
-
+			Build:  build,
 			Plugin: plugin,
 		}
-		if err := printer.Print(build); err != nil {
-			errs = append(errs, fmt.Errorf(`generate enum: %w`, err))
+		if err := p.Print(); err != nil {
+			return err
 		}
-	}
-	for _, file := range plugin.FilesByPath {
-		if !file.Generate {
-			continue
-		}
-		for _, service := range file.Services {
-			printer := entpb.GrpcPrinter{
-				GrpcPrinterConfig: conf.GrpcPrinterConfig,
-
-				Plugin:  plugin,
-				File:    file,
-				Service: service,
-			}
-			if err := printer.Print(build); err != nil {
-				errs = append(errs, fmt.Errorf(`generate "%s": %w`, service.Desc.Name(), err))
-				continue
-			}
-		}
-	}
-	if len(errs) > 0 {
-		return errors.Join(errs...)
-	}
-
-	return nil
+		return nil
+	})
 }

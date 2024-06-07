@@ -12,32 +12,33 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/iancoleman/strcase"
 	"github.com/lesomnus/entpb/pbgen/ident"
+	"github.com/lesomnus/entpb/utils"
 )
 
 type Build struct {
 	// Filepath or alias to proto file to be output.
-	files map[string]*ProtoFile
+	Files map[string]*ProtoFile
 
 	// Key is global name of the Go type that bound to enum.
 	// e.g. for enum "Role" that bound to Go type "Role" in package "github.com/lesomnus/entpb/example",
 	// the key would be its global name, "github.com/lesomnus/entpb/example:example.Role".
 	// Global name can be built using following functions:
-	//   - globalTypeName
-	//   - globalTypeNameFromReflect
-	//   - globalTypeNameFromEntTypeInfo
-	enums map[string]*enum
+	//   - utils.FullIdent
+	//   - utils.FullIdentFromReflect
+	//   - utils.FullIdentFromEntTypeInfo
+	Enums map[string]*Enum
 
 	// Holds message definitions.
 	// Key is name of Ent Schema.
 	// e.g. User, Identity, ...
-	messages map[string]*messageAnnotation
+	Messages map[string]*MessageAnnotation
 }
 
 func NewBuild(graph *gen.Graph) (*Build, error) {
 	b := &Build{
-		files:    map[string]*ProtoFile{},
-		enums:    map[string]*enum{},
-		messages: map[string]*messageAnnotation{},
+		Files:    map[string]*ProtoFile{},
+		Enums:    map[string]*Enum{},
+		Messages: map[string]*MessageAnnotation{},
 	}
 	if err := b.parse(graph); err != nil {
 		return nil, err
@@ -47,21 +48,21 @@ func NewBuild(graph *gen.Graph) (*Build, error) {
 }
 
 func (b *Build) parse(graph *gen.Graph) error {
-	if d, ok := decodeAnnotation(&ProtoFiles{}, graph.Annotations); !ok {
+	if d, ok := DecodeAnnotation(&ProtoFiles{}, graph.Annotations); !ok {
 		return nil
 	} else {
 		for p, f := range *d {
-			for name, enum := range f.enums {
-				if _, ok := b.enums[name]; ok {
+			for name, enum := range f.Enums {
+				if _, ok := b.Enums[name]; ok {
 					return fmt.Errorf(`multiple definition of enum for same Go type "%s"`, name)
 				}
 
 				enum.File = f
-				b.enums[name] = enum
+				b.Enums[name] = enum
 			}
 
-			f.path = p
-			b.files[p] = f
+			f.Filepath = p
+			b.Files[p] = f
 		}
 	}
 
@@ -79,12 +80,12 @@ func (b *Build) parse(graph *gen.Graph) error {
 	}
 
 	errs = []error{}
-	for _, enum := range b.enums {
+	for _, enum := range b.Enums {
 		if err := b.normalizeEnum(enum); err != nil {
 			errs = append(errs, fmt.Errorf(`normalize enum "%s": %w`, enum.Ident, err))
 		}
 	}
-	for _, msg := range b.messages {
+	for _, msg := range b.Messages {
 		errs_ := []error{}
 		if err := b.parseFields(msg); err != nil {
 			errs_ = append(errs_, fmt.Errorf(`parse fields: %w`, err))
@@ -104,34 +105,34 @@ func (b *Build) parse(graph *gen.Graph) error {
 }
 
 func (b *Build) parseMessage(r *load.Schema) error {
-	d, ok := decodeAnnotation(&messageAnnotation{}, r.Annotations)
+	d, ok := DecodeAnnotation(&MessageAnnotation{}, r.Annotations)
 	if !ok {
 		return nil
 	}
 	if d.Ident == "" {
 		d.Ident = ident.Ident(r.Name)
 	}
-	if a, ok := decodeAnnotation(&schema.CommentAnnotation{}, r.Annotations); ok {
+	if a, ok := DecodeAnnotation(&schema.CommentAnnotation{}, r.Annotations); ok {
 		d.Comment = a.Text
 	}
 
-	f, ok := b.files[d.Filepath]
+	f, ok := b.Files[d.Filepath]
 	if !ok {
 		return fmt.Errorf(`message "%s" references non-exists proto file "%s"`, d.Ident, d.Filepath)
 	}
 
-	if _, ok := f.messages[d.Ident]; ok {
+	if _, ok := f.Messages[d.Ident]; ok {
 		return fmt.Errorf(`message name "%s" duplicated with proto file "%s"`, d.Ident, d.Filepath)
 	}
 
 	d.File = f
 	d.Schema = r
-	f.messages[d.Ident] = d
-	b.messages[r.Name] = d
+	f.Messages[d.Ident] = d
+	b.Messages[r.Name] = d
 	return nil
 }
 
-func (p *Build) normalizeEnum(enum *enum) error {
+func (p *Build) normalizeEnum(enum *Enum) error {
 	prefix := ""
 	has_zero := false
 	if enum.Prefix == nil {
@@ -164,7 +165,7 @@ func (p *Build) normalizeEnum(enum *enum) error {
 	return nil
 }
 
-func (b *Build) parseFields(m *messageAnnotation) error {
+func (b *Build) parseFields(m *MessageAnnotation) error {
 	errs := []error{}
 	for _, field := range m.Schema.Fields {
 		d, err := b.parseEntField(field)
@@ -208,8 +209,8 @@ func (b *Build) parseFields(m *messageAnnotation) error {
 	return nil
 }
 
-func (p *Build) parseEntField(r *load.Field) (*fieldAnnotation, error) {
-	d, ok := decodeAnnotation(&fieldAnnotation{}, r.Annotations)
+func (p *Build) parseEntField(r *load.Field) (*FieldAnnotation, error) {
+	d, ok := DecodeAnnotation(&FieldAnnotation{}, r.Annotations)
 	if !ok {
 		return nil, nil
 	}
@@ -218,16 +219,16 @@ func (p *Build) parseEntField(r *load.Field) (*fieldAnnotation, error) {
 	}
 
 	if r.Info.Type == field.TypeEnum {
-		name := globalTypeNameFromEntTypeInfo(r.Info)
-		enum, ok := p.enums[name]
+		name := utils.FullIdentFromEntTypeInfo(r.Info)
+		enum, ok := p.Enums[name]
 		if !ok {
 			return nil, fmt.Errorf(`unregistered enum type: "%s"`, name)
 		}
 
 		d.PbType = PbType{
 			Ident:   enum.Ident,
-			Package: enum.File.pbPackage,
-			Import:  enum.File.path,
+			Package: enum.File.PbPackage,
+			Import:  enum.File.Filepath,
 		}
 	} else if t := pb_types[int(r.Info.Type)]; t.Ident == "" {
 		return nil, fmt.Errorf("unsupported type: %s", r.Info.Type.String())
@@ -244,8 +245,8 @@ func (p *Build) parseEntField(r *load.Field) (*fieldAnnotation, error) {
 	return d, nil
 }
 
-func (p *Build) parseEntEdge(r *load.Edge) (*fieldAnnotation, error) {
-	d, ok := decodeAnnotation(&fieldAnnotation{}, r.Annotations)
+func (p *Build) parseEntEdge(r *load.Edge) (*FieldAnnotation, error) {
+	d, ok := DecodeAnnotation(&FieldAnnotation{}, r.Annotations)
 	if !ok {
 		return nil, nil
 	}
@@ -253,7 +254,7 @@ func (p *Build) parseEntEdge(r *load.Edge) (*fieldAnnotation, error) {
 		d.Ident = ident.Ident(r.Name)
 	}
 
-	message, ok := p.messages[r.Type]
+	message, ok := p.Messages[r.Type]
 	if !ok {
 		return nil, fmt.Errorf(`edge "%s" references a schema "%s" that is not a proto message`, r.Name, r.Type)
 	}
@@ -268,28 +269,28 @@ func (p *Build) parseEntEdge(r *load.Edge) (*fieldAnnotation, error) {
 	return d, nil
 }
 
-func (p *Build) parseService(d *messageAnnotation) error {
+func (p *Build) parseService(d *MessageAnnotation) error {
 	s := d.Service
 	if s == nil || len(s.Rpcs) == 0 {
 		return nil
 	}
 
-	s.message = d
+	s.Message = d
 	if s.Filepath == "" {
 		s.Filepath = d.Filepath
 	}
 
-	f, ok := p.files[s.Filepath]
+	f, ok := p.Files[s.Filepath]
 	if !ok {
 		return fmt.Errorf(`service "%s" references non-exists proto file "%s"`, d.Ident, s.Filepath)
 	}
-	if s.Name == "" {
-		s.Name = ident.Ident(fmt.Sprintf("%sService", d.Ident))
+	if s.Ident == "" {
+		s.Ident = ident.Ident(fmt.Sprintf("%sService", d.Ident))
 	}
-	if _, ok := f.services[s.Name]; ok {
-		return fmt.Errorf(`duplicated service "%s"`, s.Name)
+	if _, ok := f.Services[s.Ident]; ok {
+		return fmt.Errorf(`duplicated service "%s"`, s.Ident)
 	} else {
-		f.services[s.Name] = s
+		f.Services[s.Ident] = s
 	}
 
 	for _, rpc := range s.Rpcs {
@@ -301,10 +302,10 @@ func (p *Build) parseService(d *messageAnnotation) error {
 		}
 
 		if rpc.Req.Import == "" {
-			return fmt.Errorf(`RPC "%s": parameter type must be message`, rpc.Name)
+			return fmt.Errorf(`RPC "%s": parameter type must be message`, rpc.Ident)
 		}
 		if rpc.Res.Import == "" {
-			return fmt.Errorf(`RPC "%s": return type must be message`, rpc.Name)
+			return fmt.Errorf(`RPC "%s": return type must be message`, rpc.Ident)
 		}
 	}
 

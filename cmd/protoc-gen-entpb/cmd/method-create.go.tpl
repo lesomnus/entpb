@@ -1,6 +1,6 @@
-func (s *{{ print $.Service.GoName "Server" }}) {{ $.Method.GoName }}(ctx {{ import "context" | ident "Context" }}, req *{{ $.Method.Input.GoIdent | use }}) (*{{ $.Method.Output.GoIdent | use }}, error) {
-	q := s.db.{{ $.Message.Schema.Name }}.Create()
-	{{ range $.Message.Fields -}}
+func (s *{{ print $.PbSvc.GoName "Server" }}) {{ $.PbMethod.GoName }}(ctx {{ import "context" | ident "Context" }}, req *{{ $.PbMethod.Input.GoIdent | use }}) (*{{ $.PbMethod.Output.GoIdent | use }}, error) {
+	q := s.db.{{ $.EntMsg.Schema.Name }}.Create()
+	{{ range $.EntMsg.Fields -}}
 	{{ if .IsReadOnly -}}
 		{{ continue }}
 	{{ end -}}
@@ -35,5 +35,5 @@ func (s *{{ print $.Service.GoName "Server" }}) {{ $.Method.GoName }}(ctx {{ imp
 		return nil, {{ $.Runtime.Ident "EntErrorToStatus" | use }}(err)
 	}
 
-	return toProto{{ $.Message.Schema.Name }}(res), nil
+	return toProto{{ $.EntMsg.Schema.Name }}(res), nil
 }

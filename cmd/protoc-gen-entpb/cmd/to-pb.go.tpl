@@ -1,7 +1,7 @@
-{{ $pb_type := print $.Ident | $.Pb.Ident | use -}}
-func toProto{{ $.Schema.Name }}(v *{{ $.Ent.Ident $.Schema.Name | use }}) *{{ $pb_type }} {
+{{ $pb_type := print $.EntMsg.Ident | $.Pb.Ident | use -}}
+func toProto{{ $.EntMsg.Schema.Name }}(v *{{ $.Ent.Ident $.EntMsg.Schema.Name | use }}) *{{ $pb_type }} {
 	m := &{{ $pb_type }}{}
-	{{ range $.Fields -}}
+	{{ range $.EntMsg.Fields -}}
 	{{ $pb_field := print "m." (pascal (print .Ident)) -}}
 	{{ $ent_field := print "v." (entname .EntName) -}}
 	{{ if .IsEdge -}}

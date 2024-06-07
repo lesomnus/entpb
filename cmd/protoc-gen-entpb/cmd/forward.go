@@ -1,4 +1,4 @@
-package entpb
+package cmd
 
 import (
 	"strings"
@@ -6,85 +6,22 @@ import (
 	"entgo.io/ent/entc/gen"
 	"entgo.io/ent/schema/field"
 	"github.com/iancoleman/strcase"
+	"github.com/lesomnus/entpb"
 	"github.com/lesomnus/entpb/pbgen/ident"
 	"github.com/lesomnus/entpb/utils"
-	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-const ProtoFilesAnnotation = "ProtoFiles"
-
-type ProtoFileOption interface {
-	protoFileOpt(*ProtoFile)
-}
-
-type ProtoFile struct {
-	Filepath string
-
-	PbPackage ident.Full
-	GoPackage string
-
-	Enums    map[string]*Enum // key is global type name of the type bound to mapping enum.
-	Messages map[ident.Ident]*MessageAnnotation
-	Services map[ident.Ident]*Service
-}
-
-type ProtoFileInit struct {
-	PbPackage ident.Full
-	GoPackage string
-}
-
-func NewProtoFile(init ProtoFileInit, opts ...ProtoFileOption) *ProtoFile {
-	v := &ProtoFile{
-		PbPackage: init.PbPackage,
-		GoPackage: init.GoPackage,
-
-		Enums:    map[string]*Enum{},
-		Messages: map[ident.Ident]*MessageAnnotation{},
-		Services: map[ident.Ident]*Service{},
-	}
-	for _, opt := range opts {
-		opt.protoFileOpt(v)
-	}
-
-	return v
-}
-
-type ProtoFiles map[string]*ProtoFile
-
-func (ProtoFiles) Name() string {
-	return ProtoFilesAnnotation
-}
-
-func (f *ProtoFile) ImportPaths() []string {
-	ps := map[string]struct{}{}
-	for _, message := range f.Messages {
-		for _, field := range message.Fields {
-			ps[field.PbType.Import] = struct{}{}
-		}
-	}
-	for _, service := range f.Services {
-		for _, rpc := range service.Rpcs {
-			ps[rpc.Req.Import] = struct{}{}
-			ps[rpc.Res.Import] = struct{}{}
-		}
-	}
-	delete(ps, "")
-	delete(ps, f.Filepath)
-
-	return maps.Keys(ps)
-}
-
 func ForwardDeclarations(files map[string]*protogen.File, graph *gen.Graph) {
-	d := ProtoFiles{}
-	DecodeAnnotation(&d, graph.Annotations)
+	d := entpb.ProtoFiles{}
+	entpb.DecodeAnnotation(&d, graph.Annotations)
 	for p, f := range d {
 		f.Filepath = p
 	}
 
 	for _, s := range graph.Schemas {
-		d_m, ok := DecodeAnnotation(&MessageAnnotation{}, s.Annotations)
+		d_m, ok := entpb.DecodeAnnotation(&entpb.MessageAnnotation{}, s.Annotations)
 		if !ok {
 			continue
 		}
@@ -97,10 +34,10 @@ func ForwardDeclarations(files map[string]*protogen.File, graph *gen.Graph) {
 		// FIXME: it maybe overwrites existing file.
 		// I think above continue must be fixed first.
 		if s := d_m.Service; s != nil {
-			d[s.Filepath] = NewProtoFile(ProtoFileInit{})
+			d[s.Filepath] = entpb.NewProtoFile(entpb.ProtoFileInit{})
 		}
 
-		file := NewProtoFile(ProtoFileInit{})
+		file := entpb.NewProtoFile(entpb.ProtoFileInit{})
 		d[d_m.Filepath] = file
 
 		for _, ent_field := range s.Fields {
@@ -111,7 +48,7 @@ func ForwardDeclarations(files map[string]*protogen.File, graph *gen.Graph) {
 				// Not an external type such as `example.Role`
 				continue
 			}
-			if _, ok := DecodeAnnotation(&FieldAnnotation{}, ent_field.Annotations); !ok {
+			if _, ok := entpb.DecodeAnnotation(&entpb.FieldAnnotation{}, ent_field.Annotations); !ok {
 				continue
 			}
 
@@ -154,7 +91,7 @@ func ForwardDeclarations(files map[string]*protogen.File, graph *gen.Graph) {
 
 			z := ""
 			r := ent_field.Info.RType
-			enum := &Enum{
+			enum := &entpb.Enum{
 				GoType: *r,
 
 				Ident: ident.Ident(pb_enum.Desc.Name()),
@@ -183,7 +120,7 @@ func ForwardDeclarations(files map[string]*protogen.File, graph *gen.Graph) {
 					panic("guessing prefix failed?")
 				}
 
-				enum.Fields = append(enum.Fields, &EnumField{
+				enum.Fields = append(enum.Fields, &entpb.EnumField{
 					Name:   name,
 					Number: int(v.Desc.Number()),
 					Value:  remain,

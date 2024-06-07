@@ -4,62 +4,45 @@ import (
 	"github.com/lesomnus/entpb/pbgen/ident"
 )
 
-type service struct {
-	Filepath string
-	Name     ident.Ident
-	Rpcs     map[ident.Ident]*Rpc
-
-	// Marks key named RPC should be implemented.
-	BuiltIn map[ident.Ident]rpc_built_in
-
-	message *messageAnnotation
+type ServiceOption interface {
+	serviceOpt(*Service)
 }
 
 type Service struct {
-	Filepath string      // If empty, filepath to message is set.
-	Name     ident.Ident // If empty, "{message name}Service" is set; e.g. User -> UserService.
+	Filepath string
+	Ident    ident.Ident
+	Rpcs     map[ident.Ident]*Rpc
+
+	Message *MessageAnnotation
 }
 
-func (s *Service) messageOpt(a *messageAnnotation) {
-	if a.Service == nil {
-		a.Service = &service{
-			Rpcs:    map[ident.Ident]*Rpc{},
-			BuiltIn: map[ident.Ident]rpc_built_in{},
-		}
-	}
+func (s *Service) messageOpt(t *MessageAnnotation) {
+	t.Service = s
+}
 
-	a.Service.Filepath = s.Filepath
+func WithService(filepath string, opts ...ServiceOption) MessageOption {
+	s := &Service{
+		Filepath: filepath,
+
+		Rpcs: map[ident.Ident]*Rpc{},
+	}
+	for _, opt := range opts {
+		opt.serviceOpt(s)
+	}
+	return s
 }
 
 type Rpc struct {
-	Name    ident.Ident
+	Ident   ident.Ident
 	Comment string
 
 	Req    PbType
 	Res    PbType
 	Stream Stream
-
-	// TODO: can it be separated into plugin?
-	builtin rpc_built_in
 }
 
-func (r Rpc) NameAs(v ident.Ident) *Rpc {
-	r.Name = v
-	return &r
-}
-
-func (r *Rpc) messageOpt(a *messageAnnotation) {
-	if a.Service == nil {
-		a.Service = &service{
-			Rpcs:    map[ident.Ident]*Rpc{},
-			BuiltIn: map[ident.Ident]rpc_built_in{},
-		}
-	}
-
-	a.Service.Rpcs[r.Name] = r
-	if r.builtin != rpcBuiltInUnspecified {
-		a.Service.BuiltIn[r.Name] = r.builtin
-	}
+func (r *Rpc) serviceOpt(t *Service) {
+	t.Rpcs[r.Ident] = r
 }
 
 type Stream int
@@ -73,28 +56,16 @@ const (
 
 func RpcEntCreate() *Rpc {
 	return &Rpc{
-		Name: "Create",
-		Req:  PbThis,
-		Res:  PbThis,
-
-		builtin: rpcBuiltInCreate,
+		Ident: "Create",
+		Req:   PbThis,
+		Res:   PbThis,
 	}
 }
 
 func RpcEntGet() *Rpc {
 	return &Rpc{
-		Name: "Get",
-		Req:  PbThis,
-		Res:  PbType{Ident: "@Ident@NameRequest"},
-
-		builtin: rpcBuiltInGet,
+		Ident: "Get",
+		Req:   PbThis,
+		// Res:   PbType{Ident: "@Ident@NameRequest"},
 	}
 }
-
-type rpc_built_in int
-
-const (
-	rpcBuiltInUnspecified rpc_built_in = iota
-	rpcBuiltInCreate
-	rpcBuiltInGet
-)

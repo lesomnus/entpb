@@ -5,13 +5,14 @@ import (
 
 	"entgo.io/ent/schema/field"
 	"github.com/lesomnus/entpb/pbgen/ident"
+	"github.com/lesomnus/entpb/utils"
 )
 
 type EnumOption interface {
-	enumOpt(*enum)
+	enumOpt(*Enum)
 }
 
-type enum struct {
+type Enum struct {
 	// Go type that is mapped with this enum.
 	// e.g. `example.Role`.
 	GoType field.RType
@@ -48,11 +49,11 @@ type EnumDesc struct {
 
 type protoFileOptAddEnum[T ~string] struct {
 	name string
-	enum *enum
+	enum *Enum
 }
 
 func (o protoFileOptAddEnum[T]) protoFileOpt(t *ProtoFile) {
-	t.enums[o.name] = o.enum
+	t.Enums[o.name] = o.enum
 }
 
 // Field names are prefixed by enum name; e.g. "owner" of `enum Role` will become "ROLE_OWNER".
@@ -64,7 +65,7 @@ func WithEnum[T ~string](fields map[T]EnumDesc, opts ...EnumOption) ProtoFileOpt
 	r := reflect.TypeOf(t)
 	z := ""
 
-	v := &enum{
+	v := &Enum{
 		GoType: field.RType{
 			Name:    r.Name(),
 			Ident:   r.String(),
@@ -87,13 +88,13 @@ func WithEnum[T ~string](fields map[T]EnumDesc, opts ...EnumOption) ProtoFileOpt
 		opt.enumOpt(v)
 	}
 
-	name := globalTypeNameFromReflect(r)
+	name := utils.FullIdentFromReflect(r)
 	return &protoFileOptAddEnum[T]{name, v}
 }
 
 type enumOptPrefix struct{ v *string }
 
-func (o *enumOptPrefix) enumOpt(t *enum) {
+func (o *enumOptPrefix) enumOpt(t *Enum) {
 	t.Prefix = o.v
 }
 
@@ -102,7 +103,7 @@ func WithNoPrefix() EnumOption       { return &enumOptPrefix{nil} }
 
 type enumOptBound struct{ v bool }
 
-func (o *enumOptBound) enumOpt(t *enum) {
+func (o *enumOptBound) enumOpt(t *Enum) {
 	t.IsClosed = o.v
 }
 

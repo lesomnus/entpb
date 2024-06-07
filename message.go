@@ -7,51 +7,51 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-const MessageAnnotation = "ProtoMessage"
+const MessageAnnotationLabel = "ProtoMessage"
 
 type MessageOption interface {
-	messageOpt(*messageAnnotation)
+	messageOpt(*MessageAnnotation)
 }
 
 func Message(filepath string, opts ...MessageOption) schema.Annotation {
-	a := &messageAnnotation{Filepath: filepath}
+	a := &MessageAnnotation{Filepath: filepath}
 	for _, opt := range opts {
 		opt.messageOpt(a)
 	}
 	return a
 }
 
-type messageAnnotation struct {
+type MessageAnnotation struct {
 	Filepath string
 
 	Ident   ident.Ident
 	Comment string `mapstructure:"-"`
 
-	Service *service
+	Service *Service
 
 	File   *ProtoFile         `mapstructure:"-"`
 	Schema *load.Schema       `mapstructure:"-"`
-	Fields []*fieldAnnotation `mapstructure:"-"`
+	Fields []*FieldAnnotation `mapstructure:"-"`
 }
 
-func (a *messageAnnotation) pbType() PbType {
+func (a *MessageAnnotation) pbType() PbType {
 	t := PbType{
 		Ident:  a.Ident,
 		Import: a.Filepath,
 	}
 	if f := a.File; f != nil {
-		t.Package = f.pbPackage
+		t.Package = f.PbPackage
 	}
 
 	return t
 }
 
-func (messageAnnotation) Name() string {
-	return MessageAnnotation
+func (MessageAnnotation) Name() string {
+	return MessageAnnotationLabel
 }
 
-func (a messageAnnotation) Merge(other schema.Annotation) schema.Annotation {
-	a_, ok := other.(*messageAnnotation)
+func (a MessageAnnotation) Merge(other schema.Annotation) schema.Annotation {
+	a_, ok := other.(*MessageAnnotation)
 	if !ok {
 		panic("invalid annotation")
 	}
@@ -72,10 +72,6 @@ func (a messageAnnotation) Merge(other schema.Annotation) schema.Annotation {
 			rpcs := maps.Clone(lhs.Rpcs)
 			maps.Copy(rpcs, rhs.Rpcs)
 			rhs.Rpcs = rpcs
-
-			builtin := maps.Clone(lhs.BuiltIn)
-			maps.Copy(builtin, rhs.BuiltIn)
-			rhs.BuiltIn = builtin
 		}
 	}
 
