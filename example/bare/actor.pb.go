@@ -26,13 +26,6 @@ func (s *ActorServiceServer) Create(ctx context.Context, req *pb.Actor) (*pb.Act
 	} else {
 		q.SetParentID(v)
 	}
-	for _, v := range req.Identities {
-		if w, err := uuid.FromBytes(v.GetId()); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "identities: %s", err)
-		} else {
-			q.AddIdentityIDs(w)
-		}
-	}
 	for _, v := range req.Children {
 		if w, err := uuid.FromBytes(v.GetId()); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "children: %s", err)
@@ -60,6 +53,35 @@ func (s *ActorServiceServer) Get(ctx context.Context, req *pb.GetActorRequest) (
 	q.WithChildren(func(q *ent.UserQuery) { q.Select(user.FieldID) })
 
 	res, err := q.Only(ctx)
+	if err != nil {
+		return nil, runtime.EntErrorToStatus(err)
+	}
+
+	return toProtoUser(res), nil
+}
+func (s *ActorServiceServer) Update(ctx context.Context, req *pb.UpdateActorRequest) (*pb.Actor, error) {
+	id, err := uuid.FromBytes(req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err.Error())
+	}
+
+	q := s.db.User.UpdateOneID(id)
+	if v := req.Referer; v != nil {
+		if w, err := uuid.FromBytes(v.GetId()); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "referer: %s", err)
+		} else {
+			q.SetParentID(w)
+		}
+	}
+	for _, v := range req.GetChildren() {
+		if w, err := uuid.FromBytes(v.GetId()); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "children: %s", err)
+		} else {
+			q.AddChildIDs(w)
+		}
+	}
+
+	res, err := q.Save(ctx)
 	if err != nil {
 		return nil, runtime.EntErrorToStatus(err)
 	}

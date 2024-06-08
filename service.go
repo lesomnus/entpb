@@ -65,3 +65,7 @@ func RpcEntCreate() *Rpc {
 func RpcEntGet() *Rpc {
 	return &Rpc{Ident: "Get"}
 }
+
+func RpcEntUpdate() *Rpc {
+	return &Rpc{Ident: "Update"}
+}

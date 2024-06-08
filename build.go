@@ -247,6 +247,7 @@ func (p *Build) parseEntField(r *load.Field) (*FieldAnnotation, error) {
 	d.EntInfo = r.Info
 	d.HasDefault = r.Default
 	d.IsKey = r.Unique
+	d.IsImmutable = r.Immutable
 	d.IsOptional = r.Nillable
 
 	return d, nil
@@ -272,6 +273,7 @@ func (p *Build) parseEntEdge(r *load.Edge) (*FieldAnnotation, error) {
 	d.PbType = message.pbType()
 	d.IsOptional = !r.Required
 	d.IsRepeated = !r.Unique
+	d.IsImmutable = r.Immutable
 
 	return d, nil
 }
@@ -341,6 +343,37 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 			}
 			// TODO: add index as a key? How?
 			// To make an index as a oneof field, new message need to be created.
+
+			s.File.Messages[req_name] = msg
+			p.Messages[req_name] = msg
+
+			rpc.EntReq = msg
+			rpc.EntRes = d
+
+		case "Update":
+			req_name := ident.Ident(fmt.Sprintf("Update%sRequest", d.Ident))
+			rpc.Req = d.pbType()
+			rpc.Req.Ident = req_name
+			rpc.Res = d.pbType()
+
+			msg := &MessageAnnotation{
+				Filepath: s.Filepath,
+				Ident:    req_name,
+				File:     s.File,
+			}
+			for _, field := range d.Fields {
+				if field.EntName == "id" {
+					msg.Fields = append(msg.Fields, field)
+					continue
+				}
+				if field.IsReadOnly {
+					continue
+				}
+
+				v := *field
+				v.IsOptional = true
+				msg.Fields = append(msg.Fields, &v)
+			}
 
 			s.File.Messages[req_name] = msg
 			p.Messages[req_name] = msg

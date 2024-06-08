@@ -34,11 +34,12 @@ type FieldAnnotation struct {
 	EntRef  string          `mapstructure:"-"` // Name of the schema that this edge references.
 	PbType  PbType          `mapstructure:"-"`
 
-	HasDefault bool `mapstructure:"-"`
-	IsKey      bool `mapstructure:"-"`
-	IsOptional bool `mapstructure:"-"`
-	IsRepeated bool `mapstructure:"-"`
-	IsReadOnly bool // Make this field cannot be set manually.
+	HasDefault  bool `mapstructure:"-"`
+	IsKey       bool `mapstructure:"-"`
+	IsOptional  bool `mapstructure:"-"`
+	IsRepeated  bool `mapstructure:"-"`
+	IsImmutable bool `mapstructure:"-"`
+	IsReadOnly  bool // Make this field cannot be set manually.
 }
 
 func (a *FieldAnnotation) IsOneof() bool {

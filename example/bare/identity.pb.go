@@ -54,6 +54,27 @@ func (s *IdentityServiceServer) Get(ctx context.Context, req *pb.GetIdentityRequ
 
 	return toProtoIdentity(res), nil
 }
+func (s *IdentityServiceServer) Update(ctx context.Context, req *pb.UpdateIdentityRequest) (*pb.Identity, error) {
+	id, err := uuid.FromBytes(req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err.Error())
+	}
+
+	q := s.db.Identity.UpdateOneID(id)
+	if v := req.Name; v != nil {
+		q.SetName(*v)
+	}
+	if v := req.Email; v != nil {
+		q.SetEmail(*v)
+	}
+
+	res, err := q.Save(ctx)
+	if err != nil {
+		return nil, runtime.EntErrorToStatus(err)
+	}
+
+	return toProtoIdentity(res), nil
+}
 func toProtoIdentity(v *ent.Identity) *pb.Identity {
 	m := &pb.Identity{}
 	m.Id = v.ID[:]

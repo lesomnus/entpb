@@ -131,44 +131,41 @@ func (p *Printer) PrintService(pb_file *protogen.File) error {
 			return fmt.Errorf("server-struct: %w", err)
 		}
 
+		ctx := struct {
+			imports
+			PbSvc    *protogen.Service
+			PbMethod *protogen.Method
+			EntMsg   *entpb.MessageAnnotation
+			EntRpc   *entpb.Rpc
+		}{
+			imports: imports_,
+			PbSvc:   pb_service,
+			EntMsg:  ent_service.Message,
+		}
 		for _, pb_method := range pb_service.Methods {
 			ent_rpc, ok := ent_service.Rpcs[ident.Ident(pb_method.Desc.Name())]
 			if !ok {
 				panic("invalid build state: RPC not found")
 			}
 
+			ctx.PbMethod = pb_method
+			ctx.EntRpc = ent_rpc
+
 			method_name := ident.Ident(pb_method.Desc.Name())
 			switch method_name {
 			case "Create":
-				if err := tpl.ExecuteTemplate(o, "method-create.go.tpl", struct {
-					imports
-					PbSvc    *protogen.Service
-					PbMethod *protogen.Method
-					EntMsg   *entpb.MessageAnnotation
-				}{
-					imports_,
-					pb_service,
-					pb_method,
-					ent_service.Message,
-				}); err != nil {
+				if err := tpl.ExecuteTemplate(o, "method-create.go.tpl", ctx); err != nil {
 					return fmt.Errorf("method-create: %w", err)
 				}
 
 			case "Get":
-				if err := tpl.ExecuteTemplate(o, "method-get.go.tpl", struct {
-					imports
-					PbSvc    *protogen.Service
-					PbMethod *protogen.Method
-					EntMsg   *entpb.MessageAnnotation
-					EntRpc   *entpb.Rpc
-				}{
-					imports_,
-					pb_service,
-					pb_method,
-					ent_service.Message,
-					ent_rpc,
-				}); err != nil {
+				if err := tpl.ExecuteTemplate(o, "method-get.go.tpl", ctx); err != nil {
 					return fmt.Errorf("method-get: %w", err)
+				}
+
+			case "Update":
+				if err := tpl.ExecuteTemplate(o, "method-update.go.tpl", ctx); err != nil {
+					return fmt.Errorf("method-update: %w", err)
 				}
 
 			default:

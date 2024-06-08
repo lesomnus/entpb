@@ -25,6 +25,7 @@ const (
 	AccountService_Create_FullMethodName = "/entpb.directory.AccountService/Create"
 	AccountService_Get_FullMethodName    = "/entpb.directory.AccountService/Get"
 	AccountService_Lock_FullMethodName   = "/entpb.directory.AccountService/Lock"
+	AccountService_Update_FullMethodName = "/entpb.directory.AccountService/Update"
 )
 
 // AccountServiceClient is the client API for AccountService service.
@@ -34,6 +35,7 @@ type AccountServiceClient interface {
 	Create(ctx context.Context, in *Account, opts ...grpc.CallOption) (*Account, error)
 	Get(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*Account, error)
 	Lock(ctx context.Context, in *Account, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Update(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*Account, error)
 }
 
 type accountServiceClient struct {
@@ -74,6 +76,16 @@ func (c *accountServiceClient) Lock(ctx context.Context, in *Account, opts ...gr
 	return out, nil
 }
 
+func (c *accountServiceClient) Update(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*Account, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Account)
+	err := c.cc.Invoke(ctx, AccountService_Update_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccountServiceServer is the server API for AccountService service.
 // All implementations must embed UnimplementedAccountServiceServer
 // for forward compatibility
@@ -81,6 +93,7 @@ type AccountServiceServer interface {
 	Create(context.Context, *Account) (*Account, error)
 	Get(context.Context, *GetAccountRequest) (*Account, error)
 	Lock(context.Context, *Account) (*emptypb.Empty, error)
+	Update(context.Context, *UpdateAccountRequest) (*Account, error)
 	mustEmbedUnimplementedAccountServiceServer()
 }
 
@@ -96,6 +109,9 @@ func (UnimplementedAccountServiceServer) Get(context.Context, *GetAccountRequest
 }
 func (UnimplementedAccountServiceServer) Lock(context.Context, *Account) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Lock not implemented")
+}
+func (UnimplementedAccountServiceServer) Update(context.Context, *UpdateAccountRequest) (*Account, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedAccountServiceServer) mustEmbedUnimplementedAccountServiceServer() {}
 
@@ -164,6 +180,24 @@ func _AccountService_Lock_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccountService_Update_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).Update(ctx, req.(*UpdateAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AccountService_ServiceDesc is the grpc.ServiceDesc for AccountService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -183,6 +217,10 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Lock",
 			Handler:    _AccountService_Lock_Handler,
 		},
+		{
+			MethodName: "Update",
+			Handler:    _AccountService_Update_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "entpb/directory/service.proto",
@@ -191,6 +229,7 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 const (
 	ActorService_Create_FullMethodName = "/entpb.directory.ActorService/Create"
 	ActorService_Get_FullMethodName    = "/entpb.directory.ActorService/Get"
+	ActorService_Update_FullMethodName = "/entpb.directory.ActorService/Update"
 )
 
 // ActorServiceClient is the client API for ActorService service.
@@ -199,6 +238,7 @@ const (
 type ActorServiceClient interface {
 	Create(ctx context.Context, in *Actor, opts ...grpc.CallOption) (*Actor, error)
 	Get(ctx context.Context, in *GetActorRequest, opts ...grpc.CallOption) (*Actor, error)
+	Update(ctx context.Context, in *UpdateActorRequest, opts ...grpc.CallOption) (*Actor, error)
 }
 
 type actorServiceClient struct {
@@ -229,12 +269,23 @@ func (c *actorServiceClient) Get(ctx context.Context, in *GetActorRequest, opts 
 	return out, nil
 }
 
+func (c *actorServiceClient) Update(ctx context.Context, in *UpdateActorRequest, opts ...grpc.CallOption) (*Actor, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Actor)
+	err := c.cc.Invoke(ctx, ActorService_Update_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ActorServiceServer is the server API for ActorService service.
 // All implementations must embed UnimplementedActorServiceServer
 // for forward compatibility
 type ActorServiceServer interface {
 	Create(context.Context, *Actor) (*Actor, error)
 	Get(context.Context, *GetActorRequest) (*Actor, error)
+	Update(context.Context, *UpdateActorRequest) (*Actor, error)
 	mustEmbedUnimplementedActorServiceServer()
 }
 
@@ -247,6 +298,9 @@ func (UnimplementedActorServiceServer) Create(context.Context, *Actor) (*Actor, 
 }
 func (UnimplementedActorServiceServer) Get(context.Context, *GetActorRequest) (*Actor, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedActorServiceServer) Update(context.Context, *UpdateActorRequest) (*Actor, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedActorServiceServer) mustEmbedUnimplementedActorServiceServer() {}
 
@@ -297,6 +351,24 @@ func _ActorService_Get_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ActorService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateActorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ActorServiceServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ActorService_Update_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ActorServiceServer).Update(ctx, req.(*UpdateActorRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ActorService_ServiceDesc is the grpc.ServiceDesc for ActorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -312,6 +384,10 @@ var ActorService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Get",
 			Handler:    _ActorService_Get_Handler,
 		},
+		{
+			MethodName: "Update",
+			Handler:    _ActorService_Update_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "entpb/directory/service.proto",
@@ -320,6 +396,7 @@ var ActorService_ServiceDesc = grpc.ServiceDesc{
 const (
 	IdentityService_Create_FullMethodName = "/entpb.directory.IdentityService/Create"
 	IdentityService_Get_FullMethodName    = "/entpb.directory.IdentityService/Get"
+	IdentityService_Update_FullMethodName = "/entpb.directory.IdentityService/Update"
 )
 
 // IdentityServiceClient is the client API for IdentityService service.
@@ -328,6 +405,7 @@ const (
 type IdentityServiceClient interface {
 	Create(ctx context.Context, in *Identity, opts ...grpc.CallOption) (*Identity, error)
 	Get(ctx context.Context, in *GetIdentityRequest, opts ...grpc.CallOption) (*Identity, error)
+	Update(ctx context.Context, in *UpdateIdentityRequest, opts ...grpc.CallOption) (*Identity, error)
 }
 
 type identityServiceClient struct {
@@ -358,12 +436,23 @@ func (c *identityServiceClient) Get(ctx context.Context, in *GetIdentityRequest,
 	return out, nil
 }
 
+func (c *identityServiceClient) Update(ctx context.Context, in *UpdateIdentityRequest, opts ...grpc.CallOption) (*Identity, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Identity)
+	err := c.cc.Invoke(ctx, IdentityService_Update_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IdentityServiceServer is the server API for IdentityService service.
 // All implementations must embed UnimplementedIdentityServiceServer
 // for forward compatibility
 type IdentityServiceServer interface {
 	Create(context.Context, *Identity) (*Identity, error)
 	Get(context.Context, *GetIdentityRequest) (*Identity, error)
+	Update(context.Context, *UpdateIdentityRequest) (*Identity, error)
 	mustEmbedUnimplementedIdentityServiceServer()
 }
 
@@ -376,6 +465,9 @@ func (UnimplementedIdentityServiceServer) Create(context.Context, *Identity) (*I
 }
 func (UnimplementedIdentityServiceServer) Get(context.Context, *GetIdentityRequest) (*Identity, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedIdentityServiceServer) Update(context.Context, *UpdateIdentityRequest) (*Identity, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedIdentityServiceServer) mustEmbedUnimplementedIdentityServiceServer() {}
 
@@ -426,6 +518,24 @@ func _IdentityService_Get_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IdentityService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateIdentityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_Update_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).Update(ctx, req.(*UpdateIdentityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IdentityService_ServiceDesc is the grpc.ServiceDesc for IdentityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -441,6 +551,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Get",
 			Handler:    _IdentityService_Get_Handler,
 		},
+		{
+			MethodName: "Update",
+			Handler:    _IdentityService_Update_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "entpb/directory/service.proto",
@@ -449,6 +563,7 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 const (
 	MembershipService_Create_FullMethodName = "/entpb.directory.MembershipService/Create"
 	MembershipService_Get_FullMethodName    = "/entpb.directory.MembershipService/Get"
+	MembershipService_Update_FullMethodName = "/entpb.directory.MembershipService/Update"
 )
 
 // MembershipServiceClient is the client API for MembershipService service.
@@ -457,6 +572,7 @@ const (
 type MembershipServiceClient interface {
 	Create(ctx context.Context, in *Membership, opts ...grpc.CallOption) (*Membership, error)
 	Get(ctx context.Context, in *GetMembershipRequest, opts ...grpc.CallOption) (*Membership, error)
+	Update(ctx context.Context, in *UpdateMembershipRequest, opts ...grpc.CallOption) (*Membership, error)
 }
 
 type membershipServiceClient struct {
@@ -487,12 +603,23 @@ func (c *membershipServiceClient) Get(ctx context.Context, in *GetMembershipRequ
 	return out, nil
 }
 
+func (c *membershipServiceClient) Update(ctx context.Context, in *UpdateMembershipRequest, opts ...grpc.CallOption) (*Membership, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Membership)
+	err := c.cc.Invoke(ctx, MembershipService_Update_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MembershipServiceServer is the server API for MembershipService service.
 // All implementations must embed UnimplementedMembershipServiceServer
 // for forward compatibility
 type MembershipServiceServer interface {
 	Create(context.Context, *Membership) (*Membership, error)
 	Get(context.Context, *GetMembershipRequest) (*Membership, error)
+	Update(context.Context, *UpdateMembershipRequest) (*Membership, error)
 	mustEmbedUnimplementedMembershipServiceServer()
 }
 
@@ -505,6 +632,9 @@ func (UnimplementedMembershipServiceServer) Create(context.Context, *Membership)
 }
 func (UnimplementedMembershipServiceServer) Get(context.Context, *GetMembershipRequest) (*Membership, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedMembershipServiceServer) Update(context.Context, *UpdateMembershipRequest) (*Membership, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedMembershipServiceServer) mustEmbedUnimplementedMembershipServiceServer() {}
 
@@ -555,6 +685,24 @@ func _MembershipService_Get_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MembershipService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMembershipRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MembershipServiceServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MembershipService_Update_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MembershipServiceServer).Update(ctx, req.(*UpdateMembershipRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MembershipService_ServiceDesc is the grpc.ServiceDesc for MembershipService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -569,6 +717,10 @@ var MembershipService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Get",
 			Handler:    _MembershipService_Get_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _MembershipService_Update_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

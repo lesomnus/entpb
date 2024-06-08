@@ -13,21 +13,25 @@ service AccountService {
 	rpc Create (Account) returns (Account);
 	rpc Get (GetAccountRequest) returns (Account);
 	rpc Lock (Account) returns (google.protobuf.Empty);
+	rpc Update (UpdateAccountRequest) returns (Account);
 }
 
 service ActorService {
 	rpc Create (Actor) returns (Actor);
 	rpc Get (GetActorRequest) returns (Actor);
+	rpc Update (UpdateActorRequest) returns (Actor);
 }
 
 service IdentityService {
 	rpc Create (Identity) returns (Identity);
 	rpc Get (GetIdentityRequest) returns (Identity);
+	rpc Update (UpdateIdentityRequest) returns (Identity);
 }
 
 service MembershipService {
 	rpc Create (Membership) returns (Membership);
 	rpc Get (GetMembershipRequest) returns (Membership);
+	rpc Update (UpdateMembershipRequest) returns (Membership);
 }
 
 message GetAccountRequest {
@@ -46,5 +50,31 @@ message GetIdentityRequest {
 }
 
 message GetMembershipRequest {
+	bytes id = 1;
+}
+
+message UpdateAccountRequest {
+	bytes id = 1;
+	optional Actor owner = 2;
+	optional string alias = 3;
+	optional GroupRole role = 4;
+}
+
+message UpdateActorRequest {
+	bytes id = 1;
+	repeated Actor children = 2;
+	optional Actor referer = 3;
+	repeated Identity identities = 4;
+}
+
+message UpdateIdentityRequest {
+	bytes id = 1;
+	optional Actor owner = 2;
+	// Name of the user
+	optional string name = 3;
+	optional string email = 4;
+}
+
+message UpdateMembershipRequest {
 	bytes id = 1;
 }

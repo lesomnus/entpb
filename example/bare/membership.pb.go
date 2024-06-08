@@ -44,6 +44,21 @@ func (s *MembershipServiceServer) Get(ctx context.Context, req *pb.GetMembership
 
 	return toProtoMembership(res), nil
 }
+func (s *MembershipServiceServer) Update(ctx context.Context, req *pb.UpdateMembershipRequest) (*pb.Membership, error) {
+	id, err := uuid.FromBytes(req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err.Error())
+	}
+
+	q := s.db.Membership.UpdateOneID(id)
+
+	res, err := q.Save(ctx)
+	if err != nil {
+		return nil, runtime.EntErrorToStatus(err)
+	}
+
+	return toProtoMembership(res), nil
+}
 func toProtoMembership(v *ent.Membership) *pb.Membership {
 	m := &pb.Membership{}
 	m.Id = v.ID[:]

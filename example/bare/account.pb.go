@@ -58,6 +58,27 @@ func (s *AccountServiceServer) Get(ctx context.Context, req *pb.GetAccountReques
 
 	return toProtoAccount(res), nil
 }
+func (s *AccountServiceServer) Update(ctx context.Context, req *pb.UpdateAccountRequest) (*pb.Account, error) {
+	id, err := uuid.FromBytes(req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err.Error())
+	}
+
+	q := s.db.Account.UpdateOneID(id)
+	if v := req.Alias; v != nil {
+		q.SetAlias(*v)
+	}
+	if v := req.Role; v != nil {
+		q.SetRole(toEntRole(*v))
+	}
+
+	res, err := q.Save(ctx)
+	if err != nil {
+		return nil, runtime.EntErrorToStatus(err)
+	}
+
+	return toProtoAccount(res), nil
+}
 func toProtoAccount(v *ent.Account) *pb.Account {
 	m := &pb.Account{}
 	m.Id = v.ID[:]

@@ -31,6 +31,7 @@ func (p *Printer) NewTemplate(g *protogen.GeneratedFile) *template.Template {
 	t := template.New("")
 	t.Funcs(template.FuncMap{
 		"singular": inflect.Singularize,
+		"plural":   inflect.Pluralize,
 		"pascal":   strcase.ToCamel,
 		"entname": func(name string) string {
 			// FIXME: I don't know how Ent make acronym from the arbitrary input
