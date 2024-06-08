@@ -11,6 +11,7 @@ import (
 	pb "github.com/lesomnus/entpb/example/pb"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -35,6 +36,26 @@ func (s *AccountServiceServer) Create(ctx context.Context, req *pb.Account) (*pb
 	}
 
 	return toProtoAccount(res), nil
+}
+func (s *AccountServiceServer) Delete(ctx context.Context, req *pb.DeleteAccountRequest) (*emptypb.Empty, error) {
+	q := s.db.Account.Delete()
+	switch t := req.GetKey().(type) {
+	case *pb.DeleteAccountRequest_Id:
+		if v, err := uuid.FromBytes(t.Id); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			q.Where(account.IDEQ(v))
+		}
+	case *pb.DeleteAccountRequest_Alias:
+		q.Where(account.AliasEQ(t.Alias))
+	}
+
+	_, err := q.Exec(ctx)
+	if err != nil {
+		return nil, runtime.EntErrorToStatus(err)
+	}
+
+	return &emptypb.Empty{}, nil
 }
 func (s *AccountServiceServer) Get(ctx context.Context, req *pb.GetAccountRequest) (*pb.Account, error) {
 	q := s.db.Account.Query()

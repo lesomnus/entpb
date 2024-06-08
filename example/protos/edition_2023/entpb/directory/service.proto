@@ -12,6 +12,7 @@ option go_package = "github.com/lesomnus/entpb/example/pb";
 
 service AccountService {
 	rpc Create (Account) returns (Account);
+	rpc Delete (DeleteAccountRequest) returns (google.protobuf.Empty);
 	rpc Get (GetAccountRequest) returns (Account);
 	rpc Lock (Account) returns (google.protobuf.Empty);
 	rpc Update (UpdateAccountRequest) returns (Account);
@@ -19,20 +20,42 @@ service AccountService {
 
 service ActorService {
 	rpc Create (Actor) returns (Actor);
+	rpc Delete (DeleteActorRequest) returns (google.protobuf.Empty);
 	rpc Get (GetActorRequest) returns (Actor);
 	rpc Update (UpdateActorRequest) returns (Actor);
 }
 
 service IdentityService {
 	rpc Create (Identity) returns (Identity);
+	rpc Delete (DeleteIdentityRequest) returns (google.protobuf.Empty);
 	rpc Get (GetIdentityRequest) returns (Identity);
 	rpc Update (UpdateIdentityRequest) returns (Identity);
 }
 
 service MembershipService {
 	rpc Create (Membership) returns (Membership);
+	rpc Delete (DeleteMembershipRequest) returns (google.protobuf.Empty);
 	rpc Get (GetMembershipRequest) returns (Membership);
 	rpc Update (UpdateMembershipRequest) returns (Membership);
+}
+
+message DeleteAccountRequest {
+	oneof key {
+		bytes id = 1;
+		string alias = 3;
+	}
+}
+
+message DeleteActorRequest {
+	bytes id = 1;
+}
+
+message DeleteIdentityRequest {
+	bytes id = 1;
+}
+
+message DeleteMembershipRequest {
+	bytes id = 1;
 }
 
 message GetAccountRequest {
@@ -65,7 +88,6 @@ message UpdateActorRequest {
 	bytes id = 1;
 	repeated Actor children = 2;
 	Actor referer = 3 [features.field_presence = EXPLICIT];
-	repeated Identity identities = 4;
 }
 
 message UpdateIdentityRequest {

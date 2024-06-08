@@ -168,6 +168,11 @@ func (p *Printer) PrintService(pb_file *protogen.File) error {
 					return fmt.Errorf("method-update: %w", err)
 				}
 
+			case "Delete":
+				if err := tpl.ExecuteTemplate(o, "method-delete.go.tpl", ctx); err != nil {
+					return fmt.Errorf("method-delete: %w", err)
+				}
+
 			default:
 			}
 		}

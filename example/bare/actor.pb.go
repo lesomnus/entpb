@@ -11,6 +11,7 @@ import (
 	pb "github.com/lesomnus/entpb/example/pb"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -40,6 +41,21 @@ func (s *ActorServiceServer) Create(ctx context.Context, req *pb.Actor) (*pb.Act
 	}
 
 	return toProtoUser(res), nil
+}
+func (s *ActorServiceServer) Delete(ctx context.Context, req *pb.DeleteActorRequest) (*emptypb.Empty, error) {
+	q := s.db.User.Delete()
+	if v, err := uuid.FromBytes(req.GetId()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+	} else {
+		q.Where(user.IDEQ(v))
+	}
+
+	_, err := q.Exec(ctx)
+	if err != nil {
+		return nil, runtime.EntErrorToStatus(err)
+	}
+
+	return &emptypb.Empty{}, nil
 }
 func (s *ActorServiceServer) Get(ctx context.Context, req *pb.GetActorRequest) (*pb.Actor, error) {
 	q := s.db.User.Query()

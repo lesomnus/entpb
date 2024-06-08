@@ -69,3 +69,7 @@ func RpcEntGet() *Rpc {
 func RpcEntUpdate() *Rpc {
 	return &Rpc{Ident: "Update"}
 }
+
+func RpcEntDelete() *Rpc {
+	return &Rpc{Ident: "Delete"}
+}

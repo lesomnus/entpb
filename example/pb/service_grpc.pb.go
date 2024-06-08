@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion8
 
 const (
 	AccountService_Create_FullMethodName = "/entpb.directory.AccountService/Create"
+	AccountService_Delete_FullMethodName = "/entpb.directory.AccountService/Delete"
 	AccountService_Get_FullMethodName    = "/entpb.directory.AccountService/Get"
 	AccountService_Lock_FullMethodName   = "/entpb.directory.AccountService/Lock"
 	AccountService_Update_FullMethodName = "/entpb.directory.AccountService/Update"
@@ -33,6 +34,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AccountServiceClient interface {
 	Create(ctx context.Context, in *Account, opts ...grpc.CallOption) (*Account, error)
+	Delete(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Get(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*Account, error)
 	Lock(ctx context.Context, in *Account, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Update(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*Account, error)
@@ -50,6 +52,16 @@ func (c *accountServiceClient) Create(ctx context.Context, in *Account, opts ...
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Account)
 	err := c.cc.Invoke(ctx, AccountService_Create_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountServiceClient) Delete(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, AccountService_Delete_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -91,6 +103,7 @@ func (c *accountServiceClient) Update(ctx context.Context, in *UpdateAccountRequ
 // for forward compatibility
 type AccountServiceServer interface {
 	Create(context.Context, *Account) (*Account, error)
+	Delete(context.Context, *DeleteAccountRequest) (*emptypb.Empty, error)
 	Get(context.Context, *GetAccountRequest) (*Account, error)
 	Lock(context.Context, *Account) (*emptypb.Empty, error)
 	Update(context.Context, *UpdateAccountRequest) (*Account, error)
@@ -103,6 +116,9 @@ type UnimplementedAccountServiceServer struct {
 
 func (UnimplementedAccountServiceServer) Create(context.Context, *Account) (*Account, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+}
+func (UnimplementedAccountServiceServer) Delete(context.Context, *DeleteAccountRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedAccountServiceServer) Get(context.Context, *GetAccountRequest) (*Account, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
@@ -140,6 +156,24 @@ func _AccountService_Create_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).Create(ctx, req.(*Account))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AccountService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccountService_Delete_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).Delete(ctx, req.(*DeleteAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -210,6 +244,10 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AccountService_Create_Handler,
 		},
 		{
+			MethodName: "Delete",
+			Handler:    _AccountService_Delete_Handler,
+		},
+		{
 			MethodName: "Get",
 			Handler:    _AccountService_Get_Handler,
 		},
@@ -228,6 +266,7 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	ActorService_Create_FullMethodName = "/entpb.directory.ActorService/Create"
+	ActorService_Delete_FullMethodName = "/entpb.directory.ActorService/Delete"
 	ActorService_Get_FullMethodName    = "/entpb.directory.ActorService/Get"
 	ActorService_Update_FullMethodName = "/entpb.directory.ActorService/Update"
 )
@@ -237,6 +276,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ActorServiceClient interface {
 	Create(ctx context.Context, in *Actor, opts ...grpc.CallOption) (*Actor, error)
+	Delete(ctx context.Context, in *DeleteActorRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Get(ctx context.Context, in *GetActorRequest, opts ...grpc.CallOption) (*Actor, error)
 	Update(ctx context.Context, in *UpdateActorRequest, opts ...grpc.CallOption) (*Actor, error)
 }
@@ -253,6 +293,16 @@ func (c *actorServiceClient) Create(ctx context.Context, in *Actor, opts ...grpc
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Actor)
 	err := c.cc.Invoke(ctx, ActorService_Create_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *actorServiceClient) Delete(ctx context.Context, in *DeleteActorRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, ActorService_Delete_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -284,6 +334,7 @@ func (c *actorServiceClient) Update(ctx context.Context, in *UpdateActorRequest,
 // for forward compatibility
 type ActorServiceServer interface {
 	Create(context.Context, *Actor) (*Actor, error)
+	Delete(context.Context, *DeleteActorRequest) (*emptypb.Empty, error)
 	Get(context.Context, *GetActorRequest) (*Actor, error)
 	Update(context.Context, *UpdateActorRequest) (*Actor, error)
 	mustEmbedUnimplementedActorServiceServer()
@@ -295,6 +346,9 @@ type UnimplementedActorServiceServer struct {
 
 func (UnimplementedActorServiceServer) Create(context.Context, *Actor) (*Actor, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+}
+func (UnimplementedActorServiceServer) Delete(context.Context, *DeleteActorRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedActorServiceServer) Get(context.Context, *GetActorRequest) (*Actor, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
@@ -329,6 +383,24 @@ func _ActorService_Create_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ActorServiceServer).Create(ctx, req.(*Actor))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ActorService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteActorRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ActorServiceServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ActorService_Delete_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ActorServiceServer).Delete(ctx, req.(*DeleteActorRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -381,6 +453,10 @@ var ActorService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ActorService_Create_Handler,
 		},
 		{
+			MethodName: "Delete",
+			Handler:    _ActorService_Delete_Handler,
+		},
+		{
 			MethodName: "Get",
 			Handler:    _ActorService_Get_Handler,
 		},
@@ -395,6 +471,7 @@ var ActorService_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	IdentityService_Create_FullMethodName = "/entpb.directory.IdentityService/Create"
+	IdentityService_Delete_FullMethodName = "/entpb.directory.IdentityService/Delete"
 	IdentityService_Get_FullMethodName    = "/entpb.directory.IdentityService/Get"
 	IdentityService_Update_FullMethodName = "/entpb.directory.IdentityService/Update"
 )
@@ -404,6 +481,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type IdentityServiceClient interface {
 	Create(ctx context.Context, in *Identity, opts ...grpc.CallOption) (*Identity, error)
+	Delete(ctx context.Context, in *DeleteIdentityRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Get(ctx context.Context, in *GetIdentityRequest, opts ...grpc.CallOption) (*Identity, error)
 	Update(ctx context.Context, in *UpdateIdentityRequest, opts ...grpc.CallOption) (*Identity, error)
 }
@@ -420,6 +498,16 @@ func (c *identityServiceClient) Create(ctx context.Context, in *Identity, opts .
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Identity)
 	err := c.cc.Invoke(ctx, IdentityService_Create_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityServiceClient) Delete(ctx context.Context, in *DeleteIdentityRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, IdentityService_Delete_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -451,6 +539,7 @@ func (c *identityServiceClient) Update(ctx context.Context, in *UpdateIdentityRe
 // for forward compatibility
 type IdentityServiceServer interface {
 	Create(context.Context, *Identity) (*Identity, error)
+	Delete(context.Context, *DeleteIdentityRequest) (*emptypb.Empty, error)
 	Get(context.Context, *GetIdentityRequest) (*Identity, error)
 	Update(context.Context, *UpdateIdentityRequest) (*Identity, error)
 	mustEmbedUnimplementedIdentityServiceServer()
@@ -462,6 +551,9 @@ type UnimplementedIdentityServiceServer struct {
 
 func (UnimplementedIdentityServiceServer) Create(context.Context, *Identity) (*Identity, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+}
+func (UnimplementedIdentityServiceServer) Delete(context.Context, *DeleteIdentityRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedIdentityServiceServer) Get(context.Context, *GetIdentityRequest) (*Identity, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
@@ -496,6 +588,24 @@ func _IdentityService_Create_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IdentityServiceServer).Create(ctx, req.(*Identity))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IdentityService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteIdentityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServiceServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IdentityService_Delete_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServiceServer).Delete(ctx, req.(*DeleteIdentityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -548,6 +658,10 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _IdentityService_Create_Handler,
 		},
 		{
+			MethodName: "Delete",
+			Handler:    _IdentityService_Delete_Handler,
+		},
+		{
 			MethodName: "Get",
 			Handler:    _IdentityService_Get_Handler,
 		},
@@ -562,6 +676,7 @@ var IdentityService_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	MembershipService_Create_FullMethodName = "/entpb.directory.MembershipService/Create"
+	MembershipService_Delete_FullMethodName = "/entpb.directory.MembershipService/Delete"
 	MembershipService_Get_FullMethodName    = "/entpb.directory.MembershipService/Get"
 	MembershipService_Update_FullMethodName = "/entpb.directory.MembershipService/Update"
 )
@@ -571,6 +686,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MembershipServiceClient interface {
 	Create(ctx context.Context, in *Membership, opts ...grpc.CallOption) (*Membership, error)
+	Delete(ctx context.Context, in *DeleteMembershipRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Get(ctx context.Context, in *GetMembershipRequest, opts ...grpc.CallOption) (*Membership, error)
 	Update(ctx context.Context, in *UpdateMembershipRequest, opts ...grpc.CallOption) (*Membership, error)
 }
@@ -587,6 +703,16 @@ func (c *membershipServiceClient) Create(ctx context.Context, in *Membership, op
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Membership)
 	err := c.cc.Invoke(ctx, MembershipService_Create_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *membershipServiceClient) Delete(ctx context.Context, in *DeleteMembershipRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, MembershipService_Delete_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -618,6 +744,7 @@ func (c *membershipServiceClient) Update(ctx context.Context, in *UpdateMembersh
 // for forward compatibility
 type MembershipServiceServer interface {
 	Create(context.Context, *Membership) (*Membership, error)
+	Delete(context.Context, *DeleteMembershipRequest) (*emptypb.Empty, error)
 	Get(context.Context, *GetMembershipRequest) (*Membership, error)
 	Update(context.Context, *UpdateMembershipRequest) (*Membership, error)
 	mustEmbedUnimplementedMembershipServiceServer()
@@ -629,6 +756,9 @@ type UnimplementedMembershipServiceServer struct {
 
 func (UnimplementedMembershipServiceServer) Create(context.Context, *Membership) (*Membership, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+}
+func (UnimplementedMembershipServiceServer) Delete(context.Context, *DeleteMembershipRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedMembershipServiceServer) Get(context.Context, *GetMembershipRequest) (*Membership, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
@@ -663,6 +793,24 @@ func _MembershipService_Create_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MembershipServiceServer).Create(ctx, req.(*Membership))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MembershipService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteMembershipRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MembershipServiceServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MembershipService_Delete_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MembershipServiceServer).Delete(ctx, req.(*DeleteMembershipRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -713,6 +861,10 @@ var MembershipService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Create",
 			Handler:    _MembershipService_Create_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _MembershipService_Delete_Handler,
 		},
 		{
 			MethodName: "Get",

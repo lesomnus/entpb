@@ -37,6 +37,7 @@ func (BaseMixin) Annotations() []schema.Annotation {
 				entpb.RpcEntCreate(),
 				entpb.RpcEntGet(),
 				entpb.RpcEntUpdate(),
+				entpb.RpcEntDelete(),
 			),
 		),
 	}

@@ -11,6 +11,7 @@ import (
 	pb "github.com/lesomnus/entpb/example/pb"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -28,6 +29,21 @@ func (s *MembershipServiceServer) Create(ctx context.Context, req *pb.Membership
 	}
 
 	return toProtoMembership(res), nil
+}
+func (s *MembershipServiceServer) Delete(ctx context.Context, req *pb.DeleteMembershipRequest) (*emptypb.Empty, error) {
+	q := s.db.Membership.Delete()
+	if v, err := uuid.FromBytes(req.GetId()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+	} else {
+		q.Where(membership.IDEQ(v))
+	}
+
+	_, err := q.Exec(ctx)
+	if err != nil {
+		return nil, runtime.EntErrorToStatus(err)
+	}
+
+	return &emptypb.Empty{}, nil
 }
 func (s *MembershipServiceServer) Get(ctx context.Context, req *pb.GetMembershipRequest) (*pb.Membership, error) {
 	q := s.db.Membership.Query()
