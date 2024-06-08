@@ -272,8 +272,19 @@ func (u *printerUtils) printMessages(f *ProtoFile, print_field func(*FieldAnnota
 			if field.Comment != "" {
 				d.Body = append(d.Body, pbgen.Comment{Value: field.Comment})
 			}
-
-			d.Body = append(d.Body, print_field(field))
+			if field.IsOneof() {
+				d_ := pbgen.MessageOneof{Name: field.Ident}
+				for _, oneof_field := range field.Oneof {
+					d_.Body = append(d_.Body, pbgen.MessageOneofField{
+						Type:   oneof_field.PbType.ReferencedIn(f.PbPackage),
+						Name:   oneof_field.Ident,
+						Number: oneof_field.Number,
+					})
+				}
+				d.Body = append(d.Body, d_)
+			} else {
+				d.Body = append(d.Body, print_field(field))
+			}
 		}
 
 		ds = append(ds, d)

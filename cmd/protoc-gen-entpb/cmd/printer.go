@@ -52,7 +52,7 @@ func (p *Printer) NewGeneratedFile(name string) *protogen.GeneratedFile {
 
 func (p *Printer) PrintEnum() error {
 	o := p.NewGeneratedFile("enum")
-	tpl := NewTemplate(o)
+	tpl := p.NewTemplate(o)
 	for _, pb_file := range p.Plugin.Files {
 		if !pb_file.Generate {
 			continue
@@ -103,7 +103,7 @@ func (p *Printer) PrintService(pb_file *protogen.File) error {
 	for _, pb_service := range pb_file.Services {
 		service_name := string(pb_service.Desc.Name())
 		var ent_service *entpb.Service
-		for _, ent_message := range p.Build.Messages {
+		for _, ent_message := range p.Build.Schemas {
 			s := ent_message.Service
 			if s == nil {
 				continue
@@ -120,7 +120,7 @@ func (p *Printer) PrintService(pb_file *protogen.File) error {
 		}
 
 		o := p.NewGeneratedFile(strcase.ToKebab(string(ent_service.Message.Ident)))
-		tpl := NewTemplate(o)
+		tpl := p.NewTemplate(o)
 		if err := tpl.ExecuteTemplate(o, "server-struct.go.tpl", struct {
 			imports
 			PbSvc *protogen.Service
@@ -132,6 +132,11 @@ func (p *Printer) PrintService(pb_file *protogen.File) error {
 		}
 
 		for _, pb_method := range pb_service.Methods {
+			ent_rpc, ok := ent_service.Rpcs[ident.Ident(pb_method.Desc.Name())]
+			if !ok {
+				panic("invalid build state: RPC not found")
+			}
+
 			method_name := ident.Ident(pb_method.Desc.Name())
 			switch method_name {
 			case "Create":
@@ -147,6 +152,23 @@ func (p *Printer) PrintService(pb_file *protogen.File) error {
 					ent_service.Message,
 				}); err != nil {
 					return fmt.Errorf("method-create: %w", err)
+				}
+
+			case "Get":
+				if err := tpl.ExecuteTemplate(o, "method-get.go.tpl", struct {
+					imports
+					PbSvc    *protogen.Service
+					PbMethod *protogen.Method
+					EntMsg   *entpb.MessageAnnotation
+					EntRpc   *entpb.Rpc
+				}{
+					imports_,
+					pb_service,
+					pb_method,
+					ent_service.Message,
+					ent_rpc,
+				}); err != nil {
+					return fmt.Errorf("method-get: %w", err)
 				}
 
 			default:

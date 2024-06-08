@@ -11,17 +11,40 @@ option go_package = "github.com/lesomnus/entpb/example/pb";
 
 service AccountService {
 	rpc Create (Account) returns (Account);
+	rpc Get (GetAccountRequest) returns (Account);
 	rpc Lock (Account) returns (google.protobuf.Empty);
 }
 
 service ActorService {
 	rpc Create (Actor) returns (Actor);
+	rpc Get (GetActorRequest) returns (Actor);
 }
 
 service IdentityService {
 	rpc Create (Identity) returns (Identity);
+	rpc Get (GetIdentityRequest) returns (Identity);
 }
 
 service MembershipService {
 	rpc Create (Membership) returns (Membership);
+	rpc Get (GetMembershipRequest) returns (Membership);
+}
+
+message GetAccountRequest {
+	oneof key {
+		bytes id = 1;
+		string alias = 3;
+	}
+}
+
+message GetActorRequest {
+	bytes id = 1;
+}
+
+message GetIdentityRequest {
+	bytes id = 1;
+}
+
+message GetMembershipRequest {
+	bytes id = 1;
 }

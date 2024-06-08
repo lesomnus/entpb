@@ -6,6 +6,7 @@ import (
 	"strings"
 	"text/template"
 
+	"entgo.io/ent/entc/load"
 	"entgo.io/ent/schema/field"
 	"github.com/go-openapi/inflect"
 	"github.com/iancoleman/strcase"
@@ -26,7 +27,7 @@ var (
 	importTimestamp protogen.GoImportPath = "google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func NewTemplate(g *protogen.GeneratedFile) *template.Template {
+func (p *Printer) NewTemplate(g *protogen.GeneratedFile) *template.Template {
 	t := template.New("")
 	t.Funcs(template.FuncMap{
 		"singular": inflect.Singularize,
@@ -48,6 +49,10 @@ func NewTemplate(g *protogen.GeneratedFile) *template.Template {
 				GoName:       name,
 				GoImportPath: import_path,
 			})
+		},
+		"schema": func(s *load.Schema) protogen.GoImportPath {
+			p := fmt.Sprintf("%s/%s", string(p.EntPackage), strings.ToLower(s.Name))
+			return protogen.GoImportPath(p)
 		},
 		"to_ent": func(f *entpb.FieldAnnotation, ident_in string, ident_out string, body string) string {
 			var t field.Type

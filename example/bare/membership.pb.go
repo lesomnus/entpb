@@ -4,9 +4,13 @@ package bare
 
 import (
 	context "context"
+	uuid "github.com/google/uuid"
 	runtime "github.com/lesomnus/entpb/cmd/protoc-gen-entpb/runtime"
 	ent "github.com/lesomnus/entpb/example/ent"
+	membership "github.com/lesomnus/entpb/example/ent/membership"
 	pb "github.com/lesomnus/entpb/example/pb"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -17,7 +21,23 @@ type MembershipServiceServer struct {
 
 func (s *MembershipServiceServer) Create(ctx context.Context, req *pb.Membership) (*pb.Membership, error) {
 	q := s.db.Membership.Create()
+
 	res, err := q.Save(ctx)
+	if err != nil {
+		return nil, runtime.EntErrorToStatus(err)
+	}
+
+	return toProtoMembership(res), nil
+}
+func (s *MembershipServiceServer) Get(ctx context.Context, req *pb.GetMembershipRequest) (*pb.Membership, error) {
+	q := s.db.Membership.Query()
+	if v, err := uuid.FromBytes(req.GetId()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+	} else {
+		q.Where(membership.IDEQ(v))
+	}
+
+	res, err := q.Only(ctx)
 	if err != nil {
 		return nil, runtime.EntErrorToStatus(err)
 	}

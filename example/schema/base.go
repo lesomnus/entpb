@@ -35,6 +35,7 @@ func (BaseMixin) Annotations() []schema.Annotation {
 		entpb.Message("entpb/directory/common.proto",
 			entpb.WithService("entpb/directory/service.proto",
 				entpb.RpcEntCreate(),
+				entpb.RpcEntGet(),
 			),
 		),
 	}

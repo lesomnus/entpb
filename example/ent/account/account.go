@@ -19,6 +19,8 @@ const (
 	FieldID = "id"
 	// FieldDateCreated holds the string denoting the date_created field in the database.
 	FieldDateCreated = "date_created"
+	// FieldAlias holds the string denoting the alias field in the database.
+	FieldAlias = "alias"
 	// FieldRole holds the string denoting the role field in the database.
 	FieldRole = "role"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
@@ -38,6 +40,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldDateCreated,
+	FieldAlias,
 	FieldRole,
 }
 
@@ -65,6 +68,8 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultDateCreated holds the default value on creation for the "date_created" field.
 	DefaultDateCreated func() time.Time
+	// DefaultAlias holds the default value on creation for the "alias" field.
+	DefaultAlias func() string
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -90,6 +95,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByDateCreated orders the results by the date_created field.
 func ByDateCreated(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDateCreated, opts...).ToFunc()
+}
+
+// ByAlias orders the results by the alias field.
+func ByAlias(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAlias, opts...).ToFunc()
 }
 
 // ByRole orders the results by the role field.

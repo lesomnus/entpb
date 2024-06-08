@@ -28,6 +28,20 @@ func (au *AccountUpdate) Where(ps ...predicate.Account) *AccountUpdate {
 	return au
 }
 
+// SetAlias sets the "alias" field.
+func (au *AccountUpdate) SetAlias(s string) *AccountUpdate {
+	au.mutation.SetAlias(s)
+	return au
+}
+
+// SetNillableAlias sets the "alias" field if the given value is not nil.
+func (au *AccountUpdate) SetNillableAlias(s *string) *AccountUpdate {
+	if s != nil {
+		au.SetAlias(*s)
+	}
+	return au
+}
+
 // SetRole sets the "role" field.
 func (au *AccountUpdate) SetRole(e example.Role) *AccountUpdate {
 	au.mutation.SetRole(e)
@@ -99,6 +113,9 @@ func (au *AccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
+	if value, ok := au.mutation.Alias(); ok {
+		_spec.SetField(account.FieldAlias, field.TypeString, value)
+	}
 	if value, ok := au.mutation.Role(); ok {
 		_spec.SetField(account.FieldRole, field.TypeEnum, value)
 	}
@@ -120,6 +137,20 @@ type AccountUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *AccountMutation
+}
+
+// SetAlias sets the "alias" field.
+func (auo *AccountUpdateOne) SetAlias(s string) *AccountUpdateOne {
+	auo.mutation.SetAlias(s)
+	return auo
+}
+
+// SetNillableAlias sets the "alias" field if the given value is not nil.
+func (auo *AccountUpdateOne) SetNillableAlias(s *string) *AccountUpdateOne {
+	if s != nil {
+		auo.SetAlias(*s)
+	}
+	return auo
 }
 
 // SetRole sets the "role" field.
@@ -222,6 +253,9 @@ func (auo *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err e
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := auo.mutation.Alias(); ok {
+		_spec.SetField(account.FieldAlias, field.TypeString, value)
 	}
 	if value, ok := auo.mutation.Role(); ok {
 		_spec.SetField(account.FieldRole, field.TypeEnum, value)

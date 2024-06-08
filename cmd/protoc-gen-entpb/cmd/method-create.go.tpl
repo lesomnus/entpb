@@ -28,7 +28,7 @@ func (s *{{ print $.PbSvc.GoName "Server" }}) {{ $.PbMethod.GoName }}(ctx {{ imp
 	{{ else -}}
 	{{ to_ent . $field "v" (print $setter "(@)") }}
 	{{ end -}}
-	{{ end -}}
+	{{- end }}
 
 	res, err := q.Save(ctx)
 	if err != nil {

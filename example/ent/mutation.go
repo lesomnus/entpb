@@ -42,6 +42,7 @@ type AccountMutation struct {
 	typ           string
 	id            *uuid.UUID
 	date_created  *time.Time
+	alias         *string
 	role          *example.Role
 	clearedFields map[string]struct{}
 	owner         *uuid.UUID
@@ -191,6 +192,42 @@ func (m *AccountMutation) ResetDateCreated() {
 	m.date_created = nil
 }
 
+// SetAlias sets the "alias" field.
+func (m *AccountMutation) SetAlias(s string) {
+	m.alias = &s
+}
+
+// Alias returns the value of the "alias" field in the mutation.
+func (m *AccountMutation) Alias() (r string, exists bool) {
+	v := m.alias
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAlias returns the old "alias" field's value of the Account entity.
+// If the Account object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountMutation) OldAlias(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAlias is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAlias requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAlias: %w", err)
+	}
+	return oldValue.Alias, nil
+}
+
+// ResetAlias resets all changes to the "alias" field.
+func (m *AccountMutation) ResetAlias() {
+	m.alias = nil
+}
+
 // SetRole sets the "role" field.
 func (m *AccountMutation) SetRole(e example.Role) {
 	m.role = &e
@@ -300,9 +337,12 @@ func (m *AccountMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AccountMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 3)
 	if m.date_created != nil {
 		fields = append(fields, account.FieldDateCreated)
+	}
+	if m.alias != nil {
+		fields = append(fields, account.FieldAlias)
 	}
 	if m.role != nil {
 		fields = append(fields, account.FieldRole)
@@ -317,6 +357,8 @@ func (m *AccountMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case account.FieldDateCreated:
 		return m.DateCreated()
+	case account.FieldAlias:
+		return m.Alias()
 	case account.FieldRole:
 		return m.Role()
 	}
@@ -330,6 +372,8 @@ func (m *AccountMutation) OldField(ctx context.Context, name string) (ent.Value,
 	switch name {
 	case account.FieldDateCreated:
 		return m.OldDateCreated(ctx)
+	case account.FieldAlias:
+		return m.OldAlias(ctx)
 	case account.FieldRole:
 		return m.OldRole(ctx)
 	}
@@ -347,6 +391,13 @@ func (m *AccountMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDateCreated(v)
+		return nil
+	case account.FieldAlias:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAlias(v)
 		return nil
 	case account.FieldRole:
 		v, ok := value.(example.Role)
@@ -406,6 +457,9 @@ func (m *AccountMutation) ResetField(name string) error {
 	switch name {
 	case account.FieldDateCreated:
 		m.ResetDateCreated()
+		return nil
+	case account.FieldAlias:
+		m.ResetAlias()
 		return nil
 	case account.FieldRole:
 		m.ResetRole()

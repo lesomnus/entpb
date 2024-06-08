@@ -38,7 +38,7 @@ func (t *PbType) Equal(other *PbType) bool {
 }
 
 var (
-	PbThis = PbType{Ident: "$this"}
+	PbThis = PbType{Ident: "@this", Import: "@this"}
 
 	PbUuid      = PbType{Ident: "bytes"}
 	PbEmpty     = PbType{Ident: "Empty", Package: ident.Full{"google", "protobuf"}, Import: "google/protobuf/empty.proto"}

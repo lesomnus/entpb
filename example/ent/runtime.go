@@ -26,6 +26,10 @@ func init() {
 	accountDescDateCreated := accountMixinFields0[1].Descriptor()
 	// account.DefaultDateCreated holds the default value on creation for the date_created field.
 	account.DefaultDateCreated = accountDescDateCreated.Default.(func() time.Time)
+	// accountDescAlias is the schema descriptor for alias field.
+	accountDescAlias := accountFields[0].Descriptor()
+	// account.DefaultAlias holds the default value on creation for the alias field.
+	account.DefaultAlias = accountDescAlias.Default.(func() string)
 	// accountDescID is the schema descriptor for id field.
 	accountDescID := accountMixinFields0[0].Descriptor()
 	// account.DefaultID holds the default value on creation for the id field.

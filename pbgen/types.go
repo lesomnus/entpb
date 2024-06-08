@@ -129,6 +129,36 @@ func (MessageField) TemplateName() string {
 	return "message-field"
 }
 
+type MessageOneof struct {
+	Name    ident.Ident
+	Options []Option
+	Body    []MessageOneofBody
+
+	messageBody_
+}
+
+func (MessageOneof) TemplateName() string {
+	return "message-oneof"
+}
+
+type MessageOneofBody interface{ messageOneofBody() }
+type messageOneofBody_ struct{}
+
+func (messageOneofBody_) messageOneofBody() {}
+
+type MessageOneofField struct {
+	Type    Type
+	Name    ident.Ident
+	Number  int
+	Options []Option
+
+	messageOneofBody_
+}
+
+func (MessageOneofField) TemplateName() string {
+	return "message-oneof-field"
+}
+
 type Service struct {
 	Name ident.Ident
 	Body []ServiceBody
@@ -178,6 +208,7 @@ type Comment struct {
 	topLevelDef_
 	enumBody_
 	messageBody_
+	messageOneofBody_
 	serviceBody_
 }
 

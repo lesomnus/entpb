@@ -5,6 +5,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/lesomnus/entpb"
 	"github.com/lesomnus/entpb/example"
 )
@@ -36,6 +37,10 @@ func (Account) Mixin() []ent.Mixin {
 
 func (Account) Fields() []ent.Field {
 	return []ent.Field{
+		field.String("alias").
+			Annotations(entpb.Field(3)).
+			Unique().
+			DefaultFunc(uuid.NewString),
 		field.Enum("role").
 			Annotations(entpb.Field(4)).
 			GoType(example.Role("")),

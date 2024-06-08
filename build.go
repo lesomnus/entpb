@@ -1,6 +1,7 @@
 package entpb
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"slices"
@@ -29,16 +30,20 @@ type Build struct {
 	Enums map[string]*Enum
 
 	// Holds message definitions.
-	// Key is name of Ent Schema.
-	// e.g. User, Identity, ...
-	Messages map[string]*MessageAnnotation
+	// Key is name of message.
+	// e.g. User, GetUserRequest, Identity, ...
+	Messages map[ident.Ident]*MessageAnnotation
+
+	// Messages defined by Ent schema.
+	Schemas map[string]*MessageAnnotation
 }
 
 func NewBuild(graph *gen.Graph) (*Build, error) {
 	b := &Build{
 		Files:    map[string]*ProtoFile{},
 		Enums:    map[string]*Enum{},
-		Messages: map[string]*MessageAnnotation{},
+		Messages: map[ident.Ident]*MessageAnnotation{},
+		Schemas:  map[string]*MessageAnnotation{},
 	}
 	if err := b.parse(graph); err != nil {
 		return nil, err
@@ -85,7 +90,7 @@ func (b *Build) parse(graph *gen.Graph) error {
 			errs = append(errs, fmt.Errorf(`normalize enum "%s": %w`, enum.Ident, err))
 		}
 	}
-	for _, msg := range b.Messages {
+	for _, msg := range b.Schemas {
 		errs_ := []error{}
 		if err := b.parseFields(msg); err != nil {
 			errs_ = append(errs_, fmt.Errorf(`parse fields: %w`, err))
@@ -128,7 +133,8 @@ func (b *Build) parseMessage(r *load.Schema) error {
 	d.File = f
 	d.Schema = r
 	f.Messages[d.Ident] = d
-	b.Messages[r.Name] = d
+	b.Messages[d.Ident] = d
+	b.Schemas[r.Name] = d
 	return nil
 }
 
@@ -240,6 +246,7 @@ func (p *Build) parseEntField(r *load.Field) (*FieldAnnotation, error) {
 	d.EntName = r.Name
 	d.EntInfo = r.Info
 	d.HasDefault = r.Default
+	d.IsKey = r.Unique
 	d.IsOptional = r.Nillable
 
 	return d, nil
@@ -254,9 +261,9 @@ func (p *Build) parseEntEdge(r *load.Edge) (*FieldAnnotation, error) {
 		d.Ident = ident.Ident(r.Name)
 	}
 
-	message, ok := p.Messages[r.Type]
+	message, ok := p.Schemas[r.Type]
 	if !ok {
-		return nil, fmt.Errorf(`edge "%s" references a schema "%s" that is not a proto message`, r.Name, r.Type)
+		return nil, fmt.Errorf(`references a schema "%s" that is not a proto message`, r.Type)
 	}
 
 	d.Comment = r.Comment
@@ -283,6 +290,8 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 	f, ok := p.Files[s.Filepath]
 	if !ok {
 		return fmt.Errorf(`service "%s" references non-exists proto file "%s"`, d.Ident, s.Filepath)
+	} else {
+		s.File = f
 	}
 	if s.Ident == "" {
 		s.Ident = ident.Ident(fmt.Sprintf("%sService", d.Ident))
@@ -294,18 +303,65 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 	}
 
 	for _, rpc := range s.Rpcs {
-		if rpc.Req.Equal(&PbThis) {
+		switch rpc.Ident {
+		case "Create":
 			rpc.Req = d.pbType()
-		}
-		if rpc.Res.Equal(&PbThis) {
 			rpc.Res = d.pbType()
-		}
+			rpc.EntReq = d
+			rpc.EntRes = d
 
-		if rpc.Req.Import == "" {
-			return fmt.Errorf(`RPC "%s": parameter type must be message`, rpc.Ident)
-		}
-		if rpc.Res.Import == "" {
-			return fmt.Errorf(`RPC "%s": return type must be message`, rpc.Ident)
+		case "Get":
+			req_name := ident.Ident(fmt.Sprintf("Get%sRequest", d.Ident))
+			rpc.Req = d.pbType()
+			rpc.Req.Ident = req_name
+			rpc.Res = d.pbType()
+
+			msg := &MessageAnnotation{
+				Filepath: s.Filepath,
+				Ident:    req_name,
+				File:     s.File,
+			}
+			key_fields := []*FieldAnnotation{}
+			for _, field := range d.Fields {
+				if !field.IsKey {
+					continue
+				}
+
+				key_fields = append(key_fields, field)
+			}
+			if len(key_fields) == 1 {
+				msg.Fields = append(msg.Fields, key_fields[0])
+			} else {
+				field := &FieldAnnotation{Ident: "key"}
+				field.Oneof = append(field.Oneof, key_fields...)
+				field.Number = slices.MinFunc(key_fields, func(a, b *FieldAnnotation) int {
+					return cmp.Compare(a.Number, b.Number)
+				}).Number
+				msg.Fields = append(msg.Fields, field)
+			}
+			// TODO: add index as a key? How?
+			// To make an index as a oneof field, new message need to be created.
+
+			s.File.Messages[req_name] = msg
+			p.Messages[req_name] = msg
+
+			rpc.EntReq = msg
+			rpc.EntRes = d
+
+		default:
+			if rpc.Req.Equal(&PbThis) {
+				rpc.Req = d.pbType()
+			}
+			if rpc.Res.Equal(&PbThis) {
+				rpc.Res = d.pbType()
+			}
+
+			if rpc.Req.Import == "" {
+				return fmt.Errorf(`RPC "%s": parameter type must be message`, rpc.Ident)
+			}
+			if rpc.Res.Import == "" {
+				return fmt.Errorf(`RPC "%s": return type must be message`, rpc.Ident)
+			}
 		}
 	}
 

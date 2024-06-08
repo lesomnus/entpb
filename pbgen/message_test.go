@@ -79,4 +79,36 @@ func TestMessage(t *testing.T) {
 	// cheese
 }`, v)
 	})
+
+	t.Run("oneof", func(t *testing.T) {
+		require := require.New(t)
+
+		d := pbgen.Message{
+			Name: "User",
+			Body: []pbgen.MessageBody{
+				pbgen.MessageField{Type: pbgen.TypeBytes, Name: "id", Number: 1},
+				pbgen.MessageField{Type: pbgen.TypeString, Name: "name", Number: 2},
+				pbgen.MessageOneof{
+					Name: "auth",
+					Body: []pbgen.MessageOneofBody{
+						pbgen.MessageOneofField{Type: pbgen.TypeString, Name: "password", Number: 3},
+						pbgen.MessageOneofField{Type: pbgen.TypeString, Name: "email", Number: 4},
+					},
+				},
+			},
+		}
+		o := bytes.Buffer{}
+		err := pbgen.Execute(&o, &d)
+		require.NoError(err)
+
+		v := o.String()
+		require.Equal(`message User {
+	bytes id = 1;
+	string name = 2;
+	oneof auth {
+		string password = 3;
+		string email = 4;
+	}
+}`, v)
+	})
 }

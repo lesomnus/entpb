@@ -22,6 +22,8 @@ type Account struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// DateCreated holds the value of the "date_created" field.
 	DateCreated time.Time `json:"date_created,omitempty"`
+	// Alias holds the value of the "alias" field.
+	Alias string `json:"alias,omitempty"`
 	// Role holds the value of the "role" field.
 	Role example.Role `json:"role,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -56,7 +58,7 @@ func (*Account) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case account.FieldRole:
+		case account.FieldAlias, account.FieldRole:
 			values[i] = new(sql.NullString)
 		case account.FieldDateCreated:
 			values[i] = new(sql.NullTime)
@@ -90,6 +92,12 @@ func (a *Account) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field date_created", values[i])
 			} else if value.Valid {
 				a.DateCreated = value.Time
+			}
+		case account.FieldAlias:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field alias", values[i])
+			} else if value.Valid {
+				a.Alias = value.String
 			}
 		case account.FieldRole:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -147,6 +155,9 @@ func (a *Account) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", a.ID))
 	builder.WriteString("date_created=")
 	builder.WriteString(a.DateCreated.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("alias=")
+	builder.WriteString(a.Alias)
 	builder.WriteString(", ")
 	builder.WriteString("role=")
 	builder.WriteString(fmt.Sprintf("%v", a.Role))

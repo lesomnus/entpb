@@ -12,6 +12,7 @@ var (
 	AccountsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "date_created", Type: field.TypeTime},
+		{Name: "alias", Type: field.TypeString, Unique: true},
 		{Name: "role", Type: field.TypeEnum, Enums: []string{"OWNER", "MEMBER"}},
 		{Name: "user_accounts", Type: field.TypeUUID},
 	}
@@ -23,7 +24,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "accounts_users_accounts",
-				Columns:    []*schema.Column{AccountsColumns[3]},
+				Columns:    []*schema.Column{AccountsColumns[4]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

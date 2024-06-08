@@ -25,15 +25,24 @@ type FieldAnnotation struct {
 	Number  int
 	Comment string `mapstructure:"-"`
 
+	// `Number` will be set by minimum `Number` in this field.
+	// This field is used to generate "oneof" in proto file.
+	Oneof []*FieldAnnotation `mapstructure:"-"`
+
 	EntName string          `mapstructure:"-"`
 	EntInfo *field.TypeInfo `mapstructure:"-"`
 	EntRef  string          `mapstructure:"-"` // Name of the schema that this edge references.
 	PbType  PbType          `mapstructure:"-"`
 
 	HasDefault bool `mapstructure:"-"`
+	IsKey      bool `mapstructure:"-"`
 	IsOptional bool `mapstructure:"-"`
 	IsRepeated bool `mapstructure:"-"`
 	IsReadOnly bool // Make this field cannot be set manually.
+}
+
+func (a *FieldAnnotation) IsOneof() bool {
+	return a.Oneof != nil
 }
 
 func (a *FieldAnnotation) IsEnum() bool {

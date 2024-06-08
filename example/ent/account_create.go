@@ -37,6 +37,20 @@ func (ac *AccountCreate) SetNillableDateCreated(t *time.Time) *AccountCreate {
 	return ac
 }
 
+// SetAlias sets the "alias" field.
+func (ac *AccountCreate) SetAlias(s string) *AccountCreate {
+	ac.mutation.SetAlias(s)
+	return ac
+}
+
+// SetNillableAlias sets the "alias" field if the given value is not nil.
+func (ac *AccountCreate) SetNillableAlias(s *string) *AccountCreate {
+	if s != nil {
+		ac.SetAlias(*s)
+	}
+	return ac
+}
+
 // SetRole sets the "role" field.
 func (ac *AccountCreate) SetRole(e example.Role) *AccountCreate {
 	ac.mutation.SetRole(e)
@@ -107,6 +121,10 @@ func (ac *AccountCreate) defaults() {
 		v := account.DefaultDateCreated()
 		ac.mutation.SetDateCreated(v)
 	}
+	if _, ok := ac.mutation.Alias(); !ok {
+		v := account.DefaultAlias()
+		ac.mutation.SetAlias(v)
+	}
 	if _, ok := ac.mutation.ID(); !ok {
 		v := account.DefaultID()
 		ac.mutation.SetID(v)
@@ -117,6 +135,9 @@ func (ac *AccountCreate) defaults() {
 func (ac *AccountCreate) check() error {
 	if _, ok := ac.mutation.DateCreated(); !ok {
 		return &ValidationError{Name: "date_created", err: errors.New(`ent: missing required field "Account.date_created"`)}
+	}
+	if _, ok := ac.mutation.Alias(); !ok {
+		return &ValidationError{Name: "alias", err: errors.New(`ent: missing required field "Account.alias"`)}
 	}
 	if _, ok := ac.mutation.Role(); !ok {
 		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "Account.role"`)}
@@ -167,6 +188,10 @@ func (ac *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 	if value, ok := ac.mutation.DateCreated(); ok {
 		_spec.SetField(account.FieldDateCreated, field.TypeTime, value)
 		_node.DateCreated = value
+	}
+	if value, ok := ac.mutation.Alias(); ok {
+		_spec.SetField(account.FieldAlias, field.TypeString, value)
+		_node.Alias = value
 	}
 	if value, ok := ac.mutation.Role(); ok {
 		_spec.SetField(account.FieldRole, field.TypeEnum, value)

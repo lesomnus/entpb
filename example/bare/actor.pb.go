@@ -7,6 +7,7 @@ import (
 	uuid "github.com/google/uuid"
 	runtime "github.com/lesomnus/entpb/cmd/protoc-gen-entpb/runtime"
 	ent "github.com/lesomnus/entpb/example/ent"
+	user "github.com/lesomnus/entpb/example/ent/user"
 	pb "github.com/lesomnus/entpb/example/pb"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -39,7 +40,26 @@ func (s *ActorServiceServer) Create(ctx context.Context, req *pb.Actor) (*pb.Act
 			q.AddChildIDs(w)
 		}
 	}
+
 	res, err := q.Save(ctx)
+	if err != nil {
+		return nil, runtime.EntErrorToStatus(err)
+	}
+
+	return toProtoUser(res), nil
+}
+func (s *ActorServiceServer) Get(ctx context.Context, req *pb.GetActorRequest) (*pb.Actor, error) {
+	q := s.db.User.Query()
+	if v, err := uuid.FromBytes(req.GetId()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+	} else {
+		q.Where(user.IDEQ(v))
+	}
+	q.WithParent(func(q *ent.UserQuery) { q.Select(user.FieldID) })
+	q.WithIdentities(func(q *ent.IdentityQuery) { q.Select(user.FieldID) })
+	q.WithChildren(func(q *ent.UserQuery) { q.Select(user.FieldID) })
+
+	res, err := q.Only(ctx)
 	if err != nil {
 		return nil, runtime.EntErrorToStatus(err)
 	}

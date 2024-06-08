@@ -13,7 +13,8 @@ type Service struct {
 	Ident    ident.Ident
 	Rpcs     map[ident.Ident]*Rpc
 
-	Message *MessageAnnotation
+	File    *ProtoFile
+	Message *MessageAnnotation // Message defined by Ent schema which defines this service.
 }
 
 func (s *Service) messageOpt(t *MessageAnnotation) {
@@ -39,6 +40,9 @@ type Rpc struct {
 	Req    PbType
 	Res    PbType
 	Stream Stream
+
+	EntReq *MessageAnnotation
+	EntRes *MessageAnnotation
 }
 
 func (r *Rpc) serviceOpt(t *Service) {
@@ -55,17 +59,9 @@ const (
 )
 
 func RpcEntCreate() *Rpc {
-	return &Rpc{
-		Ident: "Create",
-		Req:   PbThis,
-		Res:   PbThis,
-	}
+	return &Rpc{Ident: "Create"}
 }
 
 func RpcEntGet() *Rpc {
-	return &Rpc{
-		Ident: "Get",
-		Req:   PbThis,
-		// Res:   PbType{Ident: "@Ident@NameRequest"},
-	}
+	return &Rpc{Ident: "Get"}
 }

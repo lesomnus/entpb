@@ -62,6 +62,11 @@ func DateCreated(v time.Time) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldDateCreated, v))
 }
 
+// Alias applies equality check predicate on the "alias" field. It's identical to AliasEQ.
+func Alias(v string) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldAlias, v))
+}
+
 // DateCreatedEQ applies the EQ predicate on the "date_created" field.
 func DateCreatedEQ(v time.Time) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldDateCreated, v))
@@ -100,6 +105,71 @@ func DateCreatedLT(v time.Time) predicate.Account {
 // DateCreatedLTE applies the LTE predicate on the "date_created" field.
 func DateCreatedLTE(v time.Time) predicate.Account {
 	return predicate.Account(sql.FieldLTE(FieldDateCreated, v))
+}
+
+// AliasEQ applies the EQ predicate on the "alias" field.
+func AliasEQ(v string) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldAlias, v))
+}
+
+// AliasNEQ applies the NEQ predicate on the "alias" field.
+func AliasNEQ(v string) predicate.Account {
+	return predicate.Account(sql.FieldNEQ(FieldAlias, v))
+}
+
+// AliasIn applies the In predicate on the "alias" field.
+func AliasIn(vs ...string) predicate.Account {
+	return predicate.Account(sql.FieldIn(FieldAlias, vs...))
+}
+
+// AliasNotIn applies the NotIn predicate on the "alias" field.
+func AliasNotIn(vs ...string) predicate.Account {
+	return predicate.Account(sql.FieldNotIn(FieldAlias, vs...))
+}
+
+// AliasGT applies the GT predicate on the "alias" field.
+func AliasGT(v string) predicate.Account {
+	return predicate.Account(sql.FieldGT(FieldAlias, v))
+}
+
+// AliasGTE applies the GTE predicate on the "alias" field.
+func AliasGTE(v string) predicate.Account {
+	return predicate.Account(sql.FieldGTE(FieldAlias, v))
+}
+
+// AliasLT applies the LT predicate on the "alias" field.
+func AliasLT(v string) predicate.Account {
+	return predicate.Account(sql.FieldLT(FieldAlias, v))
+}
+
+// AliasLTE applies the LTE predicate on the "alias" field.
+func AliasLTE(v string) predicate.Account {
+	return predicate.Account(sql.FieldLTE(FieldAlias, v))
+}
+
+// AliasContains applies the Contains predicate on the "alias" field.
+func AliasContains(v string) predicate.Account {
+	return predicate.Account(sql.FieldContains(FieldAlias, v))
+}
+
+// AliasHasPrefix applies the HasPrefix predicate on the "alias" field.
+func AliasHasPrefix(v string) predicate.Account {
+	return predicate.Account(sql.FieldHasPrefix(FieldAlias, v))
+}
+
+// AliasHasSuffix applies the HasSuffix predicate on the "alias" field.
+func AliasHasSuffix(v string) predicate.Account {
+	return predicate.Account(sql.FieldHasSuffix(FieldAlias, v))
+}
+
+// AliasEqualFold applies the EqualFold predicate on the "alias" field.
+func AliasEqualFold(v string) predicate.Account {
+	return predicate.Account(sql.FieldEqualFold(FieldAlias, v))
+}
+
+// AliasContainsFold applies the ContainsFold predicate on the "alias" field.
+func AliasContainsFold(v string) predicate.Account {
+	return predicate.Account(sql.FieldContainsFold(FieldAlias, v))
 }
 
 // RoleEQ applies the EQ predicate on the "role" field.
