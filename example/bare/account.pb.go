@@ -23,9 +23,11 @@ type AccountServiceServer struct {
 func NewAccountServiceServer(db *ent.Client) *AccountServiceServer {
 	return &AccountServiceServer{db: db}
 }
-func (s *AccountServiceServer) Create(ctx context.Context, req *pb.Account) (*pb.Account, error) {
+func (s *AccountServiceServer) Create(ctx context.Context, req *pb.CreateAccountRequest) (*pb.Account, error) {
 	q := s.db.Account.Create()
-	q.SetAlias(req.Alias)
+	if v := req.Alias; v != nil {
+		q.SetAlias(*v)
+	}
 	q.SetRole(toEntRole(req.Role))
 
 	res, err := q.Save(ctx)
@@ -46,6 +48,8 @@ func (s *AccountServiceServer) Delete(ctx context.Context, req *pb.DeleteAccount
 		}
 	case *pb.DeleteAccountRequest_Alias:
 		q.Where(account.AliasEQ(t.Alias))
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
 	}
 
 	_, err := q.Exec(ctx)
@@ -66,6 +70,8 @@ func (s *AccountServiceServer) Get(ctx context.Context, req *pb.GetAccountReques
 		}
 	case *pb.GetAccountRequest_Alias:
 		q.Where(account.AliasEQ(t.Alias))
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
 	}
 
 	q.WithOwner(func(q *ent.UserQuery) { q.Select(account.FieldID) })
@@ -80,7 +86,7 @@ func (s *AccountServiceServer) Get(ctx context.Context, req *pb.GetAccountReques
 func (s *AccountServiceServer) Update(ctx context.Context, req *pb.UpdateAccountRequest) (*pb.Account, error) {
 	id, err := uuid.FromBytes(req.GetId())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
 	}
 
 	q := s.db.Account.UpdateOneID(id)
@@ -103,7 +109,7 @@ func ToProtoAccount(v *ent.Account) *pb.Account {
 	m.Id = v.ID[:]
 	m.DateCreated = timestamppb.New(v.DateCreated)
 	m.Alias = v.Alias
-	GroupRole = toPbm.Role(v.Role)
+	m.Role = toPbGroupRole(v.Role)
 	if v := v.Edges.Owner; v != nil {
 		m.Owner = &pb.Actor{Id: v.ID[:]}
 	}

@@ -13,7 +13,7 @@ option features.field_presence = IMPLICIT;
 option go_package = "github.com/lesomnus/entpb/example/pb";
 
 service AccountService {
-	rpc Create (Account) returns (Account);
+	rpc Create (CreateAccountRequest) returns (Account);
 	rpc Delete (DeleteAccountRequest) returns (google.protobuf.Empty);
 	rpc Get (GetAccountRequest) returns (Account);
 	rpc Lock (LockAccountRequest) returns (google.protobuf.Empty);
@@ -21,24 +21,55 @@ service AccountService {
 }
 
 service ActorService {
-	rpc Create (Actor) returns (Actor);
+	rpc Create (CreateActorRequest) returns (Actor);
 	rpc Delete (DeleteActorRequest) returns (google.protobuf.Empty);
 	rpc Get (GetActorRequest) returns (Actor);
 	rpc Update (UpdateActorRequest) returns (Actor);
 }
 
 service IdentityService {
-	rpc Create (Identity) returns (Identity);
+	rpc Create (CreateIdentityRequest) returns (Identity);
 	rpc Delete (DeleteIdentityRequest) returns (google.protobuf.Empty);
 	rpc Get (GetIdentityRequest) returns (Identity);
 	rpc Update (UpdateIdentityRequest) returns (Identity);
 }
 
 service MembershipService {
-	rpc Create (Membership) returns (Membership);
+	rpc Create (CreateMembershipRequest) returns (Membership);
 	rpc Delete (DeleteMembershipRequest) returns (google.protobuf.Empty);
 	rpc Get (GetMembershipRequest) returns (Membership);
 	rpc Update (UpdateMembershipRequest) returns (Membership);
+}
+
+message CreateAccountRequest {
+	bytes id = 1 [features.field_presence = EXPLICIT];
+	Actor owner = 2;
+	string alias = 3 [features.field_presence = EXPLICIT];
+	GroupRole role = 4;
+	google.protobuf.Timestamp date_created = 15 [features.field_presence = EXPLICIT];
+}
+
+message CreateActorRequest {
+	bytes id = 1 [features.field_presence = EXPLICIT];
+	repeated Actor children = 2;
+	Actor referer = 3 [features.field_presence = EXPLICIT];
+	repeated Identity identities = 4;
+	google.protobuf.Timestamp date_created = 15 [features.field_presence = EXPLICIT];
+}
+
+message CreateIdentityRequest {
+	bytes id = 1 [features.field_presence = EXPLICIT];
+	Actor owner = 2;
+	// Name of the user
+	string name = 3 [features.field_presence = EXPLICIT];
+	string email = 4 [features.field_presence = EXPLICIT];
+	google.protobuf.Timestamp date_updated = 14 [features.field_presence = EXPLICIT];
+	google.protobuf.Timestamp date_created = 15 [features.field_presence = EXPLICIT];
+}
+
+message CreateMembershipRequest {
+	bytes id = 1 [features.field_presence = EXPLICIT];
+	google.protobuf.Timestamp date_created = 15 [features.field_presence = EXPLICIT];
 }
 
 message DeleteAccountRequest {

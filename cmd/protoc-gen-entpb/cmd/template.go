@@ -118,6 +118,20 @@ func (p *Printer) NewTemplate(g *protogen.GeneratedFile) *template.Template {
 				return fmt.Sprintf("%s = %s", ident_out, ident_in)
 			}
 		},
+		"status": func(code string, msg string) string {
+			return fmt.Sprintf(`%s(%s, "%s")`,
+				g.QualifiedGoIdent(importStatus.Ident("Errorf")),
+				g.QualifiedGoIdent(importCodes.Ident(code)),
+				msg,
+			)
+		},
+		"status_err": func(code string, msg string) string {
+			return fmt.Sprintf(`%s(%s, "%s: %%s", err)`,
+				g.QualifiedGoIdent(importStatus.Ident("Errorf")),
+				g.QualifiedGoIdent(importCodes.Ident(code)),
+				msg,
+			)
+		},
 	})
 	t, err := t.ParseFS(template_files, "*")
 	if err != nil {

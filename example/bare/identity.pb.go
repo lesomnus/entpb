@@ -23,9 +23,11 @@ type IdentityServiceServer struct {
 func NewIdentityServiceServer(db *ent.Client) *IdentityServiceServer {
 	return &IdentityServiceServer{db: db}
 }
-func (s *IdentityServiceServer) Create(ctx context.Context, req *pb.Identity) (*pb.Identity, error) {
+func (s *IdentityServiceServer) Create(ctx context.Context, req *pb.CreateIdentityRequest) (*pb.Identity, error) {
 	q := s.db.Identity.Create()
-	q.SetName(req.Name)
+	if v := req.Name; v != nil {
+		q.SetName(*v)
+	}
 	if v := req.Email; v != nil {
 		q.SetEmail(*v)
 	}
@@ -75,7 +77,7 @@ func (s *IdentityServiceServer) Get(ctx context.Context, req *pb.GetIdentityRequ
 func (s *IdentityServiceServer) Update(ctx context.Context, req *pb.UpdateIdentityRequest) (*pb.Identity, error) {
 	id, err := uuid.FromBytes(req.GetId())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
 	}
 
 	q := s.db.Identity.UpdateOneID(id)

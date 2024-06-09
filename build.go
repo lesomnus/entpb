@@ -307,9 +307,31 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 	for _, rpc := range s.Rpcs {
 		switch rpc.Ident {
 		case "Create":
+			req_name := ident.Ident(fmt.Sprintf("Create%sRequest", d.Ident))
 			rpc.Req = d.pbType()
+			rpc.Req.Ident = req_name
 			rpc.Res = d.pbType()
-			rpc.EntReq = d
+
+			msg := &MessageAnnotation{
+				Filepath: s.Filepath,
+				Ident:    req_name,
+				File:     s.File,
+			}
+			for _, field := range d.Fields {
+				if !field.HasDefault {
+					msg.Fields = append(msg.Fields, field)
+					continue
+				}
+
+				v := *field
+				v.IsOptional = true
+				msg.Fields = append(msg.Fields, &v)
+			}
+
+			s.File.Messages[req_name] = msg
+			p.Messages[req_name] = msg
+
+			rpc.EntReq = msg
 			rpc.EntRes = d
 
 		case "Get":

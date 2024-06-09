@@ -23,7 +23,7 @@ type ActorServiceServer struct {
 func NewActorServiceServer(db *ent.Client) *ActorServiceServer {
 	return &ActorServiceServer{db: db}
 }
-func (s *ActorServiceServer) Create(ctx context.Context, req *pb.Actor) (*pb.Actor, error) {
+func (s *ActorServiceServer) Create(ctx context.Context, req *pb.CreateActorRequest) (*pb.Actor, error) {
 	q := s.db.User.Create()
 
 	res, err := q.Save(ctx)
@@ -69,7 +69,7 @@ func (s *ActorServiceServer) Get(ctx context.Context, req *pb.GetActorRequest) (
 func (s *ActorServiceServer) Update(ctx context.Context, req *pb.UpdateActorRequest) (*pb.Actor, error) {
 	id, err := uuid.FromBytes(req.GetId())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
 	}
 
 	q := s.db.User.UpdateOneID(id)

@@ -1,7 +1,7 @@
 func (s *{{ print $.PbSvc.GoName "Server" }}) {{ $.PbMethod.GoName }}(ctx {{ import "context" | ident "Context" }}, req *{{ $.PbMethod.Input.GoIdent | use }}) (*{{ $.PbMethod.Output.GoIdent | use }}, error) {
 	id, err := {{ import "github.com/google/uuid" | ident "FromBytes" }}(req.GetId())
 	if err != nil {
-		return nil, {{ import "google.golang.org/grpc/status" | ident "Errorf" }}({{ import "google.golang.org/grpc/codes" | ident "InvalidArgument" }}, "id: %s", err.Error())
+		return nil, {{ status_err "InvalidArgument" "id" }}
 	}
 
 	q := s.db.{{ $.EntMsg.Schema.Name }}.UpdateOneID(id)

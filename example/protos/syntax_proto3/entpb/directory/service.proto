@@ -12,7 +12,7 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/lesomnus/entpb/example/pb";
 
 service AccountService {
-	rpc Create (Account) returns (Account);
+	rpc Create (CreateAccountRequest) returns (Account);
 	rpc Delete (DeleteAccountRequest) returns (google.protobuf.Empty);
 	rpc Get (GetAccountRequest) returns (Account);
 	rpc Lock (LockAccountRequest) returns (google.protobuf.Empty);
@@ -20,24 +20,55 @@ service AccountService {
 }
 
 service ActorService {
-	rpc Create (Actor) returns (Actor);
+	rpc Create (CreateActorRequest) returns (Actor);
 	rpc Delete (DeleteActorRequest) returns (google.protobuf.Empty);
 	rpc Get (GetActorRequest) returns (Actor);
 	rpc Update (UpdateActorRequest) returns (Actor);
 }
 
 service IdentityService {
-	rpc Create (Identity) returns (Identity);
+	rpc Create (CreateIdentityRequest) returns (Identity);
 	rpc Delete (DeleteIdentityRequest) returns (google.protobuf.Empty);
 	rpc Get (GetIdentityRequest) returns (Identity);
 	rpc Update (UpdateIdentityRequest) returns (Identity);
 }
 
 service MembershipService {
-	rpc Create (Membership) returns (Membership);
+	rpc Create (CreateMembershipRequest) returns (Membership);
 	rpc Delete (DeleteMembershipRequest) returns (google.protobuf.Empty);
 	rpc Get (GetMembershipRequest) returns (Membership);
 	rpc Update (UpdateMembershipRequest) returns (Membership);
+}
+
+message CreateAccountRequest {
+	optional bytes id = 1;
+	Actor owner = 2;
+	optional string alias = 3;
+	GroupRole role = 4;
+	optional google.protobuf.Timestamp date_created = 15;
+}
+
+message CreateActorRequest {
+	optional bytes id = 1;
+	repeated Actor children = 2;
+	optional Actor referer = 3;
+	repeated Identity identities = 4;
+	optional google.protobuf.Timestamp date_created = 15;
+}
+
+message CreateIdentityRequest {
+	optional bytes id = 1;
+	Actor owner = 2;
+	// Name of the user
+	optional string name = 3;
+	optional string email = 4;
+	optional google.protobuf.Timestamp date_updated = 14;
+	optional google.protobuf.Timestamp date_created = 15;
+}
+
+message CreateMembershipRequest {
+	optional bytes id = 1;
+	optional google.protobuf.Timestamp date_created = 15;
 }
 
 message DeleteAccountRequest {

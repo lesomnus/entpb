@@ -23,7 +23,7 @@ type MembershipServiceServer struct {
 func NewMembershipServiceServer(db *ent.Client) *MembershipServiceServer {
 	return &MembershipServiceServer{db: db}
 }
-func (s *MembershipServiceServer) Create(ctx context.Context, req *pb.Membership) (*pb.Membership, error) {
+func (s *MembershipServiceServer) Create(ctx context.Context, req *pb.CreateMembershipRequest) (*pb.Membership, error) {
 	q := s.db.Membership.Create()
 
 	res, err := q.Save(ctx)
@@ -66,7 +66,7 @@ func (s *MembershipServiceServer) Get(ctx context.Context, req *pb.GetMembership
 func (s *MembershipServiceServer) Update(ctx context.Context, req *pb.UpdateMembershipRequest) (*pb.Membership, error) {
 	id, err := uuid.FromBytes(req.GetId())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
 	}
 
 	q := s.db.Membership.UpdateOneID(id)

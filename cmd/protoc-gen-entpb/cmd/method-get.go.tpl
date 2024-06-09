@@ -15,6 +15,8 @@ func (s *{{ print $.PbSvc.GoName "Server" }}) {{ $.PbMethod.GoName }}(ctx {{ imp
 	case *{{ print $.PbMethod.Input.GoIdent.GoName "_" $key_name | $.Pb.Ident | use }}:
 		{{ print "q.Where(" $pred "(@))" | to_ent $key $in "v" }}
 	{{ end -}}
+	default:
+		return nil, {{ status "InvalidArgument" "key not provided" }}
 	}
 	{{ end -}}
 

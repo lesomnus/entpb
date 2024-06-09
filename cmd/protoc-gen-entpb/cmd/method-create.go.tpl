@@ -1,6 +1,6 @@
 func (s *{{ print $.PbSvc.GoName "Server" }}) {{ $.PbMethod.GoName }}(ctx {{ import "context" | ident "Context" }}, req *{{ $.PbMethod.Input.GoIdent | use }}) (*{{ $.PbMethod.Output.GoIdent | use }}, error) {
 	q := s.db.{{ $.EntMsg.Schema.Name }}.Create()
-	{{ range $.EntMsg.Fields -}}
+	{{ range $.EntRpc.EntReq.Fields -}}
 	{{ if .IsReadOnly -}}
 		{{ continue }}
 	{{ end -}}
