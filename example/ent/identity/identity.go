@@ -21,6 +21,8 @@ const (
 	FieldName = "name"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
+	// FieldDateUpdated holds the string denoting the date_updated field in the database.
+	FieldDateUpdated = "date_updated"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// Table holds the table name of the identity in the database.
@@ -40,6 +42,7 @@ var Columns = []string{
 	FieldDateCreated,
 	FieldName,
 	FieldEmail,
+	FieldDateUpdated,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "identities"
@@ -93,6 +96,11 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByEmail orders the results by the email field.
 func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEmail, opts...).ToFunc()
+}
+
+// ByDateUpdated orders the results by the date_updated field.
+func ByDateUpdated(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDateUpdated, opts...).ToFunc()
 }
 
 // ByOwnerField orders the results by owner field.

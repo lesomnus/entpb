@@ -40,6 +40,7 @@ message Identity {
 	// Name of the user
 	string name = 3;
 	optional string email = 4;
+	optional google.protobuf.Timestamp date_updated = 14;
 	google.protobuf.Timestamp date_created = 15;
 }
 

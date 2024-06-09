@@ -551,6 +551,7 @@ type IdentityMutation struct {
 	date_created  *time.Time
 	name          *string
 	email         *string
+	date_updated  *time.Time
 	clearedFields map[string]struct{}
 	owner         *uuid.UUID
 	clearedowner  bool
@@ -784,6 +785,55 @@ func (m *IdentityMutation) ResetEmail() {
 	delete(m.clearedFields, identity.FieldEmail)
 }
 
+// SetDateUpdated sets the "date_updated" field.
+func (m *IdentityMutation) SetDateUpdated(t time.Time) {
+	m.date_updated = &t
+}
+
+// DateUpdated returns the value of the "date_updated" field in the mutation.
+func (m *IdentityMutation) DateUpdated() (r time.Time, exists bool) {
+	v := m.date_updated
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDateUpdated returns the old "date_updated" field's value of the Identity entity.
+// If the Identity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *IdentityMutation) OldDateUpdated(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDateUpdated is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDateUpdated requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDateUpdated: %w", err)
+	}
+	return oldValue.DateUpdated, nil
+}
+
+// ClearDateUpdated clears the value of the "date_updated" field.
+func (m *IdentityMutation) ClearDateUpdated() {
+	m.date_updated = nil
+	m.clearedFields[identity.FieldDateUpdated] = struct{}{}
+}
+
+// DateUpdatedCleared returns if the "date_updated" field was cleared in this mutation.
+func (m *IdentityMutation) DateUpdatedCleared() bool {
+	_, ok := m.clearedFields[identity.FieldDateUpdated]
+	return ok
+}
+
+// ResetDateUpdated resets all changes to the "date_updated" field.
+func (m *IdentityMutation) ResetDateUpdated() {
+	m.date_updated = nil
+	delete(m.clearedFields, identity.FieldDateUpdated)
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by id.
 func (m *IdentityMutation) SetOwnerID(id uuid.UUID) {
 	m.owner = &id
@@ -857,7 +907,7 @@ func (m *IdentityMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *IdentityMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.date_created != nil {
 		fields = append(fields, identity.FieldDateCreated)
 	}
@@ -866,6 +916,9 @@ func (m *IdentityMutation) Fields() []string {
 	}
 	if m.email != nil {
 		fields = append(fields, identity.FieldEmail)
+	}
+	if m.date_updated != nil {
+		fields = append(fields, identity.FieldDateUpdated)
 	}
 	return fields
 }
@@ -881,6 +934,8 @@ func (m *IdentityMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case identity.FieldEmail:
 		return m.Email()
+	case identity.FieldDateUpdated:
+		return m.DateUpdated()
 	}
 	return nil, false
 }
@@ -896,6 +951,8 @@ func (m *IdentityMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldName(ctx)
 	case identity.FieldEmail:
 		return m.OldEmail(ctx)
+	case identity.FieldDateUpdated:
+		return m.OldDateUpdated(ctx)
 	}
 	return nil, fmt.Errorf("unknown Identity field %s", name)
 }
@@ -925,6 +982,13 @@ func (m *IdentityMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEmail(v)
+		return nil
+	case identity.FieldDateUpdated:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDateUpdated(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Identity field %s", name)
@@ -959,6 +1023,9 @@ func (m *IdentityMutation) ClearedFields() []string {
 	if m.FieldCleared(identity.FieldEmail) {
 		fields = append(fields, identity.FieldEmail)
 	}
+	if m.FieldCleared(identity.FieldDateUpdated) {
+		fields = append(fields, identity.FieldDateUpdated)
+	}
 	return fields
 }
 
@@ -976,6 +1043,9 @@ func (m *IdentityMutation) ClearField(name string) error {
 	case identity.FieldEmail:
 		m.ClearEmail()
 		return nil
+	case identity.FieldDateUpdated:
+		m.ClearDateUpdated()
+		return nil
 	}
 	return fmt.Errorf("unknown Identity nullable field %s", name)
 }
@@ -992,6 +1062,9 @@ func (m *IdentityMutation) ResetField(name string) error {
 		return nil
 	case identity.FieldEmail:
 		m.ResetEmail()
+		return nil
+	case identity.FieldDateUpdated:
+		m.ResetDateUpdated()
 		return nil
 	}
 	return fmt.Errorf("unknown Identity field %s", name)

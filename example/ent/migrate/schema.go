@@ -36,6 +36,7 @@ var (
 		{Name: "date_created", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString, Default: ""},
 		{Name: "email", Type: field.TypeString, Nullable: true},
+		{Name: "date_updated", Type: field.TypeTime, Nullable: true},
 		{Name: "user_identities", Type: field.TypeUUID},
 	}
 	// IdentitiesTable holds the schema information for the "identities" table.
@@ -46,7 +47,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "identities_users_identities",
-				Columns:    []*schema.Column{IdentitiesColumns[4]},
+				Columns:    []*schema.Column{IdentitiesColumns[5]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

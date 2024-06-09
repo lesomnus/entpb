@@ -64,6 +64,20 @@ func (ic *IdentityCreate) SetNillableEmail(s *string) *IdentityCreate {
 	return ic
 }
 
+// SetDateUpdated sets the "date_updated" field.
+func (ic *IdentityCreate) SetDateUpdated(t time.Time) *IdentityCreate {
+	ic.mutation.SetDateUpdated(t)
+	return ic
+}
+
+// SetNillableDateUpdated sets the "date_updated" field if the given value is not nil.
+func (ic *IdentityCreate) SetNillableDateUpdated(t *time.Time) *IdentityCreate {
+	if t != nil {
+		ic.SetDateUpdated(*t)
+	}
+	return ic
+}
+
 // SetID sets the "id" field.
 func (ic *IdentityCreate) SetID(u uuid.UUID) *IdentityCreate {
 	ic.mutation.SetID(u)
@@ -195,6 +209,10 @@ func (ic *IdentityCreate) createSpec() (*Identity, *sqlgraph.CreateSpec) {
 	if value, ok := ic.mutation.Email(); ok {
 		_spec.SetField(identity.FieldEmail, field.TypeString, value)
 		_node.Email = &value
+	}
+	if value, ok := ic.mutation.DateUpdated(); ok {
+		_spec.SetField(identity.FieldDateUpdated, field.TypeTime, value)
+		_node.DateUpdated = &value
 	}
 	if nodes := ic.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

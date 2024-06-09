@@ -41,6 +41,7 @@ message Identity {
 	// Name of the user
 	string name = 3;
 	string email = 4 [features.field_presence = EXPLICIT];
+	google.protobuf.Timestamp date_updated = 14 [features.field_presence = EXPLICIT];
 	google.protobuf.Timestamp date_created = 15;
 }
 

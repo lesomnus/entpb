@@ -29,6 +29,10 @@ func (s *IdentityServiceServer) Create(ctx context.Context, req *pb.Identity) (*
 	if v := req.Email; v != nil {
 		q.SetEmail(*v)
 	}
+	if v := req.DateUpdated; v != nil {
+		w := v.AsTime()
+		q.SetDateUpdated(w)
+	}
 
 	res, err := q.Save(ctx)
 	if err != nil {
@@ -81,6 +85,10 @@ func (s *IdentityServiceServer) Update(ctx context.Context, req *pb.UpdateIdenti
 	if v := req.Email; v != nil {
 		q.SetEmail(*v)
 	}
+	if v := req.DateUpdated; v != nil {
+		w := v.AsTime()
+		q.SetDateUpdated(w)
+	}
 
 	res, err := q.Save(ctx)
 	if err != nil {
@@ -95,6 +103,7 @@ func ToProtoIdentity(v *ent.Identity) *pb.Identity {
 	m.DateCreated = timestamppb.New(v.DateCreated)
 	m.Name = v.Name
 	m.Email = v.Email
+	m.DateUpdated = timestamppb.New(v.DateUpdated)
 	if v := v.Edges.Owner; v != nil {
 		m.Owner = &pb.Actor{Id: v.ID[:]}
 	}

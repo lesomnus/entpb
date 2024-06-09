@@ -81,6 +81,9 @@ func (p *Printer) NewTemplate(g *protogen.GeneratedFile) *template.Template {
 						$body
 					}`)
 			case field.TypeTime:
+				if ident_in[0] == '*' {
+					ident_in = ident_in[1:]
+				}
 				return fmt.Sprintf("%s := %s.AsTime()\n%s", ident_out, ident_in, b)
 
 			case field.TypeEnum:

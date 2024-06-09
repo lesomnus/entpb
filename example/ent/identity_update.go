@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -58,6 +59,26 @@ func (iu *IdentityUpdate) SetNillableEmail(s *string) *IdentityUpdate {
 // ClearEmail clears the value of the "email" field.
 func (iu *IdentityUpdate) ClearEmail() *IdentityUpdate {
 	iu.mutation.ClearEmail()
+	return iu
+}
+
+// SetDateUpdated sets the "date_updated" field.
+func (iu *IdentityUpdate) SetDateUpdated(t time.Time) *IdentityUpdate {
+	iu.mutation.SetDateUpdated(t)
+	return iu
+}
+
+// SetNillableDateUpdated sets the "date_updated" field if the given value is not nil.
+func (iu *IdentityUpdate) SetNillableDateUpdated(t *time.Time) *IdentityUpdate {
+	if t != nil {
+		iu.SetDateUpdated(*t)
+	}
+	return iu
+}
+
+// ClearDateUpdated clears the value of the "date_updated" field.
+func (iu *IdentityUpdate) ClearDateUpdated() *IdentityUpdate {
+	iu.mutation.ClearDateUpdated()
 	return iu
 }
 
@@ -122,6 +143,12 @@ func (iu *IdentityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if iu.mutation.EmailCleared() {
 		_spec.ClearField(identity.FieldEmail, field.TypeString)
 	}
+	if value, ok := iu.mutation.DateUpdated(); ok {
+		_spec.SetField(identity.FieldDateUpdated, field.TypeTime, value)
+	}
+	if iu.mutation.DateUpdatedCleared() {
+		_spec.ClearField(identity.FieldDateUpdated, field.TypeTime)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, iu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{identity.Label}
@@ -173,6 +200,26 @@ func (iuo *IdentityUpdateOne) SetNillableEmail(s *string) *IdentityUpdateOne {
 // ClearEmail clears the value of the "email" field.
 func (iuo *IdentityUpdateOne) ClearEmail() *IdentityUpdateOne {
 	iuo.mutation.ClearEmail()
+	return iuo
+}
+
+// SetDateUpdated sets the "date_updated" field.
+func (iuo *IdentityUpdateOne) SetDateUpdated(t time.Time) *IdentityUpdateOne {
+	iuo.mutation.SetDateUpdated(t)
+	return iuo
+}
+
+// SetNillableDateUpdated sets the "date_updated" field if the given value is not nil.
+func (iuo *IdentityUpdateOne) SetNillableDateUpdated(t *time.Time) *IdentityUpdateOne {
+	if t != nil {
+		iuo.SetDateUpdated(*t)
+	}
+	return iuo
+}
+
+// ClearDateUpdated clears the value of the "date_updated" field.
+func (iuo *IdentityUpdateOne) ClearDateUpdated() *IdentityUpdateOne {
+	iuo.mutation.ClearDateUpdated()
 	return iuo
 }
 
@@ -266,6 +313,12 @@ func (iuo *IdentityUpdateOne) sqlSave(ctx context.Context) (_node *Identity, err
 	}
 	if iuo.mutation.EmailCleared() {
 		_spec.ClearField(identity.FieldEmail, field.TypeString)
+	}
+	if value, ok := iuo.mutation.DateUpdated(); ok {
+		_spec.SetField(identity.FieldDateUpdated, field.TypeTime, value)
+	}
+	if iuo.mutation.DateUpdatedCleared() {
+		_spec.ClearField(identity.FieldDateUpdated, field.TypeTime)
 	}
 	_node = &Identity{config: iuo.config}
 	_spec.Assign = _node.assignValues

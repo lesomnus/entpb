@@ -5,7 +5,9 @@ edition = "2023";
 package entpb.directory;
 
 import "entpb/directory/common.proto";
+import "entpb/directory/extend.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 option features.field_presence = IMPLICIT;
 option go_package = "github.com/lesomnus/entpb/example/pb";
@@ -14,7 +16,7 @@ service AccountService {
 	rpc Create (Account) returns (Account);
 	rpc Delete (DeleteAccountRequest) returns (google.protobuf.Empty);
 	rpc Get (GetAccountRequest) returns (Account);
-	rpc Lock (Account) returns (google.protobuf.Empty);
+	rpc Lock (LockAccountRequest) returns (google.protobuf.Empty);
 	rpc Update (UpdateAccountRequest) returns (Account);
 }
 
@@ -92,6 +94,7 @@ message UpdateIdentityRequest {
 	// Name of the user
 	string name = 3 [features.field_presence = EXPLICIT];
 	string email = 4 [features.field_presence = EXPLICIT];
+	google.protobuf.Timestamp date_updated = 14 [features.field_presence = EXPLICIT];
 }
 
 message UpdateMembershipRequest {

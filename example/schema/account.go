@@ -62,7 +62,11 @@ func (Account) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entpb.Message(entpb.PathInherit,
 			entpb.WithService(entpb.PathInherit,
-				&entpb.Rpc{Ident: "Lock", Req: entpb.PbThis, Res: entpb.PbEmpty},
+				&entpb.Rpc{
+					Ident: "Lock",
+					Req:   entpb.PbType{Ident: "LockAccountRequest", Import: "entpb/directory/extend.proto"},
+					Res:   entpb.PbEmpty,
+				},
 			),
 		),
 	}

@@ -28,6 +28,11 @@ func (Identity) Fields() []ent.Field {
 			Annotations(entpb.Field(4)).
 			Optional().
 			Nillable(),
+
+		field.Time("date_updated").
+			Annotations(entpb.Field(14)).
+			Optional().
+			Nillable(),
 	}
 }
 

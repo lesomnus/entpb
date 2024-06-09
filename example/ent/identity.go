@@ -25,6 +25,8 @@ type Identity struct {
 	Name string `json:"name,omitempty"`
 	// Email holds the value of the "email" field.
 	Email *string `json:"email,omitempty"`
+	// DateUpdated holds the value of the "date_updated" field.
+	DateUpdated *time.Time `json:"date_updated,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the IdentityQuery when eager-loading is set.
 	Edges           IdentityEdges `json:"edges"`
@@ -59,7 +61,7 @@ func (*Identity) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case identity.FieldName, identity.FieldEmail:
 			values[i] = new(sql.NullString)
-		case identity.FieldDateCreated:
+		case identity.FieldDateCreated, identity.FieldDateUpdated:
 			values[i] = new(sql.NullTime)
 		case identity.FieldID:
 			values[i] = new(uuid.UUID)
@@ -104,6 +106,13 @@ func (i *Identity) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				i.Email = new(string)
 				*i.Email = value.String
+			}
+		case identity.FieldDateUpdated:
+			if value, ok := values[j].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field date_updated", values[j])
+			} else if value.Valid {
+				i.DateUpdated = new(time.Time)
+				*i.DateUpdated = value.Time
 			}
 		case identity.ForeignKeys[0]:
 			if value, ok := values[j].(*sql.NullScanner); !ok {
@@ -162,6 +171,11 @@ func (i *Identity) String() string {
 	if v := i.Email; v != nil {
 		builder.WriteString("email=")
 		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := i.DateUpdated; v != nil {
+		builder.WriteString("date_updated=")
+		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteByte(')')
 	return builder.String()

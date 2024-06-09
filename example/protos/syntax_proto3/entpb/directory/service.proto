@@ -5,7 +5,9 @@ syntax = "proto3";
 package entpb.directory;
 
 import "entpb/directory/common.proto";
+import "entpb/directory/extend.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/lesomnus/entpb/example/pb";
 
@@ -13,7 +15,7 @@ service AccountService {
 	rpc Create (Account) returns (Account);
 	rpc Delete (DeleteAccountRequest) returns (google.protobuf.Empty);
 	rpc Get (GetAccountRequest) returns (Account);
-	rpc Lock (Account) returns (google.protobuf.Empty);
+	rpc Lock (LockAccountRequest) returns (google.protobuf.Empty);
 	rpc Update (UpdateAccountRequest) returns (Account);
 }
 
@@ -91,6 +93,7 @@ message UpdateIdentityRequest {
 	// Name of the user
 	optional string name = 3;
 	optional string email = 4;
+	optional google.protobuf.Timestamp date_updated = 14;
 }
 
 message UpdateMembershipRequest {

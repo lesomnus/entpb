@@ -36,7 +36,7 @@ type AccountServiceClient interface {
 	Create(ctx context.Context, in *Account, opts ...grpc.CallOption) (*Account, error)
 	Delete(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Get(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*Account, error)
-	Lock(ctx context.Context, in *Account, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Lock(ctx context.Context, in *LockAccountRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Update(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*Account, error)
 }
 
@@ -78,7 +78,7 @@ func (c *accountServiceClient) Get(ctx context.Context, in *GetAccountRequest, o
 	return out, nil
 }
 
-func (c *accountServiceClient) Lock(ctx context.Context, in *Account, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *accountServiceClient) Lock(ctx context.Context, in *LockAccountRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, AccountService_Lock_FullMethodName, in, out, cOpts...)
@@ -105,7 +105,7 @@ type AccountServiceServer interface {
 	Create(context.Context, *Account) (*Account, error)
 	Delete(context.Context, *DeleteAccountRequest) (*emptypb.Empty, error)
 	Get(context.Context, *GetAccountRequest) (*Account, error)
-	Lock(context.Context, *Account) (*emptypb.Empty, error)
+	Lock(context.Context, *LockAccountRequest) (*emptypb.Empty, error)
 	Update(context.Context, *UpdateAccountRequest) (*Account, error)
 	mustEmbedUnimplementedAccountServiceServer()
 }
@@ -123,7 +123,7 @@ func (UnimplementedAccountServiceServer) Delete(context.Context, *DeleteAccountR
 func (UnimplementedAccountServiceServer) Get(context.Context, *GetAccountRequest) (*Account, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedAccountServiceServer) Lock(context.Context, *Account) (*emptypb.Empty, error) {
+func (UnimplementedAccountServiceServer) Lock(context.Context, *LockAccountRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Lock not implemented")
 }
 func (UnimplementedAccountServiceServer) Update(context.Context, *UpdateAccountRequest) (*Account, error) {
@@ -197,7 +197,7 @@ func _AccountService_Get_Handler(srv interface{}, ctx context.Context, dec func(
 }
 
 func _AccountService_Lock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Account)
+	in := new(LockAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -209,7 +209,7 @@ func _AccountService_Lock_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: AccountService_Lock_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).Lock(ctx, req.(*Account))
+		return srv.(AccountServiceServer).Lock(ctx, req.(*LockAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

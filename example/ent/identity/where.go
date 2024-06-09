@@ -71,6 +71,11 @@ func Email(v string) predicate.Identity {
 	return predicate.Identity(sql.FieldEQ(FieldEmail, v))
 }
 
+// DateUpdated applies equality check predicate on the "date_updated" field. It's identical to DateUpdatedEQ.
+func DateUpdated(v time.Time) predicate.Identity {
+	return predicate.Identity(sql.FieldEQ(FieldDateUpdated, v))
+}
+
 // DateCreatedEQ applies the EQ predicate on the "date_created" field.
 func DateCreatedEQ(v time.Time) predicate.Identity {
 	return predicate.Identity(sql.FieldEQ(FieldDateCreated, v))
@@ -249,6 +254,56 @@ func EmailEqualFold(v string) predicate.Identity {
 // EmailContainsFold applies the ContainsFold predicate on the "email" field.
 func EmailContainsFold(v string) predicate.Identity {
 	return predicate.Identity(sql.FieldContainsFold(FieldEmail, v))
+}
+
+// DateUpdatedEQ applies the EQ predicate on the "date_updated" field.
+func DateUpdatedEQ(v time.Time) predicate.Identity {
+	return predicate.Identity(sql.FieldEQ(FieldDateUpdated, v))
+}
+
+// DateUpdatedNEQ applies the NEQ predicate on the "date_updated" field.
+func DateUpdatedNEQ(v time.Time) predicate.Identity {
+	return predicate.Identity(sql.FieldNEQ(FieldDateUpdated, v))
+}
+
+// DateUpdatedIn applies the In predicate on the "date_updated" field.
+func DateUpdatedIn(vs ...time.Time) predicate.Identity {
+	return predicate.Identity(sql.FieldIn(FieldDateUpdated, vs...))
+}
+
+// DateUpdatedNotIn applies the NotIn predicate on the "date_updated" field.
+func DateUpdatedNotIn(vs ...time.Time) predicate.Identity {
+	return predicate.Identity(sql.FieldNotIn(FieldDateUpdated, vs...))
+}
+
+// DateUpdatedGT applies the GT predicate on the "date_updated" field.
+func DateUpdatedGT(v time.Time) predicate.Identity {
+	return predicate.Identity(sql.FieldGT(FieldDateUpdated, v))
+}
+
+// DateUpdatedGTE applies the GTE predicate on the "date_updated" field.
+func DateUpdatedGTE(v time.Time) predicate.Identity {
+	return predicate.Identity(sql.FieldGTE(FieldDateUpdated, v))
+}
+
+// DateUpdatedLT applies the LT predicate on the "date_updated" field.
+func DateUpdatedLT(v time.Time) predicate.Identity {
+	return predicate.Identity(sql.FieldLT(FieldDateUpdated, v))
+}
+
+// DateUpdatedLTE applies the LTE predicate on the "date_updated" field.
+func DateUpdatedLTE(v time.Time) predicate.Identity {
+	return predicate.Identity(sql.FieldLTE(FieldDateUpdated, v))
+}
+
+// DateUpdatedIsNil applies the IsNil predicate on the "date_updated" field.
+func DateUpdatedIsNil() predicate.Identity {
+	return predicate.Identity(sql.FieldIsNull(FieldDateUpdated))
+}
+
+// DateUpdatedNotNil applies the NotNil predicate on the "date_updated" field.
+func DateUpdatedNotNil() predicate.Identity {
+	return predicate.Identity(sql.FieldNotNull(FieldDateUpdated))
 }
 
 // HasOwner applies the HasEdge predicate on the "owner" edge.
