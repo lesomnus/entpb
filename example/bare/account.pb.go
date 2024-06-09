@@ -103,7 +103,7 @@ func ToProtoAccount(v *ent.Account) *pb.Account {
 	m.Id = v.ID[:]
 	m.DateCreated = timestamppb.New(v.DateCreated)
 	m.Alias = v.Alias
-	m.Role = toPbGroupRole(v.Role)
+	GroupRole = toPbm.Role(v.Role)
 	if v := v.Edges.Owner; v != nil {
 		m.Owner = &pb.Actor{Id: v.ID[:]}
 	}

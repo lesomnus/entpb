@@ -89,21 +89,33 @@ func (p *Printer) NewTemplate(g *protogen.GeneratedFile) *template.Template {
 			case field.TypeEnum:
 				o := fmt.Sprintf("toEnt%s(%s)", f.EntInfo.RType.Name, ident_in)
 				return strings.ReplaceAll(body, "@", o)
+
 			default:
 				return strings.ReplaceAll(body, "@", ident_in)
 			}
 		},
-		"to_pb": func(f *entpb.FieldAnnotation, ident_in string) string {
+		"to_pb": func(f *entpb.FieldAnnotation, ident_in string, ident_out string) string {
 			t := f.EntInfo.Type
 			switch t {
 			case field.TypeUUID:
-				return fmt.Sprintf("%s[:]", ident_in)
+				return fmt.Sprintf("%s = %s[:]", ident_out, ident_in)
+
 			case field.TypeTime:
-				return fmt.Sprintf("%s(%s)", g.QualifiedGoIdent(importTimestamp.Ident("New")), ident_in)
+				if !f.IsOptional {
+					return fmt.Sprintf("%s = %s(%s)",
+						ident_out, g.QualifiedGoIdent(importTimestamp.Ident("New")), ident_in)
+				}
+				return fmt.Sprintf(
+					`if %s != nil {
+						%s = %s(*%s)
+					}`,
+					ident_in, ident_out, g.QualifiedGoIdent(importTimestamp.Ident("New")), ident_in)
+
 			case field.TypeEnum:
-				return fmt.Sprintf("toPb%s(%s)", f.PbType.Ident, ident_in)
+				return fmt.Sprintf("%s = toPb%s(%s)", f.PbType.Ident, ident_out, ident_in)
+
 			default:
-				return ident_in
+				return fmt.Sprintf("%s = %s", ident_out, ident_in)
 			}
 		},
 	})

@@ -103,7 +103,9 @@ func ToProtoIdentity(v *ent.Identity) *pb.Identity {
 	m.DateCreated = timestamppb.New(v.DateCreated)
 	m.Name = v.Name
 	m.Email = v.Email
-	m.DateUpdated = timestamppb.New(v.DateUpdated)
+	if v.DateUpdated != nil {
+		m.DateUpdated = timestamppb.New(*v.DateUpdated)
+	}
 	if v := v.Edges.Owner; v != nil {
 		m.Owner = &pb.Actor{Id: v.ID[:]}
 	}

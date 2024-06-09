@@ -17,7 +17,7 @@ func ToProto{{ $.EntMsg.Schema.Name }}(v *{{ $.Ent.Ident $.EntMsg.Schema.Name | 
 		}
 		{{ end -}}
 	{{ else -}}
-	{{ $pb_field }} = {{ to_pb . $ent_field }}
+	{{ to_pb . $ent_field $pb_field }}
 	{{ end -}}
 	{{ end -}}
 
