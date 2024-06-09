@@ -78,20 +78,16 @@ message GetMembershipRequest {
 
 message UpdateAccountRequest {
 	bytes id = 1;
-	optional Actor owner = 2;
 	optional string alias = 3;
 	optional GroupRole role = 4;
 }
 
 message UpdateActorRequest {
 	bytes id = 1;
-	repeated Actor children = 2;
-	optional Actor referer = 3;
 }
 
 message UpdateIdentityRequest {
 	bytes id = 1;
-	optional Actor owner = 2;
 	// Name of the user
 	optional string name = 3;
 	optional string email = 4;

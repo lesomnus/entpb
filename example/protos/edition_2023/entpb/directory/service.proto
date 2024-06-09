@@ -79,20 +79,16 @@ message GetMembershipRequest {
 
 message UpdateAccountRequest {
 	bytes id = 1;
-	Actor owner = 2 [features.field_presence = EXPLICIT];
 	string alias = 3 [features.field_presence = EXPLICIT];
 	GroupRole role = 4 [features.field_presence = EXPLICIT];
 }
 
 message UpdateActorRequest {
 	bytes id = 1;
-	repeated Actor children = 2;
-	Actor referer = 3 [features.field_presence = EXPLICIT];
 }
 
 message UpdateIdentityRequest {
 	bytes id = 1;
-	Actor owner = 2 [features.field_presence = EXPLICIT];
 	// Name of the user
 	string name = 3 [features.field_presence = EXPLICIT];
 	string email = 4 [features.field_presence = EXPLICIT];

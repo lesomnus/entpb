@@ -27,11 +27,6 @@ func (s *AccountServiceServer) Create(ctx context.Context, req *pb.Account) (*pb
 	q := s.db.Account.Create()
 	q.SetAlias(req.Alias)
 	q.SetRole(toEntRole(req.Role))
-	if v, err := uuid.FromBytes(req.Owner.GetId()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "owner: %s", err)
-	} else {
-		q.SetOwnerID(v)
-	}
 
 	res, err := q.Save(ctx)
 	if err != nil {

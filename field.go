@@ -39,7 +39,9 @@ type FieldAnnotation struct {
 	IsOptional  bool `mapstructure:"-"`
 	IsRepeated  bool `mapstructure:"-"`
 	IsImmutable bool `mapstructure:"-"`
-	IsReadOnly  bool // Make this field cannot be set manually.
+
+	IsExplicitReadOnly bool
+	IsExplicitWritable bool
 }
 
 func (a *FieldAnnotation) IsOneof() bool {
@@ -57,14 +59,34 @@ func (a *FieldAnnotation) IsEdge() bool {
 	return a.EntInfo == nil
 }
 
+func (a *FieldAnnotation) IsReadOnly() bool {
+	if a.IsEdge() {
+		return !a.IsExplicitWritable
+	} else {
+		return a.IsExplicitReadOnly
+	}
+}
+
+func (a *FieldAnnotation) IsWritable() bool {
+	return !a.IsReadOnly()
+}
+
 func (FieldAnnotation) Name() string {
 	return FieldAnnotationLabel
 }
 
-type fieldOptReadonly struct{}
+type fieldOptReadOnly struct{}
 
-func (o *fieldOptReadonly) fieldOpt(t *FieldAnnotation) {
-	t.IsReadOnly = true
+func (o *fieldOptReadOnly) fieldOpt(t *FieldAnnotation) {
+	t.IsExplicitReadOnly = true
 }
 
-func WithReadOnly() FieldOption { return &fieldOptReadonly{} }
+func WithReadOnly() FieldOption { return &fieldOptReadOnly{} }
+
+type fieldOptWritable struct{}
+
+func (o *fieldOptWritable) fieldOpt(t *FieldAnnotation) {
+	t.IsExplicitWritable = true
+}
+
+func WithWritable() FieldOption { return &fieldOptWritable{} }

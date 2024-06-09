@@ -25,18 +25,6 @@ func NewActorServiceServer(db *ent.Client) *ActorServiceServer {
 }
 func (s *ActorServiceServer) Create(ctx context.Context, req *pb.Actor) (*pb.Actor, error) {
 	q := s.db.User.Create()
-	if v, err := uuid.FromBytes(req.Referer.GetId()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "referer: %s", err)
-	} else {
-		q.SetParentID(v)
-	}
-	for _, v := range req.Children {
-		if w, err := uuid.FromBytes(v.GetId()); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "children: %s", err)
-		} else {
-			q.AddChildIDs(w)
-		}
-	}
 
 	res, err := q.Save(ctx)
 	if err != nil {
@@ -85,20 +73,6 @@ func (s *ActorServiceServer) Update(ctx context.Context, req *pb.UpdateActorRequ
 	}
 
 	q := s.db.User.UpdateOneID(id)
-	if v := req.Referer; v != nil {
-		if w, err := uuid.FromBytes(v.GetId()); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "referer: %s", err)
-		} else {
-			q.SetParentID(w)
-		}
-	}
-	for _, v := range req.GetChildren() {
-		if w, err := uuid.FromBytes(v.GetId()); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "children: %s", err)
-		} else {
-			q.AddChildIDs(w)
-		}
-	}
 
 	res, err := q.Save(ctx)
 	if err != nil {

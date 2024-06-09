@@ -366,7 +366,7 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 					msg.Fields = append(msg.Fields, field)
 					continue
 				}
-				if field.IsReadOnly {
+				if field.IsReadOnly() {
 					continue
 				}
 

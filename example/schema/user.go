@@ -25,7 +25,7 @@ func (User) Edges() []ent.Edge {
 			Annotations(entpb.Field(3, entpb.WithName("referer"))).
 			Unique(),
 		edge.To("identities", Identity.Type).
-			Annotations(entpb.Field(4, entpb.WithReadOnly())),
+			Annotations(entpb.Field(4)),
 		edge.To("accounts", Account.Type),
 		edge.To("memberships", Membership.Type),
 	}

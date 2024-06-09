@@ -29,11 +29,6 @@ func (s *IdentityServiceServer) Create(ctx context.Context, req *pb.Identity) (*
 	if v := req.Email; v != nil {
 		q.SetEmail(*v)
 	}
-	if v, err := uuid.FromBytes(req.Owner.GetId()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "owner: %s", err)
-	} else {
-		q.SetOwnerID(v)
-	}
 
 	res, err := q.Save(ctx)
 	if err != nil {
