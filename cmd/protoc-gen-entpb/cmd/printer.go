@@ -119,18 +119,6 @@ func (p *Printer) PrintService(pb_file *protogen.File) error {
 			return nil
 		}
 
-		o := p.NewGeneratedFile(strcase.ToKebab(string(ent_service.Message.Ident)))
-		tpl := p.NewTemplate(o)
-		if err := tpl.ExecuteTemplate(o, "server-struct.go.tpl", struct {
-			imports
-			PbSvc *protogen.Service
-		}{
-			imports: imports_,
-			PbSvc:   pb_service,
-		}); err != nil {
-			return fmt.Errorf("server-struct: %w", err)
-		}
-
 		ctx := struct {
 			imports
 			PbSvc    *protogen.Service
@@ -142,6 +130,16 @@ func (p *Printer) PrintService(pb_file *protogen.File) error {
 			PbSvc:   pb_service,
 			EntMsg:  ent_service.Message,
 		}
+
+		o := p.NewGeneratedFile(strcase.ToKebab(string(ent_service.Message.Ident)))
+		tpl := p.NewTemplate(o)
+		if err := tpl.ExecuteTemplate(o, "server-struct.go.tpl", ctx); err != nil {
+			return fmt.Errorf("server-struct: %w", err)
+		}
+		if err := tpl.ExecuteTemplate(o, "constructor.go.tpl", ctx); err != nil {
+			return fmt.Errorf("constructor: %w", err)
+		}
+
 		for _, pb_method := range pb_service.Methods {
 			ent_rpc, ok := ent_service.Rpcs[ident.Ident(pb_method.Desc.Name())]
 			if !ok {

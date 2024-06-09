@@ -22,5 +22,3 @@ import {{ with .Visibility }}{{ . }} {{ end }}"{{ .Name }}";
 {{- $empty_line = ne .TemplateName "comment" }}
 {{ include .TemplateName . }}
 {{- end }}
-
-{{- /**/ -}}

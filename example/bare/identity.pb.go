@@ -20,6 +20,9 @@ type IdentityServiceServer struct {
 	pb.UnimplementedIdentityServiceServer
 }
 
+func NewIdentityServiceServer(db *ent.Client) *IdentityServiceServer {
+	return &IdentityServiceServer{db: db}
+}
 func (s *IdentityServiceServer) Create(ctx context.Context, req *pb.Identity) (*pb.Identity, error) {
 	q := s.db.Identity.Create()
 	q.SetName(req.Name)
@@ -37,7 +40,7 @@ func (s *IdentityServiceServer) Create(ctx context.Context, req *pb.Identity) (*
 		return nil, runtime.EntErrorToStatus(err)
 	}
 
-	return toProtoIdentity(res), nil
+	return ToProtoIdentity(res), nil
 }
 func (s *IdentityServiceServer) Delete(ctx context.Context, req *pb.DeleteIdentityRequest) (*emptypb.Empty, error) {
 	q := s.db.Identity.Delete()
@@ -68,7 +71,7 @@ func (s *IdentityServiceServer) Get(ctx context.Context, req *pb.GetIdentityRequ
 		return nil, runtime.EntErrorToStatus(err)
 	}
 
-	return toProtoIdentity(res), nil
+	return ToProtoIdentity(res), nil
 }
 func (s *IdentityServiceServer) Update(ctx context.Context, req *pb.UpdateIdentityRequest) (*pb.Identity, error) {
 	id, err := uuid.FromBytes(req.GetId())
@@ -89,9 +92,9 @@ func (s *IdentityServiceServer) Update(ctx context.Context, req *pb.UpdateIdenti
 		return nil, runtime.EntErrorToStatus(err)
 	}
 
-	return toProtoIdentity(res), nil
+	return ToProtoIdentity(res), nil
 }
-func toProtoIdentity(v *ent.Identity) *pb.Identity {
+func ToProtoIdentity(v *ent.Identity) *pb.Identity {
 	m := &pb.Identity{}
 	m.Id = v.ID[:]
 	m.DateCreated = timestamppb.New(v.DateCreated)

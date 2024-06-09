@@ -20,6 +20,9 @@ type ActorServiceServer struct {
 	pb.UnimplementedActorServiceServer
 }
 
+func NewActorServiceServer(db *ent.Client) *ActorServiceServer {
+	return &ActorServiceServer{db: db}
+}
 func (s *ActorServiceServer) Create(ctx context.Context, req *pb.Actor) (*pb.Actor, error) {
 	q := s.db.User.Create()
 	if v, err := uuid.FromBytes(req.Referer.GetId()); err != nil {
@@ -40,7 +43,7 @@ func (s *ActorServiceServer) Create(ctx context.Context, req *pb.Actor) (*pb.Act
 		return nil, runtime.EntErrorToStatus(err)
 	}
 
-	return toProtoUser(res), nil
+	return ToProtoUser(res), nil
 }
 func (s *ActorServiceServer) Delete(ctx context.Context, req *pb.DeleteActorRequest) (*emptypb.Empty, error) {
 	q := s.db.User.Delete()
@@ -73,7 +76,7 @@ func (s *ActorServiceServer) Get(ctx context.Context, req *pb.GetActorRequest) (
 		return nil, runtime.EntErrorToStatus(err)
 	}
 
-	return toProtoUser(res), nil
+	return ToProtoUser(res), nil
 }
 func (s *ActorServiceServer) Update(ctx context.Context, req *pb.UpdateActorRequest) (*pb.Actor, error) {
 	id, err := uuid.FromBytes(req.GetId())
@@ -102,9 +105,9 @@ func (s *ActorServiceServer) Update(ctx context.Context, req *pb.UpdateActorRequ
 		return nil, runtime.EntErrorToStatus(err)
 	}
 
-	return toProtoUser(res), nil
+	return ToProtoUser(res), nil
 }
-func toProtoUser(v *ent.User) *pb.Actor {
+func ToProtoUser(v *ent.User) *pb.Actor {
 	m := &pb.Actor{}
 	m.Id = v.ID[:]
 	m.DateCreated = timestamppb.New(v.DateCreated)

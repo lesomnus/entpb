@@ -20,6 +20,9 @@ type AccountServiceServer struct {
 	pb.UnimplementedAccountServiceServer
 }
 
+func NewAccountServiceServer(db *ent.Client) *AccountServiceServer {
+	return &AccountServiceServer{db: db}
+}
 func (s *AccountServiceServer) Create(ctx context.Context, req *pb.Account) (*pb.Account, error) {
 	q := s.db.Account.Create()
 	q.SetAlias(req.Alias)
@@ -35,7 +38,7 @@ func (s *AccountServiceServer) Create(ctx context.Context, req *pb.Account) (*pb
 		return nil, runtime.EntErrorToStatus(err)
 	}
 
-	return toProtoAccount(res), nil
+	return ToProtoAccount(res), nil
 }
 func (s *AccountServiceServer) Delete(ctx context.Context, req *pb.DeleteAccountRequest) (*emptypb.Empty, error) {
 	q := s.db.Account.Delete()
@@ -77,7 +80,7 @@ func (s *AccountServiceServer) Get(ctx context.Context, req *pb.GetAccountReques
 		return nil, runtime.EntErrorToStatus(err)
 	}
 
-	return toProtoAccount(res), nil
+	return ToProtoAccount(res), nil
 }
 func (s *AccountServiceServer) Update(ctx context.Context, req *pb.UpdateAccountRequest) (*pb.Account, error) {
 	id, err := uuid.FromBytes(req.GetId())
@@ -98,9 +101,9 @@ func (s *AccountServiceServer) Update(ctx context.Context, req *pb.UpdateAccount
 		return nil, runtime.EntErrorToStatus(err)
 	}
 
-	return toProtoAccount(res), nil
+	return ToProtoAccount(res), nil
 }
-func toProtoAccount(v *ent.Account) *pb.Account {
+func ToProtoAccount(v *ent.Account) *pb.Account {
 	m := &pb.Account{}
 	m.Id = v.ID[:]
 	m.DateCreated = timestamppb.New(v.DateCreated)

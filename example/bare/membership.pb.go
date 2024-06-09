@@ -20,6 +20,9 @@ type MembershipServiceServer struct {
 	pb.UnimplementedMembershipServiceServer
 }
 
+func NewMembershipServiceServer(db *ent.Client) *MembershipServiceServer {
+	return &MembershipServiceServer{db: db}
+}
 func (s *MembershipServiceServer) Create(ctx context.Context, req *pb.Membership) (*pb.Membership, error) {
 	q := s.db.Membership.Create()
 
@@ -28,7 +31,7 @@ func (s *MembershipServiceServer) Create(ctx context.Context, req *pb.Membership
 		return nil, runtime.EntErrorToStatus(err)
 	}
 
-	return toProtoMembership(res), nil
+	return ToProtoMembership(res), nil
 }
 func (s *MembershipServiceServer) Delete(ctx context.Context, req *pb.DeleteMembershipRequest) (*emptypb.Empty, error) {
 	q := s.db.Membership.Delete()
@@ -58,7 +61,7 @@ func (s *MembershipServiceServer) Get(ctx context.Context, req *pb.GetMembership
 		return nil, runtime.EntErrorToStatus(err)
 	}
 
-	return toProtoMembership(res), nil
+	return ToProtoMembership(res), nil
 }
 func (s *MembershipServiceServer) Update(ctx context.Context, req *pb.UpdateMembershipRequest) (*pb.Membership, error) {
 	id, err := uuid.FromBytes(req.GetId())
@@ -73,9 +76,9 @@ func (s *MembershipServiceServer) Update(ctx context.Context, req *pb.UpdateMemb
 		return nil, runtime.EntErrorToStatus(err)
 	}
 
-	return toProtoMembership(res), nil
+	return ToProtoMembership(res), nil
 }
-func toProtoMembership(v *ent.Membership) *pb.Membership {
+func ToProtoMembership(v *ent.Membership) *pb.Membership {
 	m := &pb.Membership{}
 	m.Id = v.ID[:]
 	m.DateCreated = timestamppb.New(v.DateCreated)

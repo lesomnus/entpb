@@ -1,5 +1,5 @@
 {{ $pb_type := print $.EntMsg.Ident | $.Pb.Ident | use -}}
-func toProto{{ $.EntMsg.Schema.Name }}(v *{{ $.Ent.Ident $.EntMsg.Schema.Name | use }}) *{{ $pb_type }} {
+func ToProto{{ $.EntMsg.Schema.Name }}(v *{{ $.Ent.Ident $.EntMsg.Schema.Name | use }}) *{{ $pb_type }} {
 	m := &{{ $pb_type }}{}
 	{{ range $.EntMsg.Fields -}}
 	{{ $pb_field := print "m." (pascal (print .Ident)) -}}

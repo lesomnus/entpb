@@ -30,5 +30,5 @@ func (s *{{ print $.PbSvc.GoName "Server" }}) {{ $.PbMethod.GoName }}(ctx {{ imp
 		return nil, {{ $.Runtime.Ident "EntErrorToStatus" | use }}(err)
 	}
 
-	 return toProto{{ $.EntMsg.Schema.Name }}(res), nil
+	 return ToProto{{ $.EntMsg.Schema.Name }}(res), nil
 }

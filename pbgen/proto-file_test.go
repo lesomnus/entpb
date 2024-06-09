@@ -21,7 +21,8 @@ func TestProtoFile(t *testing.T) {
 		require.NoError(err)
 
 		v := o.String()
-		require.Equal(`edition = "2023";`, v)
+		require.Equal(`edition = "2023";
+`, v)
 	})
 
 	t.Run("package", func(t *testing.T) {
@@ -38,7 +39,8 @@ func TestProtoFile(t *testing.T) {
 		v := o.String()
 		require.Equal(`edition = "2023";
 
-package foo.bar.baz;`, v)
+package foo.bar.baz;
+`, v)
 	})
 
 	t.Run("import", func(t *testing.T) {
@@ -61,7 +63,8 @@ package foo.bar.baz;`, v)
 
 import "/foo/a.proto";
 import weak "/foo/b.proto";
-import public "/foo/c.proto";`, v)
+import public "/foo/c.proto";
+`, v)
 	})
 
 	t.Run("option", func(t *testing.T) {
@@ -78,7 +81,8 @@ import public "/foo/c.proto";`, v)
 		v := o.String()
 		require.Equal(`edition = "2023";
 
-option go_package = "foo.bar.baz";`, v)
+option go_package = "foo.bar.baz";
+`, v)
 	})
 
 	t.Run("messages", func(t *testing.T) {
@@ -114,7 +118,8 @@ message User {
 
 message Account {
 	bytes id = 1;
-}`, v)
+}
+`, v)
 	})
 
 	t.Run("messages with comment", func(t *testing.T) {
@@ -154,6 +159,7 @@ message User {
 // bar
 message Account {
 	bytes id = 1;
-}`, v)
+}
+`, v)
 	})
 }
