@@ -420,12 +420,12 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 			rpc.EntRes = d
 
 		default:
-			if rpc.Req.Equal(&PbThis) {
-				rpc.Req = d.pbType()
-			}
-			if rpc.Res.Equal(&PbThis) {
-				rpc.Res = d.pbType()
-			}
+			r := strings.NewReplacer(PbThis.Import, string(d.pbType().Ident))
+			rpc.Req.Ident = ident.Ident(r.Replace(string(rpc.Req.Ident)))
+			rpc.Res.Ident = ident.Ident(r.Replace(string(rpc.Res.Ident)))
+			r = strings.NewReplacer(PbThis.Import, d.pbType().Import)
+			rpc.Req.Import = r.Replace(rpc.Req.Import)
+			rpc.Res.Import = r.Replace(rpc.Res.Import)
 
 			if rpc.Req.Import == "" {
 				return fmt.Errorf(`RPC "%s": parameter type must be message`, rpc.Ident)
