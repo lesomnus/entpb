@@ -112,7 +112,7 @@ func (p *Printer) NewTemplate(g *protogen.GeneratedFile) *template.Template {
 					ident_in, ident_out, g.QualifiedGoIdent(importTimestamp.Ident("New")), ident_in)
 
 			case field.TypeEnum:
-				return fmt.Sprintf("%s = toPb%s(%s)", f.PbType.Ident, ident_out, ident_in)
+				return fmt.Sprintf("%s = toPb%s(%s)", ident_out, f.PbType.Ident, ident_in)
 
 			default:
 				return fmt.Sprintf("%s = %s", ident_out, ident_in)
