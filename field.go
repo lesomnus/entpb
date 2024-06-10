@@ -59,6 +59,10 @@ func (a *FieldAnnotation) IsEdge() bool {
 	return a.EntInfo == nil
 }
 
+func (a *FieldAnnotation) IsRequired() bool {
+	return !a.IsOptional
+}
+
 func (a *FieldAnnotation) IsReadOnly() bool {
 	if a.IsEdge() {
 		return !a.IsExplicitWritable

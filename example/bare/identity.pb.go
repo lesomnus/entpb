@@ -31,9 +31,18 @@ func (s *IdentityServiceServer) Create(ctx context.Context, req *pb.CreateIdenti
 	if v := req.Email; v != nil {
 		q.SetEmail(*v)
 	}
-	if v := req.DateUpdated; v != nil {
+	if v := req.GetDateUpdated(); v != nil {
 		w := v.AsTime()
 		q.SetDateUpdated(w)
+	}
+	if v := req.GetOwner().GetId(); v == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "field \"owner\" not provided")
+	} else {
+		if w, err := uuid.FromBytes(v); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "owner: %s", err)
+		} else {
+			q.SetOwnerID(w)
+		}
 	}
 
 	res, err := q.Save(ctx)

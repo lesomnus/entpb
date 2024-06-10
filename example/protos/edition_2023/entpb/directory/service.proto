@@ -42,34 +42,26 @@ service MembershipService {
 }
 
 message CreateAccountRequest {
-	bytes id = 1 [features.field_presence = EXPLICIT];
 	Actor owner = 2;
 	string alias = 3 [features.field_presence = EXPLICIT];
 	GroupRole role = 4;
-	google.protobuf.Timestamp date_created = 15 [features.field_presence = EXPLICIT];
 }
 
 message CreateActorRequest {
-	bytes id = 1 [features.field_presence = EXPLICIT];
 	repeated Actor children = 2;
 	Actor referer = 3 [features.field_presence = EXPLICIT];
 	repeated Identity identities = 4;
-	google.protobuf.Timestamp date_created = 15 [features.field_presence = EXPLICIT];
 }
 
 message CreateIdentityRequest {
-	bytes id = 1 [features.field_presence = EXPLICIT];
 	Actor owner = 2;
 	// Name of the user
 	string name = 3 [features.field_presence = EXPLICIT];
 	string email = 4 [features.field_presence = EXPLICIT];
 	google.protobuf.Timestamp date_updated = 14 [features.field_presence = EXPLICIT];
-	google.protobuf.Timestamp date_created = 15 [features.field_presence = EXPLICIT];
 }
 
 message CreateMembershipRequest {
-	bytes id = 1 [features.field_presence = EXPLICIT];
-	google.protobuf.Timestamp date_created = 15 [features.field_presence = EXPLICIT];
 }
 
 message DeleteAccountRequest {

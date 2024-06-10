@@ -28,7 +28,16 @@ func (s *AccountServiceServer) Create(ctx context.Context, req *pb.CreateAccount
 	if v := req.Alias; v != nil {
 		q.SetAlias(*v)
 	}
-	q.SetRole(toEntRole(req.Role))
+	q.SetRole(toEntRole(req.GetRole()))
+	if v := req.GetOwner().GetId(); v == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "field \"owner\" not provided")
+	} else {
+		if w, err := uuid.FromBytes(v); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "owner: %s", err)
+		} else {
+			q.SetOwnerID(w)
+		}
+	}
 
 	res, err := q.Save(ctx)
 	if err != nil {

@@ -41,34 +41,26 @@ service MembershipService {
 }
 
 message CreateAccountRequest {
-	optional bytes id = 1;
 	Actor owner = 2;
 	optional string alias = 3;
 	GroupRole role = 4;
-	optional google.protobuf.Timestamp date_created = 15;
 }
 
 message CreateActorRequest {
-	optional bytes id = 1;
 	repeated Actor children = 2;
 	optional Actor referer = 3;
 	repeated Identity identities = 4;
-	optional google.protobuf.Timestamp date_created = 15;
 }
 
 message CreateIdentityRequest {
-	optional bytes id = 1;
 	Actor owner = 2;
 	// Name of the user
 	optional string name = 3;
 	optional string email = 4;
 	optional google.protobuf.Timestamp date_updated = 14;
-	optional google.protobuf.Timestamp date_created = 15;
 }
 
 message CreateMembershipRequest {
-	optional bytes id = 1;
-	optional google.protobuf.Timestamp date_created = 15;
 }
 
 message DeleteAccountRequest {

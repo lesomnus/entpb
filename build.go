@@ -318,6 +318,11 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 				File:     s.File,
 			}
 			for _, field := range d.Fields {
+				if field.IsReadOnly() && field.HasDefault {
+					// Set by server automatically.
+					// e.g. Id, DateCreated
+					continue
+				}
 				if !field.HasDefault {
 					msg.Fields = append(msg.Fields, field)
 					continue
