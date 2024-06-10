@@ -20,7 +20,9 @@ func (s *{{ print $.PbSvc.GoName "Server" }}) {{ $.PbMethod.GoName }}(ctx {{ imp
 			{{ to_ent . "v" "w" (print $setter "ID(@)") }}
 		}
 		{{ else -}}
-		{{ to_ent . (print $field ".GetId()" ) "v" (print $setter "ID(@)") }}
+		if v := {{ $field }}; v != nil {
+			{{ to_ent . "v.GetId()" "w" (print $setter "ID(@)") }}
+		}
 		{{ end -}}
 	{{ else if .IsEnum -}}
 	{{ to_ent . $field "w" (print $setter "(@)") }}
