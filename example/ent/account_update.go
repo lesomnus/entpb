@@ -10,8 +10,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/lesomnus/entpb/example"
 	"github.com/lesomnus/entpb/example/ent/account"
+	"github.com/lesomnus/entpb/example/ent/membership"
 	"github.com/lesomnus/entpb/example/ent/predicate"
 )
 
@@ -56,9 +58,45 @@ func (au *AccountUpdate) SetNillableRole(e *example.Role) *AccountUpdate {
 	return au
 }
 
+// AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
+func (au *AccountUpdate) AddMembershipIDs(ids ...uuid.UUID) *AccountUpdate {
+	au.mutation.AddMembershipIDs(ids...)
+	return au
+}
+
+// AddMemberships adds the "memberships" edges to the Membership entity.
+func (au *AccountUpdate) AddMemberships(m ...*Membership) *AccountUpdate {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return au.AddMembershipIDs(ids...)
+}
+
 // Mutation returns the AccountMutation object of the builder.
 func (au *AccountUpdate) Mutation() *AccountMutation {
 	return au.mutation
+}
+
+// ClearMemberships clears all "memberships" edges to the Membership entity.
+func (au *AccountUpdate) ClearMemberships() *AccountUpdate {
+	au.mutation.ClearMemberships()
+	return au
+}
+
+// RemoveMembershipIDs removes the "memberships" edge to Membership entities by IDs.
+func (au *AccountUpdate) RemoveMembershipIDs(ids ...uuid.UUID) *AccountUpdate {
+	au.mutation.RemoveMembershipIDs(ids...)
+	return au
+}
+
+// RemoveMemberships removes "memberships" edges to Membership entities.
+func (au *AccountUpdate) RemoveMemberships(m ...*Membership) *AccountUpdate {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return au.RemoveMembershipIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -119,6 +157,51 @@ func (au *AccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := au.mutation.Role(); ok {
 		_spec.SetField(account.FieldRole, field.TypeEnum, value)
 	}
+	if au.mutation.MembershipsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.MembershipsTable,
+			Columns: []string{account.MembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.RemovedMembershipsIDs(); len(nodes) > 0 && !au.mutation.MembershipsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.MembershipsTable,
+			Columns: []string{account.MembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.MembershipsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.MembershipsTable,
+			Columns: []string{account.MembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, au.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{account.Label}
@@ -167,9 +250,45 @@ func (auo *AccountUpdateOne) SetNillableRole(e *example.Role) *AccountUpdateOne 
 	return auo
 }
 
+// AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
+func (auo *AccountUpdateOne) AddMembershipIDs(ids ...uuid.UUID) *AccountUpdateOne {
+	auo.mutation.AddMembershipIDs(ids...)
+	return auo
+}
+
+// AddMemberships adds the "memberships" edges to the Membership entity.
+func (auo *AccountUpdateOne) AddMemberships(m ...*Membership) *AccountUpdateOne {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return auo.AddMembershipIDs(ids...)
+}
+
 // Mutation returns the AccountMutation object of the builder.
 func (auo *AccountUpdateOne) Mutation() *AccountMutation {
 	return auo.mutation
+}
+
+// ClearMemberships clears all "memberships" edges to the Membership entity.
+func (auo *AccountUpdateOne) ClearMemberships() *AccountUpdateOne {
+	auo.mutation.ClearMemberships()
+	return auo
+}
+
+// RemoveMembershipIDs removes the "memberships" edge to Membership entities by IDs.
+func (auo *AccountUpdateOne) RemoveMembershipIDs(ids ...uuid.UUID) *AccountUpdateOne {
+	auo.mutation.RemoveMembershipIDs(ids...)
+	return auo
+}
+
+// RemoveMemberships removes "memberships" edges to Membership entities.
+func (auo *AccountUpdateOne) RemoveMemberships(m ...*Membership) *AccountUpdateOne {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return auo.RemoveMembershipIDs(ids...)
 }
 
 // Where appends a list predicates to the AccountUpdate builder.
@@ -259,6 +378,51 @@ func (auo *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err e
 	}
 	if value, ok := auo.mutation.Role(); ok {
 		_spec.SetField(account.FieldRole, field.TypeEnum, value)
+	}
+	if auo.mutation.MembershipsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.MembershipsTable,
+			Columns: []string{account.MembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.RemovedMembershipsIDs(); len(nodes) > 0 && !auo.mutation.MembershipsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.MembershipsTable,
+			Columns: []string{account.MembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.MembershipsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.MembershipsTable,
+			Columns: []string{account.MembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Account{config: auo.config}
 	_spec.Assign = _node.assignValues

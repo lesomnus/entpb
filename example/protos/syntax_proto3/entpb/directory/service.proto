@@ -41,7 +41,7 @@ service MembershipService {
 }
 
 message CreateAccountRequest {
-	Actor owner = 2;
+	GetActorRequest owner = 2;
 	optional string alias = 3;
 	GroupRole role = 4;
 }
@@ -53,7 +53,7 @@ message CreateActorRequest {
 }
 
 message CreateIdentityRequest {
-	Actor owner = 2;
+	GetActorRequest owner = 2;
 	// Name of the user
 	optional string name = 3;
 	optional string email = 4;
@@ -61,6 +61,7 @@ message CreateIdentityRequest {
 }
 
 message CreateMembershipRequest {
+	GetAccountRequest account = 2;
 }
 
 message DeleteAccountRequest {

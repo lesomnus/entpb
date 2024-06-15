@@ -8,6 +8,7 @@
 		"vscode": {
 			"extensions": [
 				"golang.go",
+				"jinliming2.vscode-go-template",
 				"plex.vscode-protolint",
 				"zxh404.vscode-proto3",
 				"streetsidesoftware.code-spell-checker"

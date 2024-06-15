@@ -37,9 +37,11 @@ type Account struct {
 type AccountEdges struct {
 	// Owner holds the value of the owner edge.
 	Owner *User `json:"owner,omitempty"`
+	// Memberships holds the value of the memberships edge.
+	Memberships []*Membership `json:"memberships,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
@@ -51,6 +53,15 @@ func (e AccountEdges) OwnerOrErr() (*User, error) {
 		return nil, &NotFoundError{label: user.Label}
 	}
 	return nil, &NotLoadedError{edge: "owner"}
+}
+
+// MembershipsOrErr returns the Memberships value or an error if the edge
+// was not loaded in eager-loading.
+func (e AccountEdges) MembershipsOrErr() ([]*Membership, error) {
+	if e.loadedTypes[1] {
+		return e.Memberships, nil
+	}
+	return nil, &NotLoadedError{edge: "memberships"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -128,6 +139,11 @@ func (a *Account) Value(name string) (ent.Value, error) {
 // QueryOwner queries the "owner" edge of the Account entity.
 func (a *Account) QueryOwner() *UserQuery {
 	return NewAccountClient(a.config).QueryOwner(a)
+}
+
+// QueryMemberships queries the "memberships" edge of the Account entity.
+func (a *Account) QueryMemberships() *MembershipQuery {
+	return NewAccountClient(a.config).QueryMemberships(a)
 }
 
 // Update returns a builder for updating this Account.

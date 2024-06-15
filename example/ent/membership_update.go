@@ -59,7 +59,18 @@ func (mu *MembershipUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (mu *MembershipUpdate) check() error {
+	if _, ok := mu.mutation.AccountID(); mu.mutation.AccountCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Membership.account"`)
+	}
+	return nil
+}
+
 func (mu *MembershipUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := mu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(membership.Table, membership.Columns, sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID))
 	if ps := mu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -133,7 +144,18 @@ func (muo *MembershipUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (muo *MembershipUpdateOne) check() error {
+	if _, ok := muo.mutation.AccountID(); muo.mutation.AccountCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Membership.account"`)
+	}
+	return nil
+}
+
 func (muo *MembershipUpdateOne) sqlSave(ctx context.Context) (_node *Membership, err error) {
+	if err := muo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(membership.Table, membership.Columns, sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID))
 	id, ok := muo.mutation.ID()
 	if !ok {

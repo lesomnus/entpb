@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lesomnus/entpb/example"
 	"github.com/lesomnus/entpb/example/ent/account"
+	"github.com/lesomnus/entpb/example/ent/membership"
 	"github.com/lesomnus/entpb/example/ent/user"
 )
 
@@ -80,6 +81,21 @@ func (ac *AccountCreate) SetOwnerID(id uuid.UUID) *AccountCreate {
 // SetOwner sets the "owner" edge to the User entity.
 func (ac *AccountCreate) SetOwner(u *User) *AccountCreate {
 	return ac.SetOwnerID(u.ID)
+}
+
+// AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
+func (ac *AccountCreate) AddMembershipIDs(ids ...uuid.UUID) *AccountCreate {
+	ac.mutation.AddMembershipIDs(ids...)
+	return ac
+}
+
+// AddMemberships adds the "memberships" edges to the Membership entity.
+func (ac *AccountCreate) AddMemberships(m ...*Membership) *AccountCreate {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return ac.AddMembershipIDs(ids...)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -212,6 +228,22 @@ func (ac *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.user_accounts = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ac.mutation.MembershipsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.MembershipsTable,
+			Columns: []string{account.MembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

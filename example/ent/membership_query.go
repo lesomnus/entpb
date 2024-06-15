@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/lesomnus/entpb/example/ent/account"
 	"github.com/lesomnus/entpb/example/ent/membership"
 	"github.com/lesomnus/entpb/example/ent/predicate"
 )
@@ -18,11 +19,12 @@ import (
 // MembershipQuery is the builder for querying Membership entities.
 type MembershipQuery struct {
 	config
-	ctx        *QueryContext
-	order      []membership.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Membership
-	withFKs    bool
+	ctx         *QueryContext
+	order       []membership.OrderOption
+	inters      []Interceptor
+	predicates  []predicate.Membership
+	withAccount *AccountQuery
+	withFKs     bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -57,6 +59,28 @@ func (mq *MembershipQuery) Unique(unique bool) *MembershipQuery {
 func (mq *MembershipQuery) Order(o ...membership.OrderOption) *MembershipQuery {
 	mq.order = append(mq.order, o...)
 	return mq
+}
+
+// QueryAccount chains the current query on the "account" edge.
+func (mq *MembershipQuery) QueryAccount() *AccountQuery {
+	query := (&AccountClient{config: mq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := mq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := mq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(membership.Table, membership.FieldID, selector),
+			sqlgraph.To(account.Table, account.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, membership.AccountTable, membership.AccountColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Membership entity from the query.
@@ -246,15 +270,27 @@ func (mq *MembershipQuery) Clone() *MembershipQuery {
 		return nil
 	}
 	return &MembershipQuery{
-		config:     mq.config,
-		ctx:        mq.ctx.Clone(),
-		order:      append([]membership.OrderOption{}, mq.order...),
-		inters:     append([]Interceptor{}, mq.inters...),
-		predicates: append([]predicate.Membership{}, mq.predicates...),
+		config:      mq.config,
+		ctx:         mq.ctx.Clone(),
+		order:       append([]membership.OrderOption{}, mq.order...),
+		inters:      append([]Interceptor{}, mq.inters...),
+		predicates:  append([]predicate.Membership{}, mq.predicates...),
+		withAccount: mq.withAccount.Clone(),
 		// clone intermediate query.
 		sql:  mq.sql.Clone(),
 		path: mq.path,
 	}
+}
+
+// WithAccount tells the query-builder to eager-load the nodes that are connected to
+// the "account" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MembershipQuery) WithAccount(opts ...func(*AccountQuery)) *MembershipQuery {
+	query := (&AccountClient{config: mq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	mq.withAccount = query
+	return mq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -333,10 +369,16 @@ func (mq *MembershipQuery) prepareQuery(ctx context.Context) error {
 
 func (mq *MembershipQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Membership, error) {
 	var (
-		nodes   = []*Membership{}
-		withFKs = mq.withFKs
-		_spec   = mq.querySpec()
+		nodes       = []*Membership{}
+		withFKs     = mq.withFKs
+		_spec       = mq.querySpec()
+		loadedTypes = [1]bool{
+			mq.withAccount != nil,
+		}
 	)
+	if mq.withAccount != nil {
+		withFKs = true
+	}
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, membership.ForeignKeys...)
 	}
@@ -346,6 +388,7 @@ func (mq *MembershipQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*M
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Membership{config: mq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -357,7 +400,46 @@ func (mq *MembershipQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*M
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := mq.withAccount; query != nil {
+		if err := mq.loadAccount(ctx, query, nodes, nil,
+			func(n *Membership, e *Account) { n.Edges.Account = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (mq *MembershipQuery) loadAccount(ctx context.Context, query *AccountQuery, nodes []*Membership, init func(*Membership), assign func(*Membership, *Account)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Membership)
+	for i := range nodes {
+		if nodes[i].account_memberships == nil {
+			continue
+		}
+		fk := *nodes[i].account_memberships
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(account.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "account_memberships" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (mq *MembershipQuery) sqlCount(ctx context.Context) (int, error) {

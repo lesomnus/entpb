@@ -35,14 +35,10 @@ func (s *IdentityServiceServer) Create(ctx context.Context, req *pb.CreateIdenti
 		w := v.AsTime()
 		q.SetDateUpdated(w)
 	}
-	if v := req.GetOwner().GetId(); v == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "field \"owner\" not provided")
+	if v, err := GetUserId(ctx, s.db, req.GetOwner()); err != nil {
+		return nil, err
 	} else {
-		if w, err := uuid.FromBytes(v); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "owner: %s", err)
-		} else {
-			q.SetOwnerID(w)
-		}
+		q.SetOwnerID(v)
 	}
 
 	res, err := q.Save(ctx)
@@ -118,7 +114,15 @@ func ToProtoIdentity(v *ent.Identity) *pb.Identity {
 		m.DateUpdated = timestamppb.New(*v.DateUpdated)
 	}
 	if v := v.Edges.Owner; v != nil {
-		m.Owner = &pb.Actor{Id: v.ID[:]}
+		m.Owner = ToProtoUser(v)
 	}
 	return m
+}
+func GetIdentityId(ctx context.Context, db *ent.Client, req *pb.GetIdentityRequest) (uuid.UUID, error) {
+	var r uuid.UUID
+	if v, err := uuid.FromBytes(req.GetId()); err != nil {
+		return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
+	} else {
+		return v, nil
+	}
 }

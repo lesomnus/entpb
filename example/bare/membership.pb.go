@@ -25,6 +25,11 @@ func NewMembershipServiceServer(db *ent.Client) *MembershipServiceServer {
 }
 func (s *MembershipServiceServer) Create(ctx context.Context, req *pb.CreateMembershipRequest) (*pb.Membership, error) {
 	q := s.db.Membership.Create()
+	if v, err := GetAccountId(ctx, s.db, req.GetAccount()); err != nil {
+		return nil, err
+	} else {
+		q.SetAccountID(v)
+	}
 
 	res, err := q.Save(ctx)
 	if err != nil {
@@ -55,6 +60,7 @@ func (s *MembershipServiceServer) Get(ctx context.Context, req *pb.GetMembership
 	} else {
 		q.Where(membership.IDEQ(v))
 	}
+	q.WithAccount(func(q *ent.AccountQuery) { q.Select(membership.FieldID) })
 
 	res, err := q.Only(ctx)
 	if err != nil {
@@ -82,5 +88,16 @@ func ToProtoMembership(v *ent.Membership) *pb.Membership {
 	m := &pb.Membership{}
 	m.Id = v.ID[:]
 	m.DateCreated = timestamppb.New(v.DateCreated)
+	if v := v.Edges.Account; v != nil {
+		m.Account = ToProtoAccount(v)
+	}
 	return m
+}
+func GetMembershipId(ctx context.Context, db *ent.Client, req *pb.GetMembershipRequest) (uuid.UUID, error) {
+	var r uuid.UUID
+	if v, err := uuid.FromBytes(req.GetId()); err != nil {
+		return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
+	} else {
+		return v, nil
+	}
 }

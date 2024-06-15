@@ -55,6 +55,7 @@ func (Account) Edges() []ent.Edge {
 			Immutable().
 			Unique().
 			Required(),
+		edge.To("memberships", Membership.Type),
 	}
 }
 

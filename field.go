@@ -29,10 +29,11 @@ type FieldAnnotation struct {
 	// This field is used to generate "oneof" in proto file.
 	Oneof []*FieldAnnotation `mapstructure:"-"`
 
-	EntName string          `mapstructure:"-"`
-	EntInfo *field.TypeInfo `mapstructure:"-"`
-	EntRef  string          `mapstructure:"-"` // Name of the schema that this edge references.
-	PbType  PbType          `mapstructure:"-"`
+	EntName string             `mapstructure:"-"`
+	EntInfo *field.TypeInfo    `mapstructure:"-"`
+	EntRef  string             `mapstructure:"-"` // Name of the schema that this edge references.
+	EntMsg  *MessageAnnotation `mapstructure:"-"` // Message annotation that this edge references.
+	PbType  PbType             `mapstructure:"-"` // Message or enum.
 
 	HasDefault  bool `mapstructure:"-"`
 	IsKey       bool `mapstructure:"-"`

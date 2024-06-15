@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/lesomnus/entpb/example/ent/account"
 	"github.com/lesomnus/entpb/example/ent/membership"
 )
 
@@ -47,6 +48,17 @@ func (mc *MembershipCreate) SetNillableID(u *uuid.UUID) *MembershipCreate {
 		mc.SetID(*u)
 	}
 	return mc
+}
+
+// SetAccountID sets the "account" edge to the Account entity by ID.
+func (mc *MembershipCreate) SetAccountID(id uuid.UUID) *MembershipCreate {
+	mc.mutation.SetAccountID(id)
+	return mc
+}
+
+// SetAccount sets the "account" edge to the Account entity.
+func (mc *MembershipCreate) SetAccount(a *Account) *MembershipCreate {
+	return mc.SetAccountID(a.ID)
 }
 
 // Mutation returns the MembershipMutation object of the builder.
@@ -99,6 +111,9 @@ func (mc *MembershipCreate) check() error {
 	if _, ok := mc.mutation.DateCreated(); !ok {
 		return &ValidationError{Name: "date_created", err: errors.New(`ent: missing required field "Membership.date_created"`)}
 	}
+	if _, ok := mc.mutation.AccountID(); !ok {
+		return &ValidationError{Name: "account", err: errors.New(`ent: missing required edge "Membership.account"`)}
+	}
 	return nil
 }
 
@@ -137,6 +152,23 @@ func (mc *MembershipCreate) createSpec() (*Membership, *sqlgraph.CreateSpec) {
 	if value, ok := mc.mutation.DateCreated(); ok {
 		_spec.SetField(membership.FieldDateCreated, field.TypeTime, value)
 		_node.DateCreated = value
+	}
+	if nodes := mc.mutation.AccountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   membership.AccountTable,
+			Columns: []string{membership.AccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(account.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.account_memberships = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

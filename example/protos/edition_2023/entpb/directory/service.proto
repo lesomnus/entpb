@@ -42,7 +42,7 @@ service MembershipService {
 }
 
 message CreateAccountRequest {
-	Actor owner = 2;
+	GetActorRequest owner = 2;
 	string alias = 3 [features.field_presence = EXPLICIT];
 	GroupRole role = 4;
 }
@@ -54,7 +54,7 @@ message CreateActorRequest {
 }
 
 message CreateIdentityRequest {
-	Actor owner = 2;
+	GetActorRequest owner = 2;
 	// Name of the user
 	string name = 3 [features.field_presence = EXPLICIT];
 	string email = 4 [features.field_presence = EXPLICIT];
@@ -62,6 +62,7 @@ message CreateIdentityRequest {
 }
 
 message CreateMembershipRequest {
+	GetAccountRequest account = 2;
 }
 
 message DeleteAccountRequest {

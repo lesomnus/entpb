@@ -29,6 +29,12 @@ func main() {
 	protogen.Options{
 		ParamFunc: flags.Set,
 	}.Run(func(plugin *protogen.Plugin) error {
+		plugin.SupportedEditionsMinimum = descriptorpb.Edition_EDITION_PROTO3
+		plugin.SupportedEditionsMaximum = descriptorpb.Edition_EDITION_2023
+		plugin.SupportedFeatures = uint64(0 |
+			pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL |
+			pluginpb.CodeGeneratorResponse_FEATURE_SUPPORTS_EDITIONS)
+
 		graph, err := entc.LoadGraph(schema_path, &gen.Config{})
 		if err != nil {
 			return fmt.Errorf("load Ent graph: %w", err)
@@ -40,12 +46,6 @@ func main() {
 		if err != nil {
 			return fmt.Errorf("parse Ent graph: %w", err)
 		}
-
-		plugin.SupportedEditionsMinimum = descriptorpb.Edition_EDITION_PROTO3
-		plugin.SupportedEditionsMaximum = descriptorpb.Edition_EDITION_2023
-		plugin.SupportedFeatures = uint64(0 |
-			pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL |
-			pluginpb.CodeGeneratorResponse_FEATURE_SUPPORTS_EDITIONS)
 
 		_, name := filepath.Split(import_path)
 		p := cmd.Printer{

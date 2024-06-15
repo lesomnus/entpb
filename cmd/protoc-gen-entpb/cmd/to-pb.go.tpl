@@ -6,14 +6,14 @@ func ToProto{{ $.EntMsg.Schema.Name }}(v *{{ $.Ent.Ident $.EntMsg.Schema.Name | 
 	{{ $ent_field := print "v." (entname .EntName) -}}
 	{{ if .IsEdge -}}
 		{{ $ent_field = print "v.Edges." (entname .EntName) -}}
-		{{ $ref_type := print .PbType.Ident | $.Pb.Ident | use -}}
+		{{ $converter := print "ToProto" .EntRef -}} 
 		{{ if .IsRepeated -}}
 		for _, v := range {{ $ent_field }} {
-			{{ $pb_field }} = append({{ $pb_field }}, &{{ $ref_type }}{Id: v.ID[:]})
+			{{ $pb_field }} = append({{ $pb_field }}, {{ $converter }}(v))
 		}
 		{{ else -}}
 		if v := {{ $ent_field }}; v != nil {
-			{{ $pb_field }} = &{{ $ref_type }}{Id: v.ID[:]}
+			{{ $pb_field }} = {{ $converter }}(v)
 		}
 		{{ end -}}
 	{{ else -}}

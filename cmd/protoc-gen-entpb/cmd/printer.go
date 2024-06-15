@@ -174,16 +174,16 @@ func (p *Printer) PrintService(pb_file *protogen.File) error {
 			default:
 			}
 		}
-		if err := tpl.ExecuteTemplate(o, "to-pb.go.tpl", struct {
-			imports
-			EntMsg *entpb.MessageAnnotation
-		}{
-			imports_,
-			ent_service.Message,
-		}); err != nil {
+		if err := tpl.ExecuteTemplate(o, "to-pb.go.tpl", ctx); err != nil {
 			return fmt.Errorf("to-pb: %w", err)
 		}
-
+		if msg, ok := p.Build.Messages[ident.Ident(fmt.Sprintf("Get%sRequest", ctx.EntMsg.Ident))]; ok {
+			ctx_ := ctx
+			ctx_.EntMsg = msg
+			if err := tpl.ExecuteTemplate(o, "get-id.go.tpl", ctx_); err != nil {
+				return fmt.Errorf("get-id: %w", err)
+			}
+		}
 	}
 	return nil
 }

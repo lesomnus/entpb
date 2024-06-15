@@ -29,14 +29,10 @@ func (s *AccountServiceServer) Create(ctx context.Context, req *pb.CreateAccount
 		q.SetAlias(*v)
 	}
 	q.SetRole(toEntRole(req.GetRole()))
-	if v := req.GetOwner().GetId(); v == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "field \"owner\" not provided")
+	if v, err := GetUserId(ctx, s.db, req.GetOwner()); err != nil {
+		return nil, err
 	} else {
-		if w, err := uuid.FromBytes(v); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "owner: %s", err)
-		} else {
-			q.SetOwnerID(w)
-		}
+		q.SetOwnerID(v)
 	}
 
 	res, err := q.Save(ctx)
@@ -120,7 +116,33 @@ func ToProtoAccount(v *ent.Account) *pb.Account {
 	m.Alias = v.Alias
 	m.Role = toPbGroupRole(v.Role)
 	if v := v.Edges.Owner; v != nil {
-		m.Owner = &pb.Actor{Id: v.ID[:]}
+		m.Owner = ToProtoUser(v)
 	}
 	return m
+}
+func GetAccountId(ctx context.Context, db *ent.Client, req *pb.GetAccountRequest) (uuid.UUID, error) {
+	var r uuid.UUID
+	k := req.GetKey()
+	if t, ok := k.(*pb.GetAccountRequest_Id); ok {
+		if v, err := uuid.FromBytes(t.Id); err != nil {
+			return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			return v, nil
+		}
+	}
+
+	q := db.Account.Query()
+	switch t := k.(type) {
+	case *pb.GetAccountRequest_Alias:
+		q.Where(account.AliasEQ(t.Alias))
+	case nil:
+		return r, status.Errorf(codes.InvalidArgument, "key not provided")
+	default:
+		return r, status.Errorf(codes.Unimplemented, "unknown type of key")
+	}
+	if v, err := q.OnlyID(ctx); err != nil {
+		return r, runtime.EntErrorToStatus(err)
+	} else {
+		return v, nil
+	}
 }

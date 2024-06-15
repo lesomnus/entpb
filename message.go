@@ -29,7 +29,9 @@ type MessageAnnotation struct {
 
 	Service *Service
 
-	File   *ProtoFile         `mapstructure:"-"`
+	File *ProtoFile `mapstructure:"-"`
+	// Schema that is referenced to generate this message.
+	// For example, `User` and `GetUserRequest` has same `Schema` value.
 	Schema *load.Schema       `mapstructure:"-"`
 	Fields []*FieldAnnotation `mapstructure:"-"`
 }

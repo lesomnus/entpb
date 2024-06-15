@@ -57,6 +57,7 @@ var (
 	MembershipsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "date_created", Type: field.TypeTime},
+		{Name: "account_memberships", Type: field.TypeUUID},
 		{Name: "user_memberships", Type: field.TypeUUID, Nullable: true},
 	}
 	// MembershipsTable holds the schema information for the "memberships" table.
@@ -66,8 +67,14 @@ var (
 		PrimaryKey: []*schema.Column{MembershipsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "memberships_users_memberships",
+				Symbol:     "memberships_accounts_memberships",
 				Columns:    []*schema.Column{MembershipsColumns[2]},
+				RefColumns: []*schema.Column{AccountsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "memberships_users_memberships",
+				Columns:    []*schema.Column{MembershipsColumns[3]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -105,6 +112,7 @@ var (
 func init() {
 	AccountsTable.ForeignKeys[0].RefTable = UsersTable
 	IdentitiesTable.ForeignKeys[0].RefTable = UsersTable
-	MembershipsTable.ForeignKeys[0].RefTable = UsersTable
+	MembershipsTable.ForeignKeys[0].RefTable = AccountsTable
+	MembershipsTable.ForeignKeys[1].RefTable = UsersTable
 	UsersTable.ForeignKeys[0].RefTable = UsersTable
 }

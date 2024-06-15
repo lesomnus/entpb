@@ -86,13 +86,21 @@ func ToProtoUser(v *ent.User) *pb.Actor {
 	m.Id = v.ID[:]
 	m.DateCreated = timestamppb.New(v.DateCreated)
 	if v := v.Edges.Parent; v != nil {
-		m.Referer = &pb.Actor{Id: v.ID[:]}
+		m.Referer = ToProtoUser(v)
 	}
 	for _, v := range v.Edges.Identities {
-		m.Identities = append(m.Identities, &pb.Identity{Id: v.ID[:]})
+		m.Identities = append(m.Identities, ToProtoIdentity(v))
 	}
 	for _, v := range v.Edges.Children {
-		m.Children = append(m.Children, &pb.Actor{Id: v.ID[:]})
+		m.Children = append(m.Children, ToProtoUser(v))
 	}
 	return m
+}
+func GetUserId(ctx context.Context, db *ent.Client, req *pb.GetActorRequest) (uuid.UUID, error) {
+	var r uuid.UUID
+	if v, err := uuid.FromBytes(req.GetId()); err != nil {
+		return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
+	} else {
+		return v, nil
+	}
 }

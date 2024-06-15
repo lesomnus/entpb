@@ -352,6 +352,22 @@ func (c *AccountClient) QueryOwner(a *Account) *UserQuery {
 	return query
 }
 
+// QueryMemberships queries the memberships edge of a Account.
+func (c *AccountClient) QueryMemberships(a *Account) *MembershipQuery {
+	query := (&MembershipClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := a.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(account.Table, account.FieldID, id),
+			sqlgraph.To(membership.Table, membership.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, account.MembershipsTable, account.MembershipsColumn),
+		)
+		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *AccountClient) Hooks() []Hook {
 	return c.hooks.Account
@@ -632,6 +648,22 @@ func (c *MembershipClient) GetX(ctx context.Context, id uuid.UUID) *Membership {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryAccount queries the account edge of a Membership.
+func (c *MembershipClient) QueryAccount(m *Membership) *AccountQuery {
+	query := (&AccountClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(membership.Table, membership.FieldID, id),
+			sqlgraph.To(account.Table, account.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, membership.AccountTable, membership.AccountColumn),
+		)
+		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.

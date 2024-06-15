@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
+	"github.com/lesomnus/entpb/example/ent/account"
 	"github.com/lesomnus/entpb/example/ent/membership"
 )
 
@@ -19,9 +20,33 @@ type Membership struct {
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// DateCreated holds the value of the "date_created" field.
-	DateCreated      time.Time `json:"date_created,omitempty"`
-	user_memberships *uuid.UUID
-	selectValues     sql.SelectValues
+	DateCreated time.Time `json:"date_created,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the MembershipQuery when eager-loading is set.
+	Edges               MembershipEdges `json:"edges"`
+	account_memberships *uuid.UUID
+	user_memberships    *uuid.UUID
+	selectValues        sql.SelectValues
+}
+
+// MembershipEdges holds the relations/edges for other nodes in the graph.
+type MembershipEdges struct {
+	// Account holds the value of the account edge.
+	Account *Account `json:"account,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// AccountOrErr returns the Account value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MembershipEdges) AccountOrErr() (*Account, error) {
+	if e.Account != nil {
+		return e.Account, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: account.Label}
+	}
+	return nil, &NotLoadedError{edge: "account"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -33,7 +58,9 @@ func (*Membership) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullTime)
 		case membership.FieldID:
 			values[i] = new(uuid.UUID)
-		case membership.ForeignKeys[0]: // user_memberships
+		case membership.ForeignKeys[0]: // account_memberships
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case membership.ForeignKeys[1]: // user_memberships
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -64,6 +91,13 @@ func (m *Membership) assignValues(columns []string, values []any) error {
 			}
 		case membership.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field account_memberships", values[i])
+			} else if value.Valid {
+				m.account_memberships = new(uuid.UUID)
+				*m.account_memberships = *value.S.(*uuid.UUID)
+			}
+		case membership.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field user_memberships", values[i])
 			} else if value.Valid {
 				m.user_memberships = new(uuid.UUID)
@@ -80,6 +114,11 @@ func (m *Membership) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (m *Membership) Value(name string) (ent.Value, error) {
 	return m.selectValues.Get(name)
+}
+
+// QueryAccount queries the "account" edge of the Membership entity.
+func (m *Membership) QueryAccount() *AccountQuery {
+	return NewMembershipClient(m.config).QueryAccount(m)
 }
 
 // Update returns a builder for updating this Membership.
