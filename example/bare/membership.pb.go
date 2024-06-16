@@ -5,9 +5,9 @@ package bare
 import (
 	context "context"
 	uuid "github.com/google/uuid"
-	runtime "github.com/lesomnus/entpb/cmd/protoc-gen-entpb/runtime"
 	ent "github.com/lesomnus/entpb/example/ent"
 	membership "github.com/lesomnus/entpb/example/ent/membership"
+	predicate "github.com/lesomnus/entpb/example/ent/predicate"
 	pb "github.com/lesomnus/entpb/example/pb"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -33,7 +33,7 @@ func (s *MembershipServiceServer) Create(ctx context.Context, req *pb.CreateMemb
 
 	res, err := q.Save(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return ToProtoMembership(res), nil
@@ -48,23 +48,24 @@ func (s *MembershipServiceServer) Delete(ctx context.Context, req *pb.DeleteMemb
 
 	_, err := q.Exec(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return &emptypb.Empty{}, nil
 }
 func (s *MembershipServiceServer) Get(ctx context.Context, req *pb.GetMembershipRequest) (*pb.Membership, error) {
 	q := s.db.Membership.Query()
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+	if p, err := GetMembershipSpecifier(req); err != nil {
+		return nil, err
 	} else {
-		q.Where(membership.IDEQ(v))
+		q.Where(p)
 	}
+
 	q.WithAccount(func(q *ent.AccountQuery) { q.Select(membership.FieldID) })
 
 	res, err := q.Only(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return ToProtoMembership(res), nil
@@ -79,7 +80,7 @@ func (s *MembershipServiceServer) Update(ctx context.Context, req *pb.UpdateMemb
 
 	res, err := q.Save(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return ToProtoMembership(res), nil
@@ -99,5 +100,12 @@ func GetMembershipId(ctx context.Context, db *ent.Client, req *pb.GetMembershipR
 		return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
 	} else {
 		return v, nil
+	}
+}
+func GetMembershipSpecifier(req *pb.GetMembershipRequest) (predicate.Membership, error) {
+	if v, err := uuid.FromBytes(req.GetId()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+	} else {
+		return membership.IDEQ(v), nil
 	}
 }

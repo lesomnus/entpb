@@ -5,9 +5,9 @@ package bare
 import (
 	context "context"
 	uuid "github.com/google/uuid"
-	runtime "github.com/lesomnus/entpb/cmd/protoc-gen-entpb/runtime"
 	ent "github.com/lesomnus/entpb/example/ent"
 	account "github.com/lesomnus/entpb/example/ent/account"
+	predicate "github.com/lesomnus/entpb/example/ent/predicate"
 	pb "github.com/lesomnus/entpb/example/pb"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -37,7 +37,7 @@ func (s *AccountServiceServer) Create(ctx context.Context, req *pb.CreateAccount
 
 	res, err := q.Save(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return ToProtoAccount(res), nil
@@ -59,31 +59,24 @@ func (s *AccountServiceServer) Delete(ctx context.Context, req *pb.DeleteAccount
 
 	_, err := q.Exec(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return &emptypb.Empty{}, nil
 }
 func (s *AccountServiceServer) Get(ctx context.Context, req *pb.GetAccountRequest) (*pb.Account, error) {
 	q := s.db.Account.Query()
-	switch t := req.GetKey().(type) {
-	case *pb.GetAccountRequest_Id:
-		if v, err := uuid.FromBytes(t.Id); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
-		} else {
-			q.Where(account.IDEQ(v))
-		}
-	case *pb.GetAccountRequest_Alias:
-		q.Where(account.AliasEQ(t.Alias))
-	default:
-		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
+	if p, err := GetAccountSpecifier(req); err != nil {
+		return nil, err
+	} else {
+		q.Where(p)
 	}
 
 	q.WithOwner(func(q *ent.UserQuery) { q.Select(account.FieldID) })
 
 	res, err := q.Only(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return ToProtoAccount(res), nil
@@ -104,7 +97,7 @@ func (s *AccountServiceServer) Update(ctx context.Context, req *pb.UpdateAccount
 
 	res, err := q.Save(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return ToProtoAccount(res), nil
@@ -141,8 +134,24 @@ func GetAccountId(ctx context.Context, db *ent.Client, req *pb.GetAccountRequest
 		return r, status.Errorf(codes.Unimplemented, "unknown type of key")
 	}
 	if v, err := q.OnlyID(ctx); err != nil {
-		return r, runtime.EntErrorToStatus(err)
+		return r, ToStatus(err)
 	} else {
 		return v, nil
+	}
+}
+func GetAccountSpecifier(req *pb.GetAccountRequest) (predicate.Account, error) {
+	switch t := req.GetKey().(type) {
+	case *pb.GetAccountRequest_Id:
+		if v, err := uuid.FromBytes(t.Id); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			return account.IDEQ(v), nil
+		}
+	case *pb.GetAccountRequest_Alias:
+		return account.AliasEQ(t.Alias), nil
+	case nil:
+		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
+	default:
+		return nil, status.Errorf(codes.Unimplemented, "unknown type of key")
 	}
 }

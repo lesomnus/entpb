@@ -5,9 +5,9 @@ package bare
 import (
 	context "context"
 	uuid "github.com/google/uuid"
-	runtime "github.com/lesomnus/entpb/cmd/protoc-gen-entpb/runtime"
 	ent "github.com/lesomnus/entpb/example/ent"
 	identity "github.com/lesomnus/entpb/example/ent/identity"
+	predicate "github.com/lesomnus/entpb/example/ent/predicate"
 	pb "github.com/lesomnus/entpb/example/pb"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -43,7 +43,7 @@ func (s *IdentityServiceServer) Create(ctx context.Context, req *pb.CreateIdenti
 
 	res, err := q.Save(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return ToProtoIdentity(res), nil
@@ -58,23 +58,24 @@ func (s *IdentityServiceServer) Delete(ctx context.Context, req *pb.DeleteIdenti
 
 	_, err := q.Exec(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return &emptypb.Empty{}, nil
 }
 func (s *IdentityServiceServer) Get(ctx context.Context, req *pb.GetIdentityRequest) (*pb.Identity, error) {
 	q := s.db.Identity.Query()
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+	if p, err := GetIdentitySpecifier(req); err != nil {
+		return nil, err
 	} else {
-		q.Where(identity.IDEQ(v))
+		q.Where(p)
 	}
+
 	q.WithOwner(func(q *ent.UserQuery) { q.Select(identity.FieldID) })
 
 	res, err := q.Only(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return ToProtoIdentity(res), nil
@@ -99,7 +100,7 @@ func (s *IdentityServiceServer) Update(ctx context.Context, req *pb.UpdateIdenti
 
 	res, err := q.Save(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return ToProtoIdentity(res), nil
@@ -124,5 +125,12 @@ func GetIdentityId(ctx context.Context, db *ent.Client, req *pb.GetIdentityReque
 		return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
 	} else {
 		return v, nil
+	}
+}
+func GetIdentitySpecifier(req *pb.GetIdentityRequest) (predicate.Identity, error) {
+	if v, err := uuid.FromBytes(req.GetId()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+	} else {
+		return identity.IDEQ(v), nil
 	}
 }

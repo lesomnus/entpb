@@ -20,7 +20,6 @@ var (
 )
 
 var (
-	importRuntime   protogen.GoImportPath = "github.com/lesomnus/entpb/cmd/protoc-gen-entpb/runtime"
 	importStatus    protogen.GoImportPath = "google.golang.org/grpc/status"
 	importCodes     protogen.GoImportPath = "google.golang.org/grpc/codes"
 	importUuid      protogen.GoImportPath = "github.com/google/uuid"
@@ -83,16 +82,28 @@ func (p *Printer) NewTemplate(g *protogen.GeneratedFile) *template.Template {
 			return strcase.ToCamel(name)
 		},
 		"use": g.QualifiedGoIdent,
-		"use_ent_type": func(t *field.TypeInfo) string {
+		"ent_type": func(f *entpb.FieldAnnotation) string {
 			// In fact, all cases are equivalent to:
-			// return t.Ident
-			switch t.Type {
+			// return t.String()
+			t := f.EntInfo.Type
+			switch t {
 			case field.TypeTime:
-				return g.QualifiedGoIdent(importTimestamp.Ident("Timestamp"))
+				return g.QualifiedGoIdent(protogen.GoImportPath("time").Ident("Time"))
 			case field.TypeUUID:
 				return g.QualifiedGoIdent(importUuid.Ident("UUID"))
 			default:
-				return t.Ident
+				return t.String()
+			}
+		},
+		"pb_type": func(f *entpb.FieldAnnotation) string {
+			t := f.EntInfo.Type
+			switch t {
+			case field.TypeTime:
+				return fmt.Sprintf("*%s", g.QualifiedGoIdent(importTimestamp.Ident("Timestamp")))
+			case field.TypeUUID:
+				return "[]byte"
+			default:
+				return t.String()
 			}
 		},
 		"import": func(import_path string) protogen.GoImportPath {
@@ -108,9 +119,38 @@ func (p *Printer) NewTemplate(g *protogen.GeneratedFile) *template.Template {
 			p := fmt.Sprintf("%s/%s", string(p.EntPackage), strings.ToLower(s.Name))
 			return protogen.GoImportPath(p)
 		},
+		"is_symmetric": func(f *entpb.FieldAnnotation) bool {
+			t := f.EntInfo.Type
+			switch t {
+			case field.TypeUUID:
+				fallthrough
+			case field.TypeTime:
+				fallthrough
+			case field.TypeEnum:
+				return false
+			default:
+				return true
+			}
+		},
 		"to_ent_with_rv": to_ent_with_rv,
 		"to_ent": func(f *entpb.FieldAnnotation, ident_in string, ident_out string, body string) string {
 			return to_ent_with_rv(f, ident_in, ident_out, body, "nil")
+		},
+		"to_pb_v": func(f *entpb.FieldAnnotation, ident_in string) string {
+			t := f.EntInfo.Type
+			switch t {
+			case field.TypeUUID:
+				return fmt.Sprintf("%s[:]", ident_in)
+
+			case field.TypeTime:
+				return fmt.Sprintf("%s(%s)", g.QualifiedGoIdent(importTimestamp.Ident("New")), ident_in)
+
+			case field.TypeEnum:
+				return fmt.Sprintf("toPb%s(%s)", f.PbType.Ident, ident_in)
+
+			default:
+				return ident_in
+			}
 		},
 		"to_pb": func(f *entpb.FieldAnnotation, ident_in string, ident_out string) string {
 			t := f.EntInfo.Type

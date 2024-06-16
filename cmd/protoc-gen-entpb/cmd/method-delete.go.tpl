@@ -22,7 +22,7 @@ func (s *{{ print $.PbSvc.GoName "Server" }}) {{ $.PbMethod.GoName }}(ctx {{ imp
 
 	_, err := q.Exec(ctx)
 	if err != nil {
-		return nil, {{ $.Runtime.Ident "EntErrorToStatus" | use }}(err)
+		return nil, ToStatus(err)
 	}
 
 	 return &{{ $.PbMethod.Output.GoIdent | use }}{}, nil

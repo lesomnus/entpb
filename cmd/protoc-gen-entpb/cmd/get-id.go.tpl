@@ -3,7 +3,7 @@
 {{ if $isOneof -}}
 {{ $fields = (index $fields 0).Oneof -}}
 {{ end -}}
-{{ $id_type := use_ent_type (index $fields 0).EntInfo -}}
+{{ $id_type := ent_type (index $fields 0) -}}
 func Get{{ $.EntMsg.Schema.Name }}Id(ctx {{ import "context" | ident "Context" }}, db *{{ $.Ent.Ident "Client" | use }}, req *{{ print $.EntMsg.Ident | $.Pb.Ident | use }}) ({{ $id_type }}, error) {
 	var r {{ $id_type }}
 	{{ if not $isOneof -}}
@@ -29,7 +29,7 @@ func Get{{ $.EntMsg.Schema.Name }}Id(ctx {{ import "context" | ident "Context" }
 			return r, {{ status "Unimplemented" "unknown type of key" }}
 		}
 		if v, err := q.OnlyID(ctx); err != nil {
-			return r, {{ $.Runtime.Ident "EntErrorToStatus" | use }}(err)
+			return r, ToStatus(err)
 		} else {
 			return v, nil
 		}

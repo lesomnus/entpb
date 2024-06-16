@@ -5,8 +5,8 @@ package bare
 import (
 	context "context"
 	uuid "github.com/google/uuid"
-	runtime "github.com/lesomnus/entpb/cmd/protoc-gen-entpb/runtime"
 	ent "github.com/lesomnus/entpb/example/ent"
+	predicate "github.com/lesomnus/entpb/example/ent/predicate"
 	user "github.com/lesomnus/entpb/example/ent/user"
 	pb "github.com/lesomnus/entpb/example/pb"
 	codes "google.golang.org/grpc/codes"
@@ -28,7 +28,7 @@ func (s *ActorServiceServer) Create(ctx context.Context, req *pb.CreateActorRequ
 
 	res, err := q.Save(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return ToProtoUser(res), nil
@@ -43,25 +43,26 @@ func (s *ActorServiceServer) Delete(ctx context.Context, req *pb.DeleteActorRequ
 
 	_, err := q.Exec(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return &emptypb.Empty{}, nil
 }
 func (s *ActorServiceServer) Get(ctx context.Context, req *pb.GetActorRequest) (*pb.Actor, error) {
 	q := s.db.User.Query()
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+	if p, err := GetUserSpecifier(req); err != nil {
+		return nil, err
 	} else {
-		q.Where(user.IDEQ(v))
+		q.Where(p)
 	}
+
 	q.WithParent(func(q *ent.UserQuery) { q.Select(user.FieldID) })
 	q.WithIdentities(func(q *ent.IdentityQuery) { q.Select(user.FieldID) })
 	q.WithChildren(func(q *ent.UserQuery) { q.Select(user.FieldID) })
 
 	res, err := q.Only(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return ToProtoUser(res), nil
@@ -76,7 +77,7 @@ func (s *ActorServiceServer) Update(ctx context.Context, req *pb.UpdateActorRequ
 
 	res, err := q.Save(ctx)
 	if err != nil {
-		return nil, runtime.EntErrorToStatus(err)
+		return nil, ToStatus(err)
 	}
 
 	return ToProtoUser(res), nil
@@ -102,5 +103,12 @@ func GetUserId(ctx context.Context, db *ent.Client, req *pb.GetActorRequest) (uu
 		return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
 	} else {
 		return v, nil
+	}
+}
+func GetUserSpecifier(req *pb.GetActorRequest) (predicate.User, error) {
+	if v, err := uuid.FromBytes(req.GetId()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+	} else {
+		return user.IDEQ(v), nil
 	}
 }

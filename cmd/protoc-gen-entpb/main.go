@@ -55,6 +55,8 @@ func main() {
 
 			Build:  build,
 			Plugin: plugin,
+
+			GeneratedFiles: map[string]*cmd.GeneratedFile{},
 		}
 		if err := p.Print(); err != nil {
 			return err
