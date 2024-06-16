@@ -25,10 +25,10 @@ func NewMembershipServiceServer(db *ent.Client) *MembershipServiceServer {
 }
 func (s *MembershipServiceServer) Create(ctx context.Context, req *pb.CreateMembershipRequest) (*pb.Membership, error) {
 	q := s.db.Membership.Create()
-	if v, err := GetAccountId(ctx, s.db, req.GetAccount()); err != nil {
+	if id, err := GetAccountId(ctx, s.db, req.GetAccount()); err != nil {
 		return nil, err
 	} else {
-		q.SetAccountID(v)
+		q.SetAccountID(id)
 	}
 
 	res, err := q.Save(ctx)

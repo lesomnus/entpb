@@ -35,10 +35,10 @@ func (s *IdentityServiceServer) Create(ctx context.Context, req *pb.CreateIdenti
 		w := v.AsTime()
 		q.SetDateUpdated(w)
 	}
-	if v, err := GetUserId(ctx, s.db, req.GetOwner()); err != nil {
+	if id, err := GetUserId(ctx, s.db, req.GetOwner()); err != nil {
 		return nil, err
 	} else {
-		q.SetOwnerID(v)
+		q.SetOwnerID(id)
 	}
 
 	res, err := q.Save(ctx)

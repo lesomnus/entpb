@@ -26,10 +26,10 @@ func NewActorServiceServer(db *ent.Client) *ActorServiceServer {
 func (s *ActorServiceServer) Create(ctx context.Context, req *pb.CreateActorRequest) (*pb.Actor, error) {
 	q := s.db.User.Create()
 	if v := req.GetReferer(); v != nil {
-		if w, err := uuid.FromBytes(v.GetId()); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "referer: %s", err)
+		if id, err := GetUserId(ctx, s.db, v); err != nil {
+			return nil, err
 		} else {
-			q.SetParentID(w)
+			q.SetParentID(id)
 		}
 	}
 

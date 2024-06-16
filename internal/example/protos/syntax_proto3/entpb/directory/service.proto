@@ -47,9 +47,7 @@ message CreateAccountRequest {
 }
 
 message CreateActorRequest {
-	repeated GetActorRequest children = 2;
 	optional GetActorRequest referer = 3;
-	repeated GetIdentityRequest identities = 4;
 }
 
 message CreateIdentityRequest {

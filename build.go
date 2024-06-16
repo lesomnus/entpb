@@ -320,10 +320,21 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 				File:     s.File,
 			}
 			for _, field := range d.Fields {
-				if field.IsReadOnly() && field.HasDefault {
-					// Set by server automatically.
-					// e.g. Id, DateCreated
-					continue
+				if field.IsReadOnly() {
+					if field.HasDefault {
+						// Set by server automatically.
+						// e.g. Id, DateCreated
+						continue
+					}
+					if !field.IsImmutable {
+						// Set by creating reference resource.
+						// e.g. User.Accounts set by creating Account.
+						continue
+					}
+
+					// This field is read only and immutable
+					// but doesn't have a default value,
+					// so it can be set only when it is created.
 				}
 				if field.IsEdge() {
 					ref_msg, ok := p.Schemas[field.EntRef]
@@ -385,7 +396,7 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 					msg.Fields = append(msg.Fields, &v)
 					continue
 				}
-				if field.IsReadOnly() {
+				if field.IsImmutable || field.IsReadOnly() {
 					continue
 				}
 				if field.IsEdge() {

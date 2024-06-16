@@ -29,10 +29,10 @@ func (s *AccountServiceServer) Create(ctx context.Context, req *pb.CreateAccount
 		q.SetAlias(*v)
 	}
 	q.SetRole(toEntRole(req.GetRole()))
-	if v, err := GetUserId(ctx, s.db, req.GetOwner()); err != nil {
+	if id, err := GetUserId(ctx, s.db, req.GetOwner()); err != nil {
 		return nil, err
 	} else {
-		q.SetOwnerID(v)
+		q.SetOwnerID(id)
 	}
 
 	res, err := q.Save(ctx)
