@@ -47,9 +47,9 @@ message CreateAccountRequest {
 }
 
 message CreateActorRequest {
-	repeated Actor children = 2;
-	optional Actor referer = 3;
-	repeated Identity identities = 4;
+	repeated GetActorRequest children = 2;
+	optional GetActorRequest referer = 3;
+	repeated GetIdentityRequest identities = 4;
 }
 
 message CreateIdentityRequest {
@@ -103,17 +103,18 @@ message GetMembershipRequest {
 }
 
 message UpdateAccountRequest {
-	bytes id = 1;
+	GetAccountRequest key = 1;
 	optional string alias = 3;
 	optional GroupRole role = 4;
 }
 
 message UpdateActorRequest {
-	bytes id = 1;
+	GetActorRequest key = 1;
+	optional GetActorRequest referer = 3;
 }
 
 message UpdateIdentityRequest {
-	bytes id = 1;
+	GetIdentityRequest key = 1;
 	// Name of the user
 	optional string name = 3;
 	optional string email = 4;
@@ -121,5 +122,5 @@ message UpdateIdentityRequest {
 }
 
 message UpdateMembershipRequest {
-	bytes id = 1;
+	GetMembershipRequest key = 1;
 }

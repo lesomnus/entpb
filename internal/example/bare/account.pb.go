@@ -82,9 +82,9 @@ func (s *AccountServiceServer) Get(ctx context.Context, req *pb.GetAccountReques
 	return ToProtoAccount(res), nil
 }
 func (s *AccountServiceServer) Update(ctx context.Context, req *pb.UpdateAccountRequest) (*pb.Account, error) {
-	id, err := uuid.FromBytes(req.GetId())
+	id, err := GetAccountId(ctx, s.db, req.GetKey())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		return nil, err
 	}
 
 	q := s.db.Account.UpdateOneID(id)

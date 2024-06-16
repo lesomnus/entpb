@@ -25,6 +25,13 @@ func NewActorServiceServer(db *ent.Client) *ActorServiceServer {
 }
 func (s *ActorServiceServer) Create(ctx context.Context, req *pb.CreateActorRequest) (*pb.Actor, error) {
 	q := s.db.User.Create()
+	if v := req.GetReferer(); v != nil {
+		if w, err := uuid.FromBytes(v.GetId()); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "referer: %s", err)
+		} else {
+			q.SetParentID(w)
+		}
+	}
 
 	res, err := q.Save(ctx)
 	if err != nil {
@@ -68,12 +75,19 @@ func (s *ActorServiceServer) Get(ctx context.Context, req *pb.GetActorRequest) (
 	return ToProtoUser(res), nil
 }
 func (s *ActorServiceServer) Update(ctx context.Context, req *pb.UpdateActorRequest) (*pb.Actor, error) {
-	id, err := uuid.FromBytes(req.GetId())
+	id, err := GetUserId(ctx, s.db, req.GetKey())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		return nil, err
 	}
 
 	q := s.db.User.UpdateOneID(id)
+	if v := req.Referer; v != nil {
+		if id, err := GetUserId(ctx, s.db, req.Referer); err != nil {
+			return nil, err
+		} else {
+			q.SetParentID(id)
+		}
+	}
 
 	res, err := q.Save(ctx)
 	if err != nil {

@@ -71,9 +71,9 @@ func (s *MembershipServiceServer) Get(ctx context.Context, req *pb.GetMembership
 	return ToProtoMembership(res), nil
 }
 func (s *MembershipServiceServer) Update(ctx context.Context, req *pb.UpdateMembershipRequest) (*pb.Membership, error) {
-	id, err := uuid.FromBytes(req.GetId())
+	id, err := GetMembershipId(ctx, s.db, req.GetKey())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		return nil, err
 	}
 
 	q := s.db.Membership.UpdateOneID(id)

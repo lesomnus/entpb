@@ -325,7 +325,7 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 					// e.g. Id, DateCreated
 					continue
 				}
-				if field.IsEdge() && field.IsRequired() {
+				if field.IsEdge() {
 					ref_msg, ok := p.Schemas[field.EntRef]
 					if !ok {
 						return fmt.Errorf(`schema "%s" referenced by field "%s" does not exists`, field.EntRef, field.EntName)
@@ -377,10 +377,28 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 			}
 			for _, field := range d.Fields {
 				if field.EntName == "id" {
-					msg.Fields = append(msg.Fields, field)
+					v := *field
+					v.Ident = "key"
+					get_msg := p.buildGetMessage(s, d)
+					v.EntMsg = get_msg
+					v.PbType.Ident = get_msg.Ident
+					msg.Fields = append(msg.Fields, &v)
 					continue
 				}
 				if field.IsReadOnly() {
+					continue
+				}
+				if field.IsEdge() {
+					ref_msg, ok := p.Schemas[field.EntRef]
+					if !ok {
+						return fmt.Errorf(`schema "%s" referenced by field "%s" does not exists`, field.EntRef, field.EntName)
+					}
+
+					v := *field
+					get_msg := p.buildGetMessage(s, ref_msg)
+					v.EntMsg = get_msg
+					v.PbType.Ident = get_msg.Ident
+					msg.Fields = append(msg.Fields, &v)
 					continue
 				}
 
