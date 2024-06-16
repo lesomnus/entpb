@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-package entpb.directory;
-
-option go_package = "github.com/lesomnus/entpb/example/pb";
-
-message LockAccountRequest {
-	bytes id = 1;
-}

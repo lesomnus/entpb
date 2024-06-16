@@ -12,9 +12,9 @@ __root="$(cd "$(dirname "${__dir}")" && pwd)"         # Root directory of projec
 
 
 
-MODULE_NAME=github.com/lesomnus/entpb/example
-PROTO_ROOT="${__root}/example/protos/syntax_proto3"
-OUTPUT_DIR="${__root}/example"
+MODULE_NAME=github.com/lesomnus/entpb/internal/example
+PROTO_ROOT="${__root}/internal/example/protos/syntax_proto3"
+OUTPUT_DIR="${__root}/internal/example"
 cd "${PROTO_ROOT}"
 
 protoc \
@@ -28,7 +28,7 @@ protoc \
 	\
 	--entpb_out="${OUTPUT_DIR}" \
 	--entpb_opt=module="${MODULE_NAME}" \
-	--entpb_opt=schema_path="${__root}/example/schema" \
+	--entpb_opt=schema_path="${__root}/internal/example/schema" \
 	--entpb_opt=ent_package="${MODULE_NAME}/ent" \
 	--entpb_opt=package="${MODULE_NAME}/bare" \
 	\
