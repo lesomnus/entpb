@@ -425,39 +425,11 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 			rpc.EntRes = d
 
 		case "Delete":
-			req_name := ident.Ident(fmt.Sprintf("Delete%sRequest", d.Ident))
+			msg := p.buildGetMessage(s, d)
+
 			rpc.Req = d.pbType()
-			rpc.Req.Ident = req_name
+			rpc.Req.Ident = msg.Ident
 			rpc.Res = PbEmpty
-
-			msg := &MessageAnnotation{
-				Filepath: s.Filepath,
-				Ident:    req_name,
-				File:     s.File,
-			}
-			key_fields := []*FieldAnnotation{}
-			for _, field := range d.Fields {
-				if !field.IsKey {
-					continue
-				}
-
-				key_fields = append(key_fields, field)
-			}
-			if len(key_fields) == 1 {
-				msg.Fields = append(msg.Fields, key_fields[0])
-			} else {
-				field := &FieldAnnotation{Ident: "key"}
-				field.Oneof = append(field.Oneof, key_fields...)
-				field.Number = slices.MinFunc(key_fields, func(a, b *FieldAnnotation) int {
-					return cmp.Compare(a.Number, b.Number)
-				}).Number
-				msg.Fields = append(msg.Fields, field)
-			}
-			// TODO: add index as a key? How?
-			// To make an index as a oneof field, new message need to be created.
-
-			s.File.Messages[req_name] = msg
-			p.Messages[req_name] = msg
 
 			rpc.EntReq = msg
 			rpc.EntRes = d

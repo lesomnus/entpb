@@ -6,6 +6,7 @@ import (
 	context "context"
 	uuid "github.com/google/uuid"
 	ent "github.com/lesomnus/entpb/internal/example/ent"
+	identity "github.com/lesomnus/entpb/internal/example/ent/identity"
 	predicate "github.com/lesomnus/entpb/internal/example/ent/predicate"
 	user "github.com/lesomnus/entpb/internal/example/ent/user"
 	pb "github.com/lesomnus/entpb/internal/example/pb"
@@ -40,7 +41,7 @@ func (s *ActorServiceServer) Create(ctx context.Context, req *pb.CreateActorRequ
 
 	return ToProtoUser(res), nil
 }
-func (s *ActorServiceServer) Delete(ctx context.Context, req *pb.DeleteActorRequest) (*emptypb.Empty, error) {
+func (s *ActorServiceServer) Delete(ctx context.Context, req *pb.GetActorRequest) (*emptypb.Empty, error) {
 	q := s.db.User.Delete()
 	if v, err := uuid.FromBytes(req.GetId()); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
@@ -64,7 +65,7 @@ func (s *ActorServiceServer) Get(ctx context.Context, req *pb.GetActorRequest) (
 	}
 
 	q.WithParent(func(q *ent.UserQuery) { q.Select(user.FieldID) })
-	q.WithIdentities(func(q *ent.IdentityQuery) { q.Select(user.FieldID) })
+	q.WithIdentities(func(q *ent.IdentityQuery) { q.Select(identity.FieldID) })
 	q.WithChildren(func(q *ent.UserQuery) { q.Select(user.FieldID) })
 
 	res, err := q.Only(ctx)

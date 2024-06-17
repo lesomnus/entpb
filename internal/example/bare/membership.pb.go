@@ -6,6 +6,7 @@ import (
 	context "context"
 	uuid "github.com/google/uuid"
 	ent "github.com/lesomnus/entpb/internal/example/ent"
+	account "github.com/lesomnus/entpb/internal/example/ent/account"
 	membership "github.com/lesomnus/entpb/internal/example/ent/membership"
 	predicate "github.com/lesomnus/entpb/internal/example/ent/predicate"
 	pb "github.com/lesomnus/entpb/internal/example/pb"
@@ -38,7 +39,7 @@ func (s *MembershipServiceServer) Create(ctx context.Context, req *pb.CreateMemb
 
 	return ToProtoMembership(res), nil
 }
-func (s *MembershipServiceServer) Delete(ctx context.Context, req *pb.DeleteMembershipRequest) (*emptypb.Empty, error) {
+func (s *MembershipServiceServer) Delete(ctx context.Context, req *pb.GetMembershipRequest) (*emptypb.Empty, error) {
 	q := s.db.Membership.Delete()
 	if v, err := uuid.FromBytes(req.GetId()); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
@@ -61,7 +62,7 @@ func (s *MembershipServiceServer) Get(ctx context.Context, req *pb.GetMembership
 		q.Where(p)
 	}
 
-	q.WithAccount(func(q *ent.AccountQuery) { q.Select(membership.FieldID) })
+	q.WithAccount(func(q *ent.AccountQuery) { q.Select(account.FieldID) })
 
 	res, err := q.Only(ctx)
 	if err != nil {

@@ -13,7 +13,7 @@ option go_package = "github.com/lesomnus/entpb/internal/example/pb";
 
 service AccountService {
 	rpc Create (CreateAccountRequest) returns (Account);
-	rpc Delete (DeleteAccountRequest) returns (google.protobuf.Empty);
+	rpc Delete (GetAccountRequest) returns (google.protobuf.Empty);
 	rpc Get (GetAccountRequest) returns (Account);
 	rpc Lock (LockAccountRequest) returns (google.protobuf.Empty);
 	rpc Update (UpdateAccountRequest) returns (Account);
@@ -21,21 +21,21 @@ service AccountService {
 
 service ActorService {
 	rpc Create (CreateActorRequest) returns (Actor);
-	rpc Delete (DeleteActorRequest) returns (google.protobuf.Empty);
+	rpc Delete (GetActorRequest) returns (google.protobuf.Empty);
 	rpc Get (GetActorRequest) returns (Actor);
 	rpc Update (UpdateActorRequest) returns (Actor);
 }
 
 service IdentityService {
 	rpc Create (CreateIdentityRequest) returns (Identity);
-	rpc Delete (DeleteIdentityRequest) returns (google.protobuf.Empty);
+	rpc Delete (GetIdentityRequest) returns (google.protobuf.Empty);
 	rpc Get (GetIdentityRequest) returns (Identity);
 	rpc Update (UpdateIdentityRequest) returns (Identity);
 }
 
 service MembershipService {
 	rpc Create (CreateMembershipRequest) returns (Membership);
-	rpc Delete (DeleteMembershipRequest) returns (google.protobuf.Empty);
+	rpc Delete (GetMembershipRequest) returns (google.protobuf.Empty);
 	rpc Get (GetMembershipRequest) returns (Membership);
 	rpc Update (UpdateMembershipRequest) returns (Membership);
 }
@@ -60,25 +60,6 @@ message CreateIdentityRequest {
 
 message CreateMembershipRequest {
 	GetAccountRequest account = 2;
-}
-
-message DeleteAccountRequest {
-	oneof key {
-		bytes id = 1;
-		string alias = 3;
-	}
-}
-
-message DeleteActorRequest {
-	bytes id = 1;
-}
-
-message DeleteIdentityRequest {
-	bytes id = 1;
-}
-
-message DeleteMembershipRequest {
-	bytes id = 1;
 }
 
 message GetAccountRequest {

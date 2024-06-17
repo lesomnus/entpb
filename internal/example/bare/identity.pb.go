@@ -8,6 +8,7 @@ import (
 	ent "github.com/lesomnus/entpb/internal/example/ent"
 	identity "github.com/lesomnus/entpb/internal/example/ent/identity"
 	predicate "github.com/lesomnus/entpb/internal/example/ent/predicate"
+	user "github.com/lesomnus/entpb/internal/example/ent/user"
 	pb "github.com/lesomnus/entpb/internal/example/pb"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -48,7 +49,7 @@ func (s *IdentityServiceServer) Create(ctx context.Context, req *pb.CreateIdenti
 
 	return ToProtoIdentity(res), nil
 }
-func (s *IdentityServiceServer) Delete(ctx context.Context, req *pb.DeleteIdentityRequest) (*emptypb.Empty, error) {
+func (s *IdentityServiceServer) Delete(ctx context.Context, req *pb.GetIdentityRequest) (*emptypb.Empty, error) {
 	q := s.db.Identity.Delete()
 	if v, err := uuid.FromBytes(req.GetId()); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
@@ -71,7 +72,7 @@ func (s *IdentityServiceServer) Get(ctx context.Context, req *pb.GetIdentityRequ
 		q.Where(p)
 	}
 
-	q.WithOwner(func(q *ent.UserQuery) { q.Select(identity.FieldID) })
+	q.WithOwner(func(q *ent.UserQuery) { q.Select(user.FieldID) })
 
 	res, err := q.Only(ctx)
 	if err != nil {

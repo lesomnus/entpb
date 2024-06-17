@@ -11,7 +11,7 @@ func (s *{{ print $.PbSvc.GoName "Server" }}) {{ $.PbMethod.GoName }}(ctx {{ imp
 	{{ range $.EntMsg.Fields -}}
 	{{ if .IsEdge -}}
 		{{ $name := .EntName | entname }}
-		q.With{{ $name }}(func(q *{{ print .EntRef "Query" | $.Ent.Ident | use }}){ q.Select({{ $schema.Ident "FieldID" | use -}}) })
+		q.With{{ $name }}(func(q *{{ print .EntRef "Query" | $.Ent.Ident | use }}){ q.Select({{ (schema .EntMsg.Schema).Ident "FieldID" | use -}}) })
 	{{- end }}
 	{{- end }}
 

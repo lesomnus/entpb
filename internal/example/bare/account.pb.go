@@ -8,6 +8,7 @@ import (
 	ent "github.com/lesomnus/entpb/internal/example/ent"
 	account "github.com/lesomnus/entpb/internal/example/ent/account"
 	predicate "github.com/lesomnus/entpb/internal/example/ent/predicate"
+	user "github.com/lesomnus/entpb/internal/example/ent/user"
 	pb "github.com/lesomnus/entpb/internal/example/pb"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -42,16 +43,16 @@ func (s *AccountServiceServer) Create(ctx context.Context, req *pb.CreateAccount
 
 	return ToProtoAccount(res), nil
 }
-func (s *AccountServiceServer) Delete(ctx context.Context, req *pb.DeleteAccountRequest) (*emptypb.Empty, error) {
+func (s *AccountServiceServer) Delete(ctx context.Context, req *pb.GetAccountRequest) (*emptypb.Empty, error) {
 	q := s.db.Account.Delete()
 	switch t := req.GetKey().(type) {
-	case *pb.DeleteAccountRequest_Id:
+	case *pb.GetAccountRequest_Id:
 		if v, err := uuid.FromBytes(t.Id); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
 		} else {
 			q.Where(account.IDEQ(v))
 		}
-	case *pb.DeleteAccountRequest_Alias:
+	case *pb.GetAccountRequest_Alias:
 		q.Where(account.AliasEQ(t.Alias))
 	default:
 		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
@@ -72,7 +73,7 @@ func (s *AccountServiceServer) Get(ctx context.Context, req *pb.GetAccountReques
 		q.Where(p)
 	}
 
-	q.WithOwner(func(q *ent.UserQuery) { q.Select(account.FieldID) })
+	q.WithOwner(func(q *ent.UserQuery) { q.Select(user.FieldID) })
 
 	res, err := q.Only(ctx)
 	if err != nil {
