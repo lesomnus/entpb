@@ -131,13 +131,13 @@ func GetMembershipSpecifier(req *pb.GetMembershipRequest) (predicate.Membership,
 		}
 	case *pb.GetMembershipRequest_InAccount:
 		ps := make([]predicate.Membership, 0, 2)
-		ps = append(ps, membership.NameEQ(t.InAccount.GetName()))
 		if p, err := GetAccountSpecifier(t.InAccount.GetAccount()); err != nil {
 			s, _ := status.FromError(err)
 			return nil, status.Errorf(codes.InvalidArgument, "in_account.%s", s.Message())
 		} else {
 			ps = append(ps, membership.HasAccountWith(p))
 		}
+		ps = append(ps, membership.NameEQ(t.InAccount.GetName()))
 		return membership.And(ps...), nil
 	case nil:
 		return nil, status.Errorf(codes.InvalidArgument, "key not provided")

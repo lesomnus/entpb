@@ -562,12 +562,12 @@ func (p *Build) buildGetMessage(d *MessageAnnotation) *MessageAnnotation {
 		}
 
 		ref_get_msg := p.buildGetMessage(ref_msg)
-		sub_msg.Fields = append(sub_msg.Fields, &FieldAnnotation{
+		sub_msg.Fields = append([]*FieldAnnotation{{
 			Ident:  edge_field.Ident,
 			Number: edge_field.Number,
 			EntMsg: ref_get_msg,
 			PbType: ref_get_msg.pbType(),
-		})
+		}}, sub_msg.Fields...)
 
 		key_fields = append(key_fields, &FieldAnnotation{
 			Ident:  ident.Ident(fmt.Sprintf("in_%s", edge.Name)),

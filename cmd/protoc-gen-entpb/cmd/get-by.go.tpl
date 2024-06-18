@@ -16,17 +16,31 @@
 	{{ end -}}
 {{ else -}}
 	{{ range $fields -}}
-		{{ if .IsTypeMessage -}}
-			{{ continue -}}
-		{{ end -}}
-
 		{{ $key_name := print .Ident | pascal -}}
-		func {{ $.EntMsg.Schema.Name }}By{{ $key_name }}(k {{ ent_type . }}) *{{ $msg_type }} {
-			return &{{ $msg_type }}{Key: &{{ $msg_type }}_{{ $key_name }}{ {{ $key_name }}: {{ to_pb_v . "k" }} }}
-		}
-		{{ if not (is_symmetric .) -}}
-			func {{ $.EntMsg.Schema.Name }}By{{ $key_name }}V(k {{ pb_type . }}) *{{ $msg_type }} {
-				return &{{ $msg_type }}{Key: &{{ $msg_type }}_{{ $key_name }}{ {{ $key_name }}: k }}
+		{{ if not .IsTypeMessage -}}
+			func {{ $.EntMsg.Schema.Name }}By{{ $key_name }}(k {{ ent_type . }}) *{{ $msg_type }} {
+				return &{{ $msg_type }}{Key: &{{ $msg_type }}_{{ $key_name }}{ {{ $key_name }}: {{ to_pb_v . "k" }} }}
+			}
+			{{ if not (is_symmetric .) -}}
+				func {{ $.EntMsg.Schema.Name }}By{{ $key_name }}V(k {{ pb_type . }}) *{{ $msg_type }} {
+					return &{{ $msg_type }}{Key: &{{ $msg_type }}_{{ $key_name }}{ {{ $key_name }}: k }}
+				}
+			{{ end -}}
+		{{ else -}}
+			{{ $fields := .EntMsg.Fields -}}
+			func {{ $.EntMsg.Schema.Name }}{{ $key_name }}(f *{{ (index $fields 0).EntMsg.Ident -}},
+				{{- range $i, $_ := slice $fields 1 -}}
+					k{{ $i }} {{ ent_type . }},
+				{{- end -}}
+			) *{{ $msg_type }} {
+				return &{{ $msg_type }}{Key: &{{ $msg_type }}_{{ $key_name }}{
+					{{ $key_name }}: &{{ .EntMsg.Ident }}{
+						{{ print (index $fields 0).Ident | pascal }}: f,
+						{{ range $i, $_ := slice $fields 1 -}}
+							{{ print .Ident | pascal }}: {{ to_pb_v . (print "k" $i) }},
+						{{ end -}}
+					},
+				}}
 			}
 		{{ end -}}
 	{{ end -}}

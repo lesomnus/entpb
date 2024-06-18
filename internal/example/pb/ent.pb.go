@@ -33,3 +33,11 @@ func MembershipById(k uuid.UUID) *GetMembershipRequest {
 func MembershipByIdV(k []byte) *GetMembershipRequest {
 	return &GetMembershipRequest{Key: &GetMembershipRequest_Id{Id: k}}
 }
+func MembershipInAccount(f *GetAccountRequest, k0 string) *GetMembershipRequest {
+	return &GetMembershipRequest{Key: &GetMembershipRequest_InAccount{
+		InAccount: &GetMembershipInAccount{
+			Account: f,
+			Name:    k0,
+		},
+	}}
+}
