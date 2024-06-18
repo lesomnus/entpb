@@ -27,6 +27,20 @@ func (mu *MembershipUpdate) Where(ps ...predicate.Membership) *MembershipUpdate 
 	return mu
 }
 
+// SetName sets the "name" field.
+func (mu *MembershipUpdate) SetName(s string) *MembershipUpdate {
+	mu.mutation.SetName(s)
+	return mu
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (mu *MembershipUpdate) SetNillableName(s *string) *MembershipUpdate {
+	if s != nil {
+		mu.SetName(*s)
+	}
+	return mu
+}
+
 // Mutation returns the MembershipMutation object of the builder.
 func (mu *MembershipUpdate) Mutation() *MembershipMutation {
 	return mu.mutation
@@ -79,6 +93,9 @@ func (mu *MembershipUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
+	if value, ok := mu.mutation.Name(); ok {
+		_spec.SetField(membership.FieldName, field.TypeString, value)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, mu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{membership.Label}
@@ -97,6 +114,20 @@ type MembershipUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *MembershipMutation
+}
+
+// SetName sets the "name" field.
+func (muo *MembershipUpdateOne) SetName(s string) *MembershipUpdateOne {
+	muo.mutation.SetName(s)
+	return muo
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (muo *MembershipUpdateOne) SetNillableName(s *string) *MembershipUpdateOne {
+	if s != nil {
+		muo.SetName(*s)
+	}
+	return muo
 }
 
 // Mutation returns the MembershipMutation object of the builder.
@@ -180,6 +211,9 @@ func (muo *MembershipUpdateOne) sqlSave(ctx context.Context) (_node *Membership,
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := muo.mutation.Name(); ok {
+		_spec.SetField(membership.FieldName, field.TypeString, value)
 	}
 	_node = &Membership{config: muo.config}
 	_spec.Assign = _node.assignValues

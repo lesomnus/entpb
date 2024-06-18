@@ -26,6 +26,9 @@ func NewMembershipServiceServer(db *ent.Client) *MembershipServiceServer {
 }
 func (s *MembershipServiceServer) Create(ctx context.Context, req *pb.CreateMembershipRequest) (*pb.Membership, error) {
 	q := s.db.Membership.Create()
+	if v := req.Name; v != nil {
+		q.SetName(*v)
+	}
 	if id, err := GetAccountId(ctx, s.db, req.GetAccount()); err != nil {
 		return nil, err
 	} else {
@@ -40,15 +43,11 @@ func (s *MembershipServiceServer) Create(ctx context.Context, req *pb.CreateMemb
 	return ToProtoMembership(res), nil
 }
 func (s *MembershipServiceServer) Delete(ctx context.Context, req *pb.GetMembershipRequest) (*emptypb.Empty, error) {
-	q := s.db.Membership.Delete()
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
-	} else {
-		q.Where(membership.IDEQ(v))
-	}
-
-	_, err := q.Exec(ctx)
+	p, err := GetMembershipSpecifier(req)
 	if err != nil {
+		return nil, err
+	}
+	if _, err := s.db.Membership.Delete().Where(p).Exec(ctx); err != nil {
 		return nil, ToStatus(err)
 	}
 
@@ -78,6 +77,9 @@ func (s *MembershipServiceServer) Update(ctx context.Context, req *pb.UpdateMemb
 	}
 
 	q := s.db.Membership.UpdateOneID(id)
+	if v := req.Name; v != nil {
+		q.SetName(*v)
+	}
 
 	res, err := q.Save(ctx)
 	if err != nil {
@@ -90,6 +92,7 @@ func ToProtoMembership(v *ent.Membership) *pb.Membership {
 	m := &pb.Membership{}
 	m.Id = v.ID[:]
 	m.DateCreated = timestamppb.New(v.DateCreated)
+	m.Name = v.Name
 	if v := v.Edges.Account; v != nil {
 		m.Account = ToProtoAccount(v)
 	}
@@ -97,16 +100,48 @@ func ToProtoMembership(v *ent.Membership) *pb.Membership {
 }
 func GetMembershipId(ctx context.Context, db *ent.Client, req *pb.GetMembershipRequest) (uuid.UUID, error) {
 	var r uuid.UUID
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
-	} else {
-		return v, nil
+	k := req.GetKey()
+	if t, ok := k.(*pb.GetMembershipRequest_Id); ok {
+		if v, err := uuid.FromBytes(t.Id); err != nil {
+			return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			return v, nil
+		}
 	}
+
+	p, err := GetMembershipSpecifier(req)
+	if err != nil {
+		return r, err
+	}
+
+	v, err := db.Membership.Query().Where(p).OnlyID(ctx)
+	if err != nil {
+		return r, ToStatus(err)
+	}
+
+	return v, nil
 }
 func GetMembershipSpecifier(req *pb.GetMembershipRequest) (predicate.Membership, error) {
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
-	} else {
-		return membership.IDEQ(v), nil
+	switch t := req.GetKey().(type) {
+	case *pb.GetMembershipRequest_Id:
+		if v, err := uuid.FromBytes(t.Id); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			return membership.IDEQ(v), nil
+		}
+	case *pb.GetMembershipRequest_InAccount:
+		ps := make([]predicate.Membership, 0, 2)
+		ps = append(ps, membership.NameEQ(t.InAccount.GetName()))
+		if p, err := GetAccountSpecifier(t.InAccount.GetAccount()); err != nil {
+			s, _ := status.FromError(err)
+			return nil, status.Errorf(codes.InvalidArgument, "in_account.%s", s.Message())
+		} else {
+			ps = append(ps, membership.HasAccountWith(p))
+		}
+		return membership.And(ps...), nil
+	case nil:
+		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
+	default:
+		return nil, status.Errorf(codes.Unimplemented, "unknown type of key")
 	}
 }

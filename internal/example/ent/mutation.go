@@ -1236,6 +1236,7 @@ type MembershipMutation struct {
 	typ            string
 	id             *uuid.UUID
 	date_created   *time.Time
+	name           *string
 	clearedFields  map[string]struct{}
 	account        *uuid.UUID
 	clearedaccount bool
@@ -1384,27 +1385,87 @@ func (m *MembershipMutation) ResetDateCreated() {
 	m.date_created = nil
 }
 
-// SetAccountID sets the "account" edge to the Account entity by id.
-func (m *MembershipMutation) SetAccountID(id uuid.UUID) {
-	m.account = &id
+// SetAccountID sets the "account_id" field.
+func (m *MembershipMutation) SetAccountID(u uuid.UUID) {
+	m.account = &u
+}
+
+// AccountID returns the value of the "account_id" field in the mutation.
+func (m *MembershipMutation) AccountID() (r uuid.UUID, exists bool) {
+	v := m.account
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAccountID returns the old "account_id" field's value of the Membership entity.
+// If the Membership object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MembershipMutation) OldAccountID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAccountID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAccountID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAccountID: %w", err)
+	}
+	return oldValue.AccountID, nil
+}
+
+// ResetAccountID resets all changes to the "account_id" field.
+func (m *MembershipMutation) ResetAccountID() {
+	m.account = nil
+}
+
+// SetName sets the "name" field.
+func (m *MembershipMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *MembershipMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Membership entity.
+// If the Membership object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MembershipMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *MembershipMutation) ResetName() {
+	m.name = nil
 }
 
 // ClearAccount clears the "account" edge to the Account entity.
 func (m *MembershipMutation) ClearAccount() {
 	m.clearedaccount = true
+	m.clearedFields[membership.FieldAccountID] = struct{}{}
 }
 
 // AccountCleared reports if the "account" edge to the Account entity was cleared.
 func (m *MembershipMutation) AccountCleared() bool {
 	return m.clearedaccount
-}
-
-// AccountID returns the "account" edge ID in the mutation.
-func (m *MembershipMutation) AccountID() (id uuid.UUID, exists bool) {
-	if m.account != nil {
-		return *m.account, true
-	}
-	return
 }
 
 // AccountIDs returns the "account" edge IDs in the mutation.
@@ -1457,9 +1518,15 @@ func (m *MembershipMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MembershipMutation) Fields() []string {
-	fields := make([]string, 0, 1)
+	fields := make([]string, 0, 3)
 	if m.date_created != nil {
 		fields = append(fields, membership.FieldDateCreated)
+	}
+	if m.account != nil {
+		fields = append(fields, membership.FieldAccountID)
+	}
+	if m.name != nil {
+		fields = append(fields, membership.FieldName)
 	}
 	return fields
 }
@@ -1471,6 +1538,10 @@ func (m *MembershipMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case membership.FieldDateCreated:
 		return m.DateCreated()
+	case membership.FieldAccountID:
+		return m.AccountID()
+	case membership.FieldName:
+		return m.Name()
 	}
 	return nil, false
 }
@@ -1482,6 +1553,10 @@ func (m *MembershipMutation) OldField(ctx context.Context, name string) (ent.Val
 	switch name {
 	case membership.FieldDateCreated:
 		return m.OldDateCreated(ctx)
+	case membership.FieldAccountID:
+		return m.OldAccountID(ctx)
+	case membership.FieldName:
+		return m.OldName(ctx)
 	}
 	return nil, fmt.Errorf("unknown Membership field %s", name)
 }
@@ -1497,6 +1572,20 @@ func (m *MembershipMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDateCreated(v)
+		return nil
+	case membership.FieldAccountID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAccountID(v)
+		return nil
+	case membership.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Membership field %s", name)
@@ -1549,6 +1638,12 @@ func (m *MembershipMutation) ResetField(name string) error {
 	switch name {
 	case membership.FieldDateCreated:
 		m.ResetDateCreated()
+		return nil
+	case membership.FieldAccountID:
+		m.ResetAccountID()
+		return nil
+	case membership.FieldName:
+		m.ResetName()
 		return nil
 	}
 	return fmt.Errorf("unknown Membership field %s", name)

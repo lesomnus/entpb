@@ -16,6 +16,10 @@
 	{{ end -}}
 {{ else -}}
 	{{ range $fields -}}
+		{{ if .IsTypeMessage -}}
+			{{ continue -}}
+		{{ end -}}
+
 		{{ $key_name := print .Ident | pascal -}}
 		func {{ $.EntMsg.Schema.Name }}By{{ $key_name }}(k {{ ent_type . }}) *{{ $msg_type }} {
 			return &{{ $msg_type }}{Key: &{{ $msg_type }}_{{ $key_name }}{ {{ $key_name }}: {{ to_pb_v . "k" }} }}

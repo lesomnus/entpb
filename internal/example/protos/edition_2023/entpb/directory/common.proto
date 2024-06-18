@@ -48,5 +48,6 @@ message Identity {
 message Membership {
 	bytes id = 1;
 	Account account = 2;
+	string name = 3;
 	google.protobuf.Timestamp date_created = 15;
 }

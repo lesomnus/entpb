@@ -107,6 +107,19 @@ func (b *Build) parse(graph *gen.Graph) error {
 		return fmt.Errorf("parse message definitions: %w", errors.Join(errs...))
 	}
 
+	errs = []error{}
+	// Rpcs must be parsed after the services are parsed
+	// since some rpc generates a message that bound to another message (e.g. GetEntityRequest),
+	// so it references service.File to put the generated file in the index.
+	for _, msg := range b.Schemas {
+		if err := b.parseServiceRpcs(msg); err != nil {
+			errs = append(errs, fmt.Errorf(`parse rpcs in %s: %w`, msg.Ident, err))
+		}
+	}
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
+
 	return nil
 }
 
@@ -270,7 +283,6 @@ func (p *Build) parseEntEdge(r *load.Edge) (*FieldAnnotation, error) {
 
 	d.Comment = r.Comment
 	d.EntName = r.Name
-	d.EntRef = r.Type
 	d.EntMsg = message
 	d.PbType = message.pbType()
 	d.IsOptional = !r.Required
@@ -306,6 +318,12 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 		f.Services[s.Ident] = s
 	}
 
+	return nil
+}
+
+func (p *Build) parseServiceRpcs(d *MessageAnnotation) error {
+	s := d.Service
+
 	for _, rpc := range s.Rpcs {
 		switch rpc.Ident {
 		case "Create":
@@ -337,15 +355,15 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 					// so it can be set only when it is created.
 				}
 				if field.IsEdge() {
-					ref_msg, ok := p.Schemas[field.EntRef]
+					ref_msg, ok := p.Schemas[field.EntMsg.Schema.Name]
 					if !ok {
-						return fmt.Errorf(`schema "%s" referenced by field "%s" does not exists`, field.EntRef, field.EntName)
+						return fmt.Errorf(`schema "%s" referenced by field "%s" does not exists`, field.EntMsg.Schema.Name, field.EntName)
 					}
 
 					v := *field
-					get_msg := p.buildGetMessage(s, ref_msg)
+					get_msg := p.buildGetMessage(ref_msg)
 					v.EntMsg = get_msg
-					v.PbType.Ident = get_msg.Ident
+					v.PbType = get_msg.pbType()
 					msg.Fields = append(msg.Fields, &v)
 					continue
 				}
@@ -366,7 +384,7 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 			rpc.EntRes = d
 
 		case "Get":
-			msg := p.buildGetMessage(s, d)
+			msg := p.buildGetMessage(d)
 
 			rpc.Req = d.pbType()
 			rpc.Req.Ident = msg.Ident
@@ -390,9 +408,9 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 				if field.EntName == "id" {
 					v := *field
 					v.Ident = "key"
-					get_msg := p.buildGetMessage(s, d)
+					get_msg := p.buildGetMessage(d)
 					v.EntMsg = get_msg
-					v.PbType.Ident = get_msg.Ident
+					v.PbType = get_msg.pbType()
 					msg.Fields = append(msg.Fields, &v)
 					continue
 				}
@@ -400,15 +418,15 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 					continue
 				}
 				if field.IsEdge() {
-					ref_msg, ok := p.Schemas[field.EntRef]
+					ref_msg, ok := p.Schemas[field.EntMsg.Schema.Name]
 					if !ok {
-						return fmt.Errorf(`schema "%s" referenced by field "%s" does not exists`, field.EntRef, field.EntName)
+						return fmt.Errorf(`schema "%s" referenced by field "%s" does not exists`, field.EntMsg.Schema.Name, field.EntName)
 					}
 
 					v := *field
-					get_msg := p.buildGetMessage(s, ref_msg)
+					get_msg := p.buildGetMessage(ref_msg)
 					v.EntMsg = get_msg
-					v.PbType.Ident = get_msg.Ident
+					v.PbType = get_msg.pbType()
 					msg.Fields = append(msg.Fields, &v)
 					continue
 				}
@@ -425,7 +443,7 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 			rpc.EntRes = d
 
 		case "Delete":
-			msg := p.buildGetMessage(s, d)
+			msg := p.buildGetMessage(d)
 
 			rpc.Req = d.pbType()
 			rpc.Req.Ident = msg.Ident
@@ -454,7 +472,12 @@ func (p *Build) parseService(d *MessageAnnotation) error {
 	return nil
 }
 
-func (p *Build) buildGetMessage(s *Service, d *MessageAnnotation) *MessageAnnotation {
+func (p *Build) buildGetMessage(d *MessageAnnotation) *MessageAnnotation {
+	s := d.Service
+	if s == nil {
+		panic(fmt.Sprintf("message \"%s\" does not have service definition", d.Ident))
+	}
+
 	req_name := ident.Ident(fmt.Sprintf("Get%sRequest", d.Ident))
 	msg, ok := p.Messages[req_name]
 	if ok {
@@ -475,6 +498,87 @@ func (p *Build) buildGetMessage(s *Service, d *MessageAnnotation) *MessageAnnota
 
 		key_fields = append(key_fields, field)
 	}
+
+	// Naive implementation...
+	// Only valid if there is a foreign key in the fields of index
+	// and, the edge and fields are must be a proto field.
+	for _, index := range d.Schema.Indexes {
+		if !index.Unique {
+			continue
+		}
+
+		// Why not looking for FieldAnnotation directly?
+		// Since FieldAnnotation does not have field name that index holds.
+		// See schema.Membership; "account_id", the field name "account" edge, is not stored in the FieldAnnotation.
+		var edge *load.Edge
+		for _, field_name := range index.Fields {
+			i := slices.IndexFunc(d.Schema.Edges, func(edge *load.Edge) bool {
+				return edge.Field == field_name
+			})
+			if i < 0 {
+				continue
+			}
+
+			edge = d.Schema.Edges[i]
+			break
+		}
+		if edge == nil {
+			continue
+		}
+
+		var edge_field *FieldAnnotation
+		if i := slices.IndexFunc(d.Fields, func(field *FieldAnnotation) bool {
+			return field.EntName == edge.Name
+		}); i < 0 {
+			continue
+		} else {
+			edge_field = d.Fields[i]
+		}
+
+		ref_msg, ok := p.Schemas[edge.Type]
+		if !ok {
+			panic(fmt.Sprintf("message of schema \"%s\" not found", edge.Type))
+		}
+
+		sub_name := ident.Ident(fmt.Sprintf("Get%sIn%s", d.Ident, strcase.ToCamel(edge.Name)))
+		sub_msg := &MessageAnnotation{
+			Filepath: s.Filepath,
+			Ident:    sub_name,
+			File:     s.File,
+			Schema:   d.Schema,
+			Fields:   []*FieldAnnotation{},
+		}
+		for _, field := range d.Fields {
+			if !slices.ContainsFunc(index.Fields, func(v string) bool {
+				return v == field.EntName
+			}) {
+				continue
+			}
+
+			sub_msg.Fields = append(sub_msg.Fields, field)
+		}
+		if len(sub_msg.Fields) == 0 {
+			continue
+		}
+
+		ref_get_msg := p.buildGetMessage(ref_msg)
+		sub_msg.Fields = append(sub_msg.Fields, &FieldAnnotation{
+			Ident:  edge_field.Ident,
+			Number: edge_field.Number,
+			EntMsg: ref_get_msg,
+			PbType: ref_get_msg.pbType(),
+		})
+
+		key_fields = append(key_fields, &FieldAnnotation{
+			Ident:  ident.Ident(fmt.Sprintf("in_%s", edge.Name)),
+			Number: edge_field.Number,
+			EntMsg: sub_msg,
+			PbType: sub_msg.pbType(),
+		})
+
+		s.File.Messages[sub_name] = sub_msg
+		p.Messages[sub_name] = sub_msg
+	}
 	if len(key_fields) == 1 {
 		msg.Fields = append(msg.Fields, key_fields[0])
 	} else {
@@ -485,8 +589,6 @@ func (p *Build) buildGetMessage(s *Service, d *MessageAnnotation) *MessageAnnota
 		}).Number
 		msg.Fields = append(msg.Fields, field)
 	}
-	// TODO: add index as a key? How?
-	// To make an index as a oneof field, new message need to be created.
 
 	s.File.Messages[req_name] = msg
 	p.Messages[req_name] = msg

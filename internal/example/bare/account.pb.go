@@ -44,22 +44,11 @@ func (s *AccountServiceServer) Create(ctx context.Context, req *pb.CreateAccount
 	return ToProtoAccount(res), nil
 }
 func (s *AccountServiceServer) Delete(ctx context.Context, req *pb.GetAccountRequest) (*emptypb.Empty, error) {
-	q := s.db.Account.Delete()
-	switch t := req.GetKey().(type) {
-	case *pb.GetAccountRequest_Id:
-		if v, err := uuid.FromBytes(t.Id); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
-		} else {
-			q.Where(account.IDEQ(v))
-		}
-	case *pb.GetAccountRequest_Alias:
-		q.Where(account.AliasEQ(t.Alias))
-	default:
-		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
-	}
-
-	_, err := q.Exec(ctx)
+	p, err := GetAccountSpecifier(req)
 	if err != nil {
+		return nil, err
+	}
+	if _, err := s.db.Account.Delete().Where(p).Exec(ctx); err != nil {
 		return nil, ToStatus(err)
 	}
 
@@ -125,20 +114,17 @@ func GetAccountId(ctx context.Context, db *ent.Client, req *pb.GetAccountRequest
 		}
 	}
 
-	q := db.Account.Query()
-	switch t := k.(type) {
-	case *pb.GetAccountRequest_Alias:
-		q.Where(account.AliasEQ(t.Alias))
-	case nil:
-		return r, status.Errorf(codes.InvalidArgument, "key not provided")
-	default:
-		return r, status.Errorf(codes.Unimplemented, "unknown type of key")
+	p, err := GetAccountSpecifier(req)
+	if err != nil {
+		return r, err
 	}
-	if v, err := q.OnlyID(ctx); err != nil {
+
+	v, err := db.Account.Query().Where(p).OnlyID(ctx)
+	if err != nil {
 		return r, ToStatus(err)
-	} else {
-		return v, nil
 	}
+
+	return v, nil
 }
 func GetAccountSpecifier(req *pb.GetAccountRequest) (predicate.Account, error) {
 	switch t := req.GetKey().(type) {

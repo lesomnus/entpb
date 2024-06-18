@@ -376,9 +376,6 @@ func (mq *MembershipQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*M
 			mq.withAccount != nil,
 		}
 	)
-	if mq.withAccount != nil {
-		withFKs = true
-	}
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, membership.ForeignKeys...)
 	}
@@ -413,10 +410,7 @@ func (mq *MembershipQuery) loadAccount(ctx context.Context, query *AccountQuery,
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Membership)
 	for i := range nodes {
-		if nodes[i].account_memberships == nil {
-			continue
-		}
-		fk := *nodes[i].account_memberships
+		fk := nodes[i].AccountID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -433,7 +427,7 @@ func (mq *MembershipQuery) loadAccount(ctx context.Context, query *AccountQuery,
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "account_memberships" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "account_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -466,6 +460,9 @@ func (mq *MembershipQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != membership.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if mq.withAccount != nil {
+			_spec.Node.AddColumnOnce(membership.FieldAccountID)
 		}
 	}
 	if ps := mq.predicates; len(ps) > 0 {

@@ -42,15 +42,11 @@ func (s *ActorServiceServer) Create(ctx context.Context, req *pb.CreateActorRequ
 	return ToProtoUser(res), nil
 }
 func (s *ActorServiceServer) Delete(ctx context.Context, req *pb.GetActorRequest) (*emptypb.Empty, error) {
-	q := s.db.User.Delete()
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
-	} else {
-		q.Where(user.IDEQ(v))
-	}
-
-	_, err := q.Exec(ctx)
+	p, err := GetUserSpecifier(req)
 	if err != nil {
+		return nil, err
+	}
+	if _, err := s.db.User.Delete().Where(p).Exec(ctx); err != nil {
 		return nil, ToStatus(err)
 	}
 

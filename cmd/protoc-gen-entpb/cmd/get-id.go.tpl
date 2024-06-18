@@ -22,27 +22,16 @@ func Get{{ $.EntMsg.Schema.Name }}Id(ctx {{ import "context" | ident "Context" }
 			{{ to_ent_with_rv $id_field "t.Id" "v" "return @, nil" "r" }}
 		}
 
-		q := db.{{ $.EntMsg.Schema.Name }}.Query()
-		switch t := k.(type) {
-		{{ range $fields -}}
-			{{ if eq .Ident "id" -}}
-				{{ continue -}}
-			{{ end -}}
-			{{ $key_name := print .Ident | pascal -}}
-			{{ $in := print "t." $key_name -}}
-			{{ $pred := print (.EntName | entname) "EQ" | (schema $.EntMsg.Schema).Ident | use  -}}
-			case *{{ print $.EntMsg.Ident "_" $key_name | $.Pb.Ident | use }}:
-				{{ print "q.Where(" $pred "(@))" | to_ent . $in "v" }}
-		{{ end -}}
-		case nil:
-			return r, {{ status "InvalidArgument" "key not provided" }}
-		default:
-			return r, {{ status "Unimplemented" "unknown type of key" }}
+		p, err := Get{{ $.EntMsg.Schema.Name }}Specifier(req)
+		if err != nil {
+			return r, err
 		}
-		if v, err := q.OnlyID(ctx); err != nil {
+
+		v, err := db.{{ $.EntMsg.Schema.Name }}.Query().Where(p).OnlyID(ctx)
+		if err != nil {
 			return r, ToStatus(err)
-		} else {
-			return v, nil
 		}
+
+		return v, nil
 	{{ end -}}
 }

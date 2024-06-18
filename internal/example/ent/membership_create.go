@@ -36,6 +36,26 @@ func (mc *MembershipCreate) SetNillableDateCreated(t *time.Time) *MembershipCrea
 	return mc
 }
 
+// SetAccountID sets the "account_id" field.
+func (mc *MembershipCreate) SetAccountID(u uuid.UUID) *MembershipCreate {
+	mc.mutation.SetAccountID(u)
+	return mc
+}
+
+// SetName sets the "name" field.
+func (mc *MembershipCreate) SetName(s string) *MembershipCreate {
+	mc.mutation.SetName(s)
+	return mc
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (mc *MembershipCreate) SetNillableName(s *string) *MembershipCreate {
+	if s != nil {
+		mc.SetName(*s)
+	}
+	return mc
+}
+
 // SetID sets the "id" field.
 func (mc *MembershipCreate) SetID(u uuid.UUID) *MembershipCreate {
 	mc.mutation.SetID(u)
@@ -47,12 +67,6 @@ func (mc *MembershipCreate) SetNillableID(u *uuid.UUID) *MembershipCreate {
 	if u != nil {
 		mc.SetID(*u)
 	}
-	return mc
-}
-
-// SetAccountID sets the "account" edge to the Account entity by ID.
-func (mc *MembershipCreate) SetAccountID(id uuid.UUID) *MembershipCreate {
-	mc.mutation.SetAccountID(id)
 	return mc
 }
 
@@ -100,6 +114,10 @@ func (mc *MembershipCreate) defaults() {
 		v := membership.DefaultDateCreated()
 		mc.mutation.SetDateCreated(v)
 	}
+	if _, ok := mc.mutation.Name(); !ok {
+		v := membership.DefaultName()
+		mc.mutation.SetName(v)
+	}
 	if _, ok := mc.mutation.ID(); !ok {
 		v := membership.DefaultID()
 		mc.mutation.SetID(v)
@@ -110,6 +128,12 @@ func (mc *MembershipCreate) defaults() {
 func (mc *MembershipCreate) check() error {
 	if _, ok := mc.mutation.DateCreated(); !ok {
 		return &ValidationError{Name: "date_created", err: errors.New(`ent: missing required field "Membership.date_created"`)}
+	}
+	if _, ok := mc.mutation.AccountID(); !ok {
+		return &ValidationError{Name: "account_id", err: errors.New(`ent: missing required field "Membership.account_id"`)}
+	}
+	if _, ok := mc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Membership.name"`)}
 	}
 	if _, ok := mc.mutation.AccountID(); !ok {
 		return &ValidationError{Name: "account", err: errors.New(`ent: missing required edge "Membership.account"`)}
@@ -153,6 +177,10 @@ func (mc *MembershipCreate) createSpec() (*Membership, *sqlgraph.CreateSpec) {
 		_spec.SetField(membership.FieldDateCreated, field.TypeTime, value)
 		_node.DateCreated = value
 	}
+	if value, ok := mc.mutation.Name(); ok {
+		_spec.SetField(membership.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
 	if nodes := mc.mutation.AccountIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -167,7 +195,7 @@ func (mc *MembershipCreate) createSpec() (*Membership, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.account_memberships = &nodes[0]
+		_node.AccountID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

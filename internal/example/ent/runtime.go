@@ -60,6 +60,10 @@ func init() {
 	membershipDescDateCreated := membershipMixinFields0[1].Descriptor()
 	// membership.DefaultDateCreated holds the default value on creation for the date_created field.
 	membership.DefaultDateCreated = membershipDescDateCreated.Default.(func() time.Time)
+	// membershipDescName is the schema descriptor for name field.
+	membershipDescName := membershipFields[1].Descriptor()
+	// membership.DefaultName holds the default value on creation for the name field.
+	membership.DefaultName = membershipDescName.Default.(func() string)
 	// membershipDescID is the schema descriptor for id field.
 	membershipDescID := membershipMixinFields0[0].Descriptor()
 	// membership.DefaultID holds the default value on creation for the id field.

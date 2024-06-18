@@ -6,7 +6,7 @@ func ToProto{{ $.EntMsg.Schema.Name }}(v *{{ $.Ent.Ident $.EntMsg.Schema.Name | 
 	{{ $ent_field := print "v." (entname .EntName) -}}
 	{{ if .IsEdge -}}
 		{{ $ent_field = print "v.Edges." (entname .EntName) -}}
-		{{ $converter := print "ToProto" .EntRef -}} 
+		{{ $converter := print "ToProto" .EntMsg.Schema.Name -}} 
 		{{ if .IsRepeated -}}
 		for _, v := range {{ $ent_field }} {
 			{{ $pb_field }} = append({{ $pb_field }}, {{ $converter }}(v))

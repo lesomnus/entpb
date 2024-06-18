@@ -57,7 +57,8 @@ var (
 	MembershipsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "date_created", Type: field.TypeTime},
-		{Name: "account_memberships", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString},
+		{Name: "account_id", Type: field.TypeUUID},
 		{Name: "user_memberships", Type: field.TypeUUID, Nullable: true},
 	}
 	// MembershipsTable holds the schema information for the "memberships" table.
@@ -68,15 +69,22 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "memberships_accounts_memberships",
-				Columns:    []*schema.Column{MembershipsColumns[2]},
+				Columns:    []*schema.Column{MembershipsColumns[3]},
 				RefColumns: []*schema.Column{AccountsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "memberships_users_memberships",
-				Columns:    []*schema.Column{MembershipsColumns[3]},
+				Columns:    []*schema.Column{MembershipsColumns[4]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "membership_account_id_name",
+				Unique:  true,
+				Columns: []*schema.Column{MembershipsColumns[3], MembershipsColumns[2]},
 			},
 		},
 	}

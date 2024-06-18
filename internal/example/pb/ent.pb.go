@@ -28,8 +28,8 @@ func IdentityByIdV(k []byte) *GetIdentityRequest {
 	return &GetIdentityRequest{Id: k}
 }
 func MembershipById(k uuid.UUID) *GetMembershipRequest {
-	return &GetMembershipRequest{Id: k[:]}
+	return &GetMembershipRequest{Key: &GetMembershipRequest_Id{Id: k[:]}}
 }
 func MembershipByIdV(k []byte) *GetMembershipRequest {
-	return &GetMembershipRequest{Id: k}
+	return &GetMembershipRequest{Key: &GetMembershipRequest_Id{Id: k}}
 }

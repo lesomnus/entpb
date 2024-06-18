@@ -61,6 +61,16 @@ func DateCreated(v time.Time) predicate.Membership {
 	return predicate.Membership(sql.FieldEQ(FieldDateCreated, v))
 }
 
+// AccountID applies equality check predicate on the "account_id" field. It's identical to AccountIDEQ.
+func AccountID(v uuid.UUID) predicate.Membership {
+	return predicate.Membership(sql.FieldEQ(FieldAccountID, v))
+}
+
+// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
+func Name(v string) predicate.Membership {
+	return predicate.Membership(sql.FieldEQ(FieldName, v))
+}
+
 // DateCreatedEQ applies the EQ predicate on the "date_created" field.
 func DateCreatedEQ(v time.Time) predicate.Membership {
 	return predicate.Membership(sql.FieldEQ(FieldDateCreated, v))
@@ -99,6 +109,91 @@ func DateCreatedLT(v time.Time) predicate.Membership {
 // DateCreatedLTE applies the LTE predicate on the "date_created" field.
 func DateCreatedLTE(v time.Time) predicate.Membership {
 	return predicate.Membership(sql.FieldLTE(FieldDateCreated, v))
+}
+
+// AccountIDEQ applies the EQ predicate on the "account_id" field.
+func AccountIDEQ(v uuid.UUID) predicate.Membership {
+	return predicate.Membership(sql.FieldEQ(FieldAccountID, v))
+}
+
+// AccountIDNEQ applies the NEQ predicate on the "account_id" field.
+func AccountIDNEQ(v uuid.UUID) predicate.Membership {
+	return predicate.Membership(sql.FieldNEQ(FieldAccountID, v))
+}
+
+// AccountIDIn applies the In predicate on the "account_id" field.
+func AccountIDIn(vs ...uuid.UUID) predicate.Membership {
+	return predicate.Membership(sql.FieldIn(FieldAccountID, vs...))
+}
+
+// AccountIDNotIn applies the NotIn predicate on the "account_id" field.
+func AccountIDNotIn(vs ...uuid.UUID) predicate.Membership {
+	return predicate.Membership(sql.FieldNotIn(FieldAccountID, vs...))
+}
+
+// NameEQ applies the EQ predicate on the "name" field.
+func NameEQ(v string) predicate.Membership {
+	return predicate.Membership(sql.FieldEQ(FieldName, v))
+}
+
+// NameNEQ applies the NEQ predicate on the "name" field.
+func NameNEQ(v string) predicate.Membership {
+	return predicate.Membership(sql.FieldNEQ(FieldName, v))
+}
+
+// NameIn applies the In predicate on the "name" field.
+func NameIn(vs ...string) predicate.Membership {
+	return predicate.Membership(sql.FieldIn(FieldName, vs...))
+}
+
+// NameNotIn applies the NotIn predicate on the "name" field.
+func NameNotIn(vs ...string) predicate.Membership {
+	return predicate.Membership(sql.FieldNotIn(FieldName, vs...))
+}
+
+// NameGT applies the GT predicate on the "name" field.
+func NameGT(v string) predicate.Membership {
+	return predicate.Membership(sql.FieldGT(FieldName, v))
+}
+
+// NameGTE applies the GTE predicate on the "name" field.
+func NameGTE(v string) predicate.Membership {
+	return predicate.Membership(sql.FieldGTE(FieldName, v))
+}
+
+// NameLT applies the LT predicate on the "name" field.
+func NameLT(v string) predicate.Membership {
+	return predicate.Membership(sql.FieldLT(FieldName, v))
+}
+
+// NameLTE applies the LTE predicate on the "name" field.
+func NameLTE(v string) predicate.Membership {
+	return predicate.Membership(sql.FieldLTE(FieldName, v))
+}
+
+// NameContains applies the Contains predicate on the "name" field.
+func NameContains(v string) predicate.Membership {
+	return predicate.Membership(sql.FieldContains(FieldName, v))
+}
+
+// NameHasPrefix applies the HasPrefix predicate on the "name" field.
+func NameHasPrefix(v string) predicate.Membership {
+	return predicate.Membership(sql.FieldHasPrefix(FieldName, v))
+}
+
+// NameHasSuffix applies the HasSuffix predicate on the "name" field.
+func NameHasSuffix(v string) predicate.Membership {
+	return predicate.Membership(sql.FieldHasSuffix(FieldName, v))
+}
+
+// NameEqualFold applies the EqualFold predicate on the "name" field.
+func NameEqualFold(v string) predicate.Membership {
+	return predicate.Membership(sql.FieldEqualFold(FieldName, v))
+}
+
+// NameContainsFold applies the ContainsFold predicate on the "name" field.
+func NameContainsFold(v string) predicate.Membership {
+	return predicate.Membership(sql.FieldContainsFold(FieldName, v))
 }
 
 // HasAccount applies the HasEdge predicate on the "account" edge.

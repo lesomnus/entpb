@@ -50,15 +50,11 @@ func (s *IdentityServiceServer) Create(ctx context.Context, req *pb.CreateIdenti
 	return ToProtoIdentity(res), nil
 }
 func (s *IdentityServiceServer) Delete(ctx context.Context, req *pb.GetIdentityRequest) (*emptypb.Empty, error) {
-	q := s.db.Identity.Delete()
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
-	} else {
-		q.Where(identity.IDEQ(v))
-	}
-
-	_, err := q.Exec(ctx)
+	p, err := GetIdentitySpecifier(req)
 	if err != nil {
+		return nil, err
+	}
+	if _, err := s.db.Identity.Delete().Where(p).Exec(ctx); err != nil {
 		return nil, ToStatus(err)
 	}
 

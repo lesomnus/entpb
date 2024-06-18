@@ -19,7 +19,7 @@ func (s *{{ print $.PbSvc.GoName "Server" }}) {{ $.PbMethod.GoName }}(ctx {{ imp
 			{{ $field := print "req." (print .Ident | pascal) -}}
 			if v := {{ $field }}; v != nil {
 				{{ if .IsEdge -}}
-				if id, err := Get{{ .EntRef }}Id(ctx, s.db, {{ $field }}); err != nil {
+				if id, err := Get{{ .EntMsg.Schema.Name }}Id(ctx, s.db, {{ $field }}); err != nil {
 					return nil, err
 				} else {
 					q.Set{{ entname .EntName }}ID(id)
