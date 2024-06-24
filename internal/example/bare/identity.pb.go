@@ -68,14 +68,17 @@ func (s *IdentityServiceServer) Get(ctx context.Context, req *pb.GetIdentityRequ
 		q.Where(p)
 	}
 
-	q.WithOwner(func(q *ent.UserQuery) { q.Select(user.FieldID) })
-
-	res, err := q.Only(ctx)
+	res, err := QueryIdentityWithEdgeIds(q).Only(ctx)
 	if err != nil {
 		return nil, ToStatus(err)
 	}
 
 	return ToProtoIdentity(res), nil
+}
+func QueryIdentityWithEdgeIds(q *ent.IdentityQuery) *ent.IdentityQuery {
+	q.WithOwner(func(q *ent.UserQuery) { q.Select(user.FieldID) })
+
+	return q
 }
 func (s *IdentityServiceServer) Update(ctx context.Context, req *pb.UpdateIdentityRequest) (*pb.Identity, error) {
 	id, err := GetIdentityId(ctx, s.db, req.GetKey())

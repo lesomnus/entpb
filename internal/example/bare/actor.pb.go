@@ -60,16 +60,19 @@ func (s *ActorServiceServer) Get(ctx context.Context, req *pb.GetActorRequest) (
 		q.Where(p)
 	}
 
-	q.WithParent(func(q *ent.UserQuery) { q.Select(user.FieldID) })
-	q.WithIdentities(func(q *ent.IdentityQuery) { q.Select(identity.FieldID) })
-	q.WithChildren(func(q *ent.UserQuery) { q.Select(user.FieldID) })
-
-	res, err := q.Only(ctx)
+	res, err := QueryUserWithEdgeIds(q).Only(ctx)
 	if err != nil {
 		return nil, ToStatus(err)
 	}
 
 	return ToProtoUser(res), nil
+}
+func QueryUserWithEdgeIds(q *ent.UserQuery) *ent.UserQuery {
+	q.WithParent(func(q *ent.UserQuery) { q.Select(user.FieldID) })
+	q.WithIdentities(func(q *ent.IdentityQuery) { q.Select(identity.FieldID) })
+	q.WithChildren(func(q *ent.UserQuery) { q.Select(user.FieldID) })
+
+	return q
 }
 func (s *ActorServiceServer) Update(ctx context.Context, req *pb.UpdateActorRequest) (*pb.Actor, error) {
 	id, err := GetUserId(ctx, s.db, req.GetKey())

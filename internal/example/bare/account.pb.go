@@ -62,14 +62,17 @@ func (s *AccountServiceServer) Get(ctx context.Context, req *pb.GetAccountReques
 		q.Where(p)
 	}
 
-	q.WithOwner(func(q *ent.UserQuery) { q.Select(user.FieldID) })
-
-	res, err := q.Only(ctx)
+	res, err := QueryAccountWithEdgeIds(q).Only(ctx)
 	if err != nil {
 		return nil, ToStatus(err)
 	}
 
 	return ToProtoAccount(res), nil
+}
+func QueryAccountWithEdgeIds(q *ent.AccountQuery) *ent.AccountQuery {
+	q.WithOwner(func(q *ent.UserQuery) { q.Select(user.FieldID) })
+
+	return q
 }
 func (s *AccountServiceServer) Update(ctx context.Context, req *pb.UpdateAccountRequest) (*pb.Account, error) {
 	id, err := GetAccountId(ctx, s.db, req.GetKey())

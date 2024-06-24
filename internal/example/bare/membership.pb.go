@@ -61,14 +61,17 @@ func (s *MembershipServiceServer) Get(ctx context.Context, req *pb.GetMembership
 		q.Where(p)
 	}
 
-	q.WithAccount(func(q *ent.AccountQuery) { q.Select(account.FieldID) })
-
-	res, err := q.Only(ctx)
+	res, err := QueryMembershipWithEdgeIds(q).Only(ctx)
 	if err != nil {
 		return nil, ToStatus(err)
 	}
 
 	return ToProtoMembership(res), nil
+}
+func QueryMembershipWithEdgeIds(q *ent.MembershipQuery) *ent.MembershipQuery {
+	q.WithAccount(func(q *ent.AccountQuery) { q.Select(account.FieldID) })
+
+	return q
 }
 func (s *MembershipServiceServer) Update(ctx context.Context, req *pb.UpdateMembershipRequest) (*pb.Membership, error) {
 	id, err := GetMembershipId(ctx, s.db, req.GetKey())
