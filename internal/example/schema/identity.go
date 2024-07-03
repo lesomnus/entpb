@@ -2,7 +2,6 @@ package schema
 
 import (
 	"entgo.io/ent"
-	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/lesomnus/entpb"
@@ -14,25 +13,20 @@ type Identity struct {
 
 func (Identity) Mixin() []ent.Mixin {
 	return []ent.Mixin{
-		BaseMixin{},
+		baseMixin{},
+		labelMixin{},
 	}
 }
 
 func (Identity) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name").
+		field.String("kind").
 			Annotations(entpb.Field(3)).
-			Comment("Name of the user").
-			Default(""),
-		field.String("email").
+			Immutable().
+			NotEmpty(),
+		field.String("verifier").
 			Annotations(entpb.Field(4)).
-			Optional().
-			Nillable(),
-
-		field.Time("date_updated").
-			Annotations(entpb.Field(14)).
-			Optional().
-			Nillable(),
+			NotEmpty(),
 	}
 }
 
@@ -45,8 +39,4 @@ func (Identity) Edges() []ent.Edge {
 			Unique().
 			Required(),
 	}
-}
-
-func (Identity) Annotations() []schema.Annotation {
-	return []schema.Annotation{}
 }

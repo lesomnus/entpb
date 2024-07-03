@@ -6,6 +6,7 @@ import (
 	context "context"
 	uuid "github.com/google/uuid"
 	ent "github.com/lesomnus/entpb/internal/example/ent"
+	account "github.com/lesomnus/entpb/internal/example/ent/account"
 	identity "github.com/lesomnus/entpb/internal/example/ent/identity"
 	predicate "github.com/lesomnus/entpb/internal/example/ent/predicate"
 	user "github.com/lesomnus/entpb/internal/example/ent/user"
@@ -16,17 +17,20 @@ import (
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type ActorServiceServer struct {
+type UserServiceServer struct {
 	db *ent.Client
-	pb.UnimplementedActorServiceServer
+	pb.UnimplementedUserServiceServer
 }
 
-func NewActorServiceServer(db *ent.Client) *ActorServiceServer {
-	return &ActorServiceServer{db: db}
+func NewUserServiceServer(db *ent.Client) *UserServiceServer {
+	return &UserServiceServer{db: db}
 }
-func (s *ActorServiceServer) Create(ctx context.Context, req *pb.CreateActorRequest) (*pb.Actor, error) {
+func (s *UserServiceServer) Create(ctx context.Context, req *pb.CreateUserRequest) (*pb.User, error) {
 	q := s.db.User.Create()
-	if v := req.GetReferer(); v != nil {
+	if v := req.Alias; v != nil {
+		q.SetAlias(*v)
+	}
+	if v := req.GetParent(); v != nil {
 		if id, err := GetUserId(ctx, s.db, v); err != nil {
 			return nil, err
 		} else {
@@ -41,7 +45,7 @@ func (s *ActorServiceServer) Create(ctx context.Context, req *pb.CreateActorRequ
 
 	return ToProtoUser(res), nil
 }
-func (s *ActorServiceServer) Delete(ctx context.Context, req *pb.GetActorRequest) (*emptypb.Empty, error) {
+func (s *UserServiceServer) Delete(ctx context.Context, req *pb.GetUserRequest) (*emptypb.Empty, error) {
 	p, err := GetUserSpecifier(req)
 	if err != nil {
 		return nil, err
@@ -52,7 +56,7 @@ func (s *ActorServiceServer) Delete(ctx context.Context, req *pb.GetActorRequest
 
 	return &emptypb.Empty{}, nil
 }
-func (s *ActorServiceServer) Get(ctx context.Context, req *pb.GetActorRequest) (*pb.Actor, error) {
+func (s *UserServiceServer) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.User, error) {
 	q := s.db.User.Query()
 	if p, err := GetUserSpecifier(req); err != nil {
 		return nil, err
@@ -70,19 +74,23 @@ func (s *ActorServiceServer) Get(ctx context.Context, req *pb.GetActorRequest) (
 func QueryUserWithEdgeIds(q *ent.UserQuery) *ent.UserQuery {
 	q.WithParent(func(q *ent.UserQuery) { q.Select(user.FieldID) })
 	q.WithIdentities(func(q *ent.IdentityQuery) { q.Select(identity.FieldID) })
+	q.WithAccounts(func(q *ent.AccountQuery) { q.Select(account.FieldID) })
 	q.WithChildren(func(q *ent.UserQuery) { q.Select(user.FieldID) })
 
 	return q
 }
-func (s *ActorServiceServer) Update(ctx context.Context, req *pb.UpdateActorRequest) (*pb.Actor, error) {
+func (s *UserServiceServer) Update(ctx context.Context, req *pb.UpdateUserRequest) (*pb.User, error) {
 	id, err := GetUserId(ctx, s.db, req.GetKey())
 	if err != nil {
 		return nil, err
 	}
 
 	q := s.db.User.UpdateOneID(id)
-	if v := req.Referer; v != nil {
-		if id, err := GetUserId(ctx, s.db, req.Referer); err != nil {
+	if v := req.Alias; v != nil {
+		q.SetAlias(*v)
+	}
+	if v := req.Parent; v != nil {
+		if id, err := GetUserId(ctx, s.db, req.Parent); err != nil {
 			return nil, err
 		} else {
 			q.SetParentID(id)
@@ -96,33 +104,61 @@ func (s *ActorServiceServer) Update(ctx context.Context, req *pb.UpdateActorRequ
 
 	return ToProtoUser(res), nil
 }
-func ToProtoUser(v *ent.User) *pb.Actor {
-	m := &pb.Actor{}
+func ToProtoUser(v *ent.User) *pb.User {
+	m := &pb.User{}
 	m.Id = v.ID[:]
 	m.DateCreated = timestamppb.New(v.DateCreated)
+	m.Alias = v.Alias
 	if v := v.Edges.Parent; v != nil {
-		m.Referer = ToProtoUser(v)
+		m.Parent = ToProtoUser(v)
 	}
 	for _, v := range v.Edges.Identities {
 		m.Identities = append(m.Identities, ToProtoIdentity(v))
+	}
+	for _, v := range v.Edges.Accounts {
+		m.Accounts = append(m.Accounts, ToProtoAccount(v))
 	}
 	for _, v := range v.Edges.Children {
 		m.Children = append(m.Children, ToProtoUser(v))
 	}
 	return m
 }
-func GetUserId(ctx context.Context, db *ent.Client, req *pb.GetActorRequest) (uuid.UUID, error) {
+func GetUserId(ctx context.Context, db *ent.Client, req *pb.GetUserRequest) (uuid.UUID, error) {
 	var r uuid.UUID
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
-	} else {
-		return v, nil
+	k := req.GetKey()
+	if t, ok := k.(*pb.GetUserRequest_Id); ok {
+		if v, err := uuid.FromBytes(t.Id); err != nil {
+			return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			return v, nil
+		}
 	}
+
+	p, err := GetUserSpecifier(req)
+	if err != nil {
+		return r, err
+	}
+
+	v, err := db.User.Query().Where(p).OnlyID(ctx)
+	if err != nil {
+		return r, ToStatus(err)
+	}
+
+	return v, nil
 }
-func GetUserSpecifier(req *pb.GetActorRequest) (predicate.User, error) {
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
-	} else {
-		return user.IDEQ(v), nil
+func GetUserSpecifier(req *pb.GetUserRequest) (predicate.User, error) {
+	switch t := req.GetKey().(type) {
+	case *pb.GetUserRequest_Id:
+		if v, err := uuid.FromBytes(t.Id); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			return user.IDEQ(v), nil
+		}
+	case *pb.GetUserRequest_Alias:
+		return user.AliasEQ(t.Alias), nil
+	case nil:
+		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
+	default:
+		return nil, status.Errorf(codes.Unimplemented, "unknown type of key")
 	}
 }

@@ -13,6 +13,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/lesomnus/entpb/internal/example/ent/account"
 	"github.com/lesomnus/entpb/internal/example/ent/membership"
+	"github.com/lesomnus/entpb/internal/example/ent/team"
+	"github.com/lesomnus/entpb/internal/example/role"
 )
 
 // MembershipCreate is the builder for creating a Membership entity.
@@ -42,17 +44,15 @@ func (mc *MembershipCreate) SetAccountID(u uuid.UUID) *MembershipCreate {
 	return mc
 }
 
-// SetName sets the "name" field.
-func (mc *MembershipCreate) SetName(s string) *MembershipCreate {
-	mc.mutation.SetName(s)
+// SetTeamID sets the "team_id" field.
+func (mc *MembershipCreate) SetTeamID(u uuid.UUID) *MembershipCreate {
+	mc.mutation.SetTeamID(u)
 	return mc
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (mc *MembershipCreate) SetNillableName(s *string) *MembershipCreate {
-	if s != nil {
-		mc.SetName(*s)
-	}
+// SetRole sets the "role" field.
+func (mc *MembershipCreate) SetRole(r role.Role) *MembershipCreate {
+	mc.mutation.SetRole(r)
 	return mc
 }
 
@@ -73,6 +73,11 @@ func (mc *MembershipCreate) SetNillableID(u *uuid.UUID) *MembershipCreate {
 // SetAccount sets the "account" edge to the Account entity.
 func (mc *MembershipCreate) SetAccount(a *Account) *MembershipCreate {
 	return mc.SetAccountID(a.ID)
+}
+
+// SetTeam sets the "team" edge to the Team entity.
+func (mc *MembershipCreate) SetTeam(t *Team) *MembershipCreate {
+	return mc.SetTeamID(t.ID)
 }
 
 // Mutation returns the MembershipMutation object of the builder.
@@ -114,10 +119,6 @@ func (mc *MembershipCreate) defaults() {
 		v := membership.DefaultDateCreated()
 		mc.mutation.SetDateCreated(v)
 	}
-	if _, ok := mc.mutation.Name(); !ok {
-		v := membership.DefaultName()
-		mc.mutation.SetName(v)
-	}
 	if _, ok := mc.mutation.ID(); !ok {
 		v := membership.DefaultID()
 		mc.mutation.SetID(v)
@@ -132,11 +133,22 @@ func (mc *MembershipCreate) check() error {
 	if _, ok := mc.mutation.AccountID(); !ok {
 		return &ValidationError{Name: "account_id", err: errors.New(`ent: missing required field "Membership.account_id"`)}
 	}
-	if _, ok := mc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Membership.name"`)}
+	if _, ok := mc.mutation.TeamID(); !ok {
+		return &ValidationError{Name: "team_id", err: errors.New(`ent: missing required field "Membership.team_id"`)}
+	}
+	if _, ok := mc.mutation.Role(); !ok {
+		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "Membership.role"`)}
+	}
+	if v, ok := mc.mutation.Role(); ok {
+		if err := membership.RoleValidator(v); err != nil {
+			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "Membership.role": %w`, err)}
+		}
 	}
 	if _, ok := mc.mutation.AccountID(); !ok {
 		return &ValidationError{Name: "account", err: errors.New(`ent: missing required edge "Membership.account"`)}
+	}
+	if _, ok := mc.mutation.TeamID(); !ok {
+		return &ValidationError{Name: "team", err: errors.New(`ent: missing required edge "Membership.team"`)}
 	}
 	return nil
 }
@@ -177,9 +189,9 @@ func (mc *MembershipCreate) createSpec() (*Membership, *sqlgraph.CreateSpec) {
 		_spec.SetField(membership.FieldDateCreated, field.TypeTime, value)
 		_node.DateCreated = value
 	}
-	if value, ok := mc.mutation.Name(); ok {
-		_spec.SetField(membership.FieldName, field.TypeString, value)
-		_node.Name = value
+	if value, ok := mc.mutation.Role(); ok {
+		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
+		_node.Role = value
 	}
 	if nodes := mc.mutation.AccountIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -196,6 +208,23 @@ func (mc *MembershipCreate) createSpec() (*Membership, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.AccountID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := mc.mutation.TeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   membership.TeamTable,
+			Columns: []string{membership.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.TeamID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

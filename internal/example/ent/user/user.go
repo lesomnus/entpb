@@ -17,6 +17,8 @@ const (
 	FieldID = "id"
 	// FieldDateCreated holds the string denoting the date_created field in the database.
 	FieldDateCreated = "date_created"
+	// FieldAlias holds the string denoting the alias field in the database.
+	FieldAlias = "alias"
 	// EdgeParent holds the string denoting the parent edge name in mutations.
 	EdgeParent = "parent"
 	// EdgeChildren holds the string denoting the children edge name in mutations.
@@ -25,8 +27,8 @@ const (
 	EdgeIdentities = "identities"
 	// EdgeAccounts holds the string denoting the accounts edge name in mutations.
 	EdgeAccounts = "accounts"
-	// EdgeMemberships holds the string denoting the memberships edge name in mutations.
-	EdgeMemberships = "memberships"
+	// EdgeTokens holds the string denoting the tokens edge name in mutations.
+	EdgeTokens = "tokens"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// ParentTable is the table that holds the parent relation/edge.
@@ -50,20 +52,21 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "account" package.
 	AccountsInverseTable = "accounts"
 	// AccountsColumn is the table column denoting the accounts relation/edge.
-	AccountsColumn = "user_accounts"
-	// MembershipsTable is the table that holds the memberships relation/edge.
-	MembershipsTable = "memberships"
-	// MembershipsInverseTable is the table name for the Membership entity.
-	// It exists in this package in order to avoid circular dependency with the "membership" package.
-	MembershipsInverseTable = "memberships"
-	// MembershipsColumn is the table column denoting the memberships relation/edge.
-	MembershipsColumn = "user_memberships"
+	AccountsColumn = "owner_id"
+	// TokensTable is the table that holds the tokens relation/edge.
+	TokensTable = "tokens"
+	// TokensInverseTable is the table name for the Token entity.
+	// It exists in this package in order to avoid circular dependency with the "token" package.
+	TokensInverseTable = "tokens"
+	// TokensColumn is the table column denoting the tokens relation/edge.
+	TokensColumn = "user_tokens"
 )
 
 // Columns holds all SQL columns for user fields.
 var Columns = []string{
 	FieldID,
 	FieldDateCreated,
+	FieldAlias,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "users"
@@ -90,6 +93,10 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultDateCreated holds the default value on creation for the "date_created" field.
 	DefaultDateCreated func() time.Time
+	// DefaultAlias holds the default value on creation for the "alias" field.
+	DefaultAlias func() string
+	// AliasValidator is a validator for the "alias" field. It is called by the builders before save.
+	AliasValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -105,6 +112,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByDateCreated orders the results by the date_created field.
 func ByDateCreated(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDateCreated, opts...).ToFunc()
+}
+
+// ByAlias orders the results by the alias field.
+func ByAlias(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAlias, opts...).ToFunc()
 }
 
 // ByParentField orders the results by parent field.
@@ -156,17 +168,17 @@ func ByAccounts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByMembershipsCount orders the results by memberships count.
-func ByMembershipsCount(opts ...sql.OrderTermOption) OrderOption {
+// ByTokensCount orders the results by tokens count.
+func ByTokensCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newMembershipsStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newTokensStep(), opts...)
 	}
 }
 
-// ByMemberships orders the results by memberships terms.
-func ByMemberships(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByTokens orders the results by tokens terms.
+func ByTokens(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newMembershipsStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newTokensStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newParentStep() *sqlgraph.Step {
@@ -197,10 +209,10 @@ func newAccountsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, AccountsTable, AccountsColumn),
 	)
 }
-func newMembershipsStep() *sqlgraph.Step {
+func newTokensStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(MembershipsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, MembershipsTable, MembershipsColumn),
+		sqlgraph.To(TokensInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TokensTable, TokensColumn),
 	)
 }

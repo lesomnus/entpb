@@ -61,6 +61,11 @@ func DateCreated(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldDateCreated, v))
 }
 
+// Alias applies equality check predicate on the "alias" field. It's identical to AliasEQ.
+func Alias(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldAlias, v))
+}
+
 // DateCreatedEQ applies the EQ predicate on the "date_created" field.
 func DateCreatedEQ(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldDateCreated, v))
@@ -99,6 +104,71 @@ func DateCreatedLT(v time.Time) predicate.User {
 // DateCreatedLTE applies the LTE predicate on the "date_created" field.
 func DateCreatedLTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldDateCreated, v))
+}
+
+// AliasEQ applies the EQ predicate on the "alias" field.
+func AliasEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldAlias, v))
+}
+
+// AliasNEQ applies the NEQ predicate on the "alias" field.
+func AliasNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldAlias, v))
+}
+
+// AliasIn applies the In predicate on the "alias" field.
+func AliasIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldAlias, vs...))
+}
+
+// AliasNotIn applies the NotIn predicate on the "alias" field.
+func AliasNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldAlias, vs...))
+}
+
+// AliasGT applies the GT predicate on the "alias" field.
+func AliasGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldAlias, v))
+}
+
+// AliasGTE applies the GTE predicate on the "alias" field.
+func AliasGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldAlias, v))
+}
+
+// AliasLT applies the LT predicate on the "alias" field.
+func AliasLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldAlias, v))
+}
+
+// AliasLTE applies the LTE predicate on the "alias" field.
+func AliasLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldAlias, v))
+}
+
+// AliasContains applies the Contains predicate on the "alias" field.
+func AliasContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldAlias, v))
+}
+
+// AliasHasPrefix applies the HasPrefix predicate on the "alias" field.
+func AliasHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldAlias, v))
+}
+
+// AliasHasSuffix applies the HasSuffix predicate on the "alias" field.
+func AliasHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldAlias, v))
+}
+
+// AliasEqualFold applies the EqualFold predicate on the "alias" field.
+func AliasEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldAlias, v))
+}
+
+// AliasContainsFold applies the ContainsFold predicate on the "alias" field.
+func AliasContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldAlias, v))
 }
 
 // HasParent applies the HasEdge predicate on the "parent" edge.
@@ -193,21 +263,21 @@ func HasAccountsWith(preds ...predicate.Account) predicate.User {
 	})
 }
 
-// HasMemberships applies the HasEdge predicate on the "memberships" edge.
-func HasMemberships() predicate.User {
+// HasTokens applies the HasEdge predicate on the "tokens" edge.
+func HasTokens() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, MembershipsTable, MembershipsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, TokensTable, TokensColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasMembershipsWith applies the HasEdge predicate on the "memberships" edge with a given conditions (other predicates).
-func HasMembershipsWith(preds ...predicate.Membership) predicate.User {
+// HasTokensWith applies the HasEdge predicate on the "tokens" edge with a given conditions (other predicates).
+func HasTokensWith(preds ...predicate.Token) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		step := newMembershipsStep()
+		step := newTokensStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

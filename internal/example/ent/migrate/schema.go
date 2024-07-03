@@ -12,9 +12,12 @@ var (
 	AccountsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "date_created", Type: field.TypeTime},
-		{Name: "alias", Type: field.TypeString, Unique: true},
-		{Name: "role", Type: field.TypeEnum, Enums: []string{"OWNER", "MEMBER"}},
-		{Name: "user_accounts", Type: field.TypeUUID},
+		{Name: "alias", Type: field.TypeString, Size: 32},
+		{Name: "name", Type: field.TypeString, Size: 64, Default: ""},
+		{Name: "description", Type: field.TypeString, Size: 256, Default: ""},
+		{Name: "role", Type: field.TypeEnum, Enums: []string{"OWNER", "ADMIN", "MEMBER"}},
+		{Name: "silo_id", Type: field.TypeUUID},
+		{Name: "owner_id", Type: field.TypeUUID},
 	}
 	// AccountsTable holds the schema information for the "accounts" table.
 	AccountsTable = &schema.Table{
@@ -23,10 +26,28 @@ var (
 		PrimaryKey: []*schema.Column{AccountsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
+				Symbol:     "accounts_silos_accounts",
+				Columns:    []*schema.Column{AccountsColumns[6]},
+				RefColumns: []*schema.Column{SilosColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
 				Symbol:     "accounts_users_accounts",
-				Columns:    []*schema.Column{AccountsColumns[4]},
+				Columns:    []*schema.Column{AccountsColumns[7]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "account_silo_id_alias",
+				Unique:  true,
+				Columns: []*schema.Column{AccountsColumns[6], AccountsColumns[2]},
+			},
+			{
+				Name:    "account_silo_id_owner_id",
+				Unique:  true,
+				Columns: []*schema.Column{AccountsColumns[6], AccountsColumns[7]},
 			},
 		},
 	}
@@ -34,9 +55,10 @@ var (
 	IdentitiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "date_created", Type: field.TypeTime},
-		{Name: "name", Type: field.TypeString, Default: ""},
-		{Name: "email", Type: field.TypeString, Nullable: true},
-		{Name: "date_updated", Type: field.TypeTime, Nullable: true},
+		{Name: "name", Type: field.TypeString, Size: 64, Default: ""},
+		{Name: "description", Type: field.TypeString, Size: 256, Default: ""},
+		{Name: "kind", Type: field.TypeString},
+		{Name: "verifier", Type: field.TypeString},
 		{Name: "user_identities", Type: field.TypeUUID},
 	}
 	// IdentitiesTable holds the schema information for the "identities" table.
@@ -47,9 +69,42 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "identities_users_identities",
-				Columns:    []*schema.Column{IdentitiesColumns[5]},
+				Columns:    []*schema.Column{IdentitiesColumns[6]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// InvitationsColumns holds the columns for the "invitations" table.
+	InvitationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "date_created", Type: field.TypeTime},
+		{Name: "invitee", Type: field.TypeString},
+		{Name: "type", Type: field.TypeString},
+		{Name: "date_expired", Type: field.TypeTime},
+		{Name: "date_accepted", Type: field.TypeTime, Nullable: true},
+		{Name: "date_declined", Type: field.TypeTime, Nullable: true},
+		{Name: "date_canceled", Type: field.TypeTime, Nullable: true},
+		{Name: "account_invitations", Type: field.TypeUUID},
+		{Name: "silo_invitations", Type: field.TypeUUID},
+	}
+	// InvitationsTable holds the schema information for the "invitations" table.
+	InvitationsTable = &schema.Table{
+		Name:       "invitations",
+		Columns:    InvitationsColumns,
+		PrimaryKey: []*schema.Column{InvitationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "invitations_accounts_invitations",
+				Columns:    []*schema.Column{InvitationsColumns[8]},
+				RefColumns: []*schema.Column{AccountsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "invitations_silos_invitations",
+				Columns:    []*schema.Column{InvitationsColumns[9]},
+				RefColumns: []*schema.Column{SilosColumns[0]},
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -57,9 +112,9 @@ var (
 	MembershipsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "date_created", Type: field.TypeTime},
-		{Name: "name", Type: field.TypeString},
+		{Name: "role", Type: field.TypeEnum, Enums: []string{"OWNER", "ADMIN", "MEMBER"}},
 		{Name: "account_id", Type: field.TypeUUID},
-		{Name: "user_memberships", Type: field.TypeUUID, Nullable: true},
+		{Name: "team_id", Type: field.TypeUUID},
 	}
 	// MembershipsTable holds the schema information for the "memberships" table.
 	MembershipsTable = &schema.Table{
@@ -71,20 +126,95 @@ var (
 				Symbol:     "memberships_accounts_memberships",
 				Columns:    []*schema.Column{MembershipsColumns[3]},
 				RefColumns: []*schema.Column{AccountsColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "memberships_users_memberships",
+				Symbol:     "memberships_teams_members",
 				Columns:    []*schema.Column{MembershipsColumns[4]},
-				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.SetNull,
+				RefColumns: []*schema.Column{TeamsColumns[0]},
+				OnDelete:   schema.Cascade,
 			},
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "membership_account_id_name",
+				Name:    "membership_account_id_team_id",
 				Unique:  true,
-				Columns: []*schema.Column{MembershipsColumns[3], MembershipsColumns[2]},
+				Columns: []*schema.Column{MembershipsColumns[3], MembershipsColumns[4]},
+			},
+		},
+	}
+	// SilosColumns holds the columns for the "silos" table.
+	SilosColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "date_created", Type: field.TypeTime},
+		{Name: "alias", Type: field.TypeString, Unique: true, Size: 32},
+		{Name: "name", Type: field.TypeString, Size: 64, Default: ""},
+		{Name: "description", Type: field.TypeString, Size: 256, Default: ""},
+	}
+	// SilosTable holds the schema information for the "silos" table.
+	SilosTable = &schema.Table{
+		Name:       "silos",
+		Columns:    SilosColumns,
+		PrimaryKey: []*schema.Column{SilosColumns[0]},
+	}
+	// TeamsColumns holds the columns for the "teams" table.
+	TeamsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "date_created", Type: field.TypeTime},
+		{Name: "alias", Type: field.TypeString, Size: 32},
+		{Name: "name", Type: field.TypeString, Size: 64, Default: ""},
+		{Name: "description", Type: field.TypeString, Size: 256, Default: ""},
+		{Name: "silo_id", Type: field.TypeUUID},
+	}
+	// TeamsTable holds the schema information for the "teams" table.
+	TeamsTable = &schema.Table{
+		Name:       "teams",
+		Columns:    TeamsColumns,
+		PrimaryKey: []*schema.Column{TeamsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "teams_silos_teams",
+				Columns:    []*schema.Column{TeamsColumns[5]},
+				RefColumns: []*schema.Column{SilosColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "team_silo_id_alias",
+				Unique:  true,
+				Columns: []*schema.Column{TeamsColumns[5], TeamsColumns[2]},
+			},
+		},
+	}
+	// TokensColumns holds the columns for the "tokens" table.
+	TokensColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "date_created", Type: field.TypeTime},
+		{Name: "value", Type: field.TypeString, Unique: true},
+		{Name: "type", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString, Default: ""},
+		{Name: "date_expired", Type: field.TypeTime},
+		{Name: "token_children", Type: field.TypeUUID, Nullable: true},
+		{Name: "user_tokens", Type: field.TypeUUID},
+	}
+	// TokensTable holds the schema information for the "tokens" table.
+	TokensTable = &schema.Table{
+		Name:       "tokens",
+		Columns:    TokensColumns,
+		PrimaryKey: []*schema.Column{TokensColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "tokens_tokens_children",
+				Columns:    []*schema.Column{TokensColumns[6]},
+				RefColumns: []*schema.Column{TokensColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "tokens_users_tokens",
+				Columns:    []*schema.Column{TokensColumns[7]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -92,6 +222,7 @@ var (
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "date_created", Type: field.TypeTime},
+		{Name: "alias", Type: field.TypeString, Unique: true, Size: 32},
 		{Name: "user_children", Type: field.TypeUUID, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
@@ -102,7 +233,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "users_users_children",
-				Columns:    []*schema.Column{UsersColumns[2]},
+				Columns:    []*schema.Column{UsersColumns[3]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -112,15 +243,25 @@ var (
 	Tables = []*schema.Table{
 		AccountsTable,
 		IdentitiesTable,
+		InvitationsTable,
 		MembershipsTable,
+		SilosTable,
+		TeamsTable,
+		TokensTable,
 		UsersTable,
 	}
 )
 
 func init() {
-	AccountsTable.ForeignKeys[0].RefTable = UsersTable
+	AccountsTable.ForeignKeys[0].RefTable = SilosTable
+	AccountsTable.ForeignKeys[1].RefTable = UsersTable
 	IdentitiesTable.ForeignKeys[0].RefTable = UsersTable
+	InvitationsTable.ForeignKeys[0].RefTable = AccountsTable
+	InvitationsTable.ForeignKeys[1].RefTable = SilosTable
 	MembershipsTable.ForeignKeys[0].RefTable = AccountsTable
-	MembershipsTable.ForeignKeys[1].RefTable = UsersTable
+	MembershipsTable.ForeignKeys[1].RefTable = TeamsTable
+	TeamsTable.ForeignKeys[0].RefTable = SilosTable
+	TokensTable.ForeignKeys[0].RefTable = TokensTable
+	TokensTable.ForeignKeys[1].RefTable = UsersTable
 	UsersTable.ForeignKeys[0].RefTable = UsersTable
 }

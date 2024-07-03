@@ -33,6 +33,18 @@ func (f IdentityFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.IdentityMutation", m)
 }
 
+// The InvitationFunc type is an adapter to allow the use of ordinary
+// function as Invitation mutator.
+type InvitationFunc func(context.Context, *ent.InvitationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f InvitationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.InvitationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.InvitationMutation", m)
+}
+
 // The MembershipFunc type is an adapter to allow the use of ordinary
 // function as Membership mutator.
 type MembershipFunc func(context.Context, *ent.MembershipMutation) (ent.Value, error)
@@ -43,6 +55,42 @@ func (f MembershipFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MembershipMutation", m)
+}
+
+// The SiloFunc type is an adapter to allow the use of ordinary
+// function as Silo mutator.
+type SiloFunc func(context.Context, *ent.SiloMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SiloFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SiloMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SiloMutation", m)
+}
+
+// The TeamFunc type is an adapter to allow the use of ordinary
+// function as Team mutator.
+type TeamFunc func(context.Context, *ent.TeamMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TeamFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TeamMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TeamMutation", m)
+}
+
+// The TokenFunc type is an adapter to allow the use of ordinary
+// function as Token mutator.
+type TokenFunc func(context.Context, *ent.TokenMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TokenFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TokenMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TokenMutation", m)
 }
 
 // The UserFunc type is an adapter to allow the use of ordinary

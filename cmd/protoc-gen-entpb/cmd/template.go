@@ -83,6 +83,10 @@ func (p *Printer) NewTemplate(g *protogen.GeneratedFile) *template.Template {
 		},
 		"use": g.QualifiedGoIdent,
 		"ent_type": func(f *entpb.FieldAnnotation) string {
+			if f.EntMsg != nil {
+				return string(f.EntMsg.Ident)
+			}
+
 			// In fact, all cases are equivalent to:
 			// return t.String()
 			t := f.EntInfo.Type
@@ -137,6 +141,10 @@ func (p *Printer) NewTemplate(g *protogen.GeneratedFile) *template.Template {
 			return to_ent_with_rv(f, ident_in, ident_out, body, "nil")
 		},
 		"to_pb_v": func(f *entpb.FieldAnnotation, ident_in string) string {
+			if f.EntMsg != nil {
+				return ident_in
+			}
+
 			t := f.EntInfo.Type
 			switch t {
 			case field.TypeUUID:

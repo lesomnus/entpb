@@ -11,10 +11,12 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
-	"github.com/lesomnus/entpb/internal/example"
 	"github.com/lesomnus/entpb/internal/example/ent/account"
+	"github.com/lesomnus/entpb/internal/example/ent/invitation"
 	"github.com/lesomnus/entpb/internal/example/ent/membership"
+	"github.com/lesomnus/entpb/internal/example/ent/silo"
 	"github.com/lesomnus/entpb/internal/example/ent/user"
+	"github.com/lesomnus/entpb/internal/example/role"
 )
 
 // AccountCreate is the builder for creating a Account entity.
@@ -52,9 +54,49 @@ func (ac *AccountCreate) SetNillableAlias(s *string) *AccountCreate {
 	return ac
 }
 
+// SetName sets the "name" field.
+func (ac *AccountCreate) SetName(s string) *AccountCreate {
+	ac.mutation.SetName(s)
+	return ac
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (ac *AccountCreate) SetNillableName(s *string) *AccountCreate {
+	if s != nil {
+		ac.SetName(*s)
+	}
+	return ac
+}
+
+// SetDescription sets the "description" field.
+func (ac *AccountCreate) SetDescription(s string) *AccountCreate {
+	ac.mutation.SetDescription(s)
+	return ac
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (ac *AccountCreate) SetNillableDescription(s *string) *AccountCreate {
+	if s != nil {
+		ac.SetDescription(*s)
+	}
+	return ac
+}
+
+// SetOwnerID sets the "owner_id" field.
+func (ac *AccountCreate) SetOwnerID(u uuid.UUID) *AccountCreate {
+	ac.mutation.SetOwnerID(u)
+	return ac
+}
+
+// SetSiloID sets the "silo_id" field.
+func (ac *AccountCreate) SetSiloID(u uuid.UUID) *AccountCreate {
+	ac.mutation.SetSiloID(u)
+	return ac
+}
+
 // SetRole sets the "role" field.
-func (ac *AccountCreate) SetRole(e example.Role) *AccountCreate {
-	ac.mutation.SetRole(e)
+func (ac *AccountCreate) SetRole(r role.Role) *AccountCreate {
+	ac.mutation.SetRole(r)
 	return ac
 }
 
@@ -72,15 +114,14 @@ func (ac *AccountCreate) SetNillableID(u *uuid.UUID) *AccountCreate {
 	return ac
 }
 
-// SetOwnerID sets the "owner" edge to the User entity by ID.
-func (ac *AccountCreate) SetOwnerID(id uuid.UUID) *AccountCreate {
-	ac.mutation.SetOwnerID(id)
-	return ac
-}
-
 // SetOwner sets the "owner" edge to the User entity.
 func (ac *AccountCreate) SetOwner(u *User) *AccountCreate {
 	return ac.SetOwnerID(u.ID)
+}
+
+// SetSilo sets the "silo" edge to the Silo entity.
+func (ac *AccountCreate) SetSilo(s *Silo) *AccountCreate {
+	return ac.SetSiloID(s.ID)
 }
 
 // AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
@@ -96,6 +137,21 @@ func (ac *AccountCreate) AddMemberships(m ...*Membership) *AccountCreate {
 		ids[i] = m[i].ID
 	}
 	return ac.AddMembershipIDs(ids...)
+}
+
+// AddInvitationIDs adds the "invitations" edge to the Invitation entity by IDs.
+func (ac *AccountCreate) AddInvitationIDs(ids ...uuid.UUID) *AccountCreate {
+	ac.mutation.AddInvitationIDs(ids...)
+	return ac
+}
+
+// AddInvitations adds the "invitations" edges to the Invitation entity.
+func (ac *AccountCreate) AddInvitations(i ...*Invitation) *AccountCreate {
+	ids := make([]uuid.UUID, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return ac.AddInvitationIDs(ids...)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -141,6 +197,14 @@ func (ac *AccountCreate) defaults() {
 		v := account.DefaultAlias()
 		ac.mutation.SetAlias(v)
 	}
+	if _, ok := ac.mutation.Name(); !ok {
+		v := account.DefaultName
+		ac.mutation.SetName(v)
+	}
+	if _, ok := ac.mutation.Description(); !ok {
+		v := account.DefaultDescription
+		ac.mutation.SetDescription(v)
+	}
 	if _, ok := ac.mutation.ID(); !ok {
 		v := account.DefaultID()
 		ac.mutation.SetID(v)
@@ -155,6 +219,33 @@ func (ac *AccountCreate) check() error {
 	if _, ok := ac.mutation.Alias(); !ok {
 		return &ValidationError{Name: "alias", err: errors.New(`ent: missing required field "Account.alias"`)}
 	}
+	if v, ok := ac.mutation.Alias(); ok {
+		if err := account.AliasValidator(v); err != nil {
+			return &ValidationError{Name: "alias", err: fmt.Errorf(`ent: validator failed for field "Account.alias": %w`, err)}
+		}
+	}
+	if _, ok := ac.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Account.name"`)}
+	}
+	if v, ok := ac.mutation.Name(); ok {
+		if err := account.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Account.name": %w`, err)}
+		}
+	}
+	if _, ok := ac.mutation.Description(); !ok {
+		return &ValidationError{Name: "description", err: errors.New(`ent: missing required field "Account.description"`)}
+	}
+	if v, ok := ac.mutation.Description(); ok {
+		if err := account.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Account.description": %w`, err)}
+		}
+	}
+	if _, ok := ac.mutation.OwnerID(); !ok {
+		return &ValidationError{Name: "owner_id", err: errors.New(`ent: missing required field "Account.owner_id"`)}
+	}
+	if _, ok := ac.mutation.SiloID(); !ok {
+		return &ValidationError{Name: "silo_id", err: errors.New(`ent: missing required field "Account.silo_id"`)}
+	}
 	if _, ok := ac.mutation.Role(); !ok {
 		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "Account.role"`)}
 	}
@@ -165,6 +256,9 @@ func (ac *AccountCreate) check() error {
 	}
 	if _, ok := ac.mutation.OwnerID(); !ok {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Account.owner"`)}
+	}
+	if _, ok := ac.mutation.SiloID(); !ok {
+		return &ValidationError{Name: "silo", err: errors.New(`ent: missing required edge "Account.silo"`)}
 	}
 	return nil
 }
@@ -209,6 +303,14 @@ func (ac *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 		_spec.SetField(account.FieldAlias, field.TypeString, value)
 		_node.Alias = value
 	}
+	if value, ok := ac.mutation.Name(); ok {
+		_spec.SetField(account.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
+	if value, ok := ac.mutation.Description(); ok {
+		_spec.SetField(account.FieldDescription, field.TypeString, value)
+		_node.Description = value
+	}
 	if value, ok := ac.mutation.Role(); ok {
 		_spec.SetField(account.FieldRole, field.TypeEnum, value)
 		_node.Role = value
@@ -227,7 +329,24 @@ func (ac *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_accounts = &nodes[0]
+		_node.OwnerID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ac.mutation.SiloIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   account.SiloTable,
+			Columns: []string{account.SiloColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(silo.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.SiloID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := ac.mutation.MembershipsIDs(); len(nodes) > 0 {
@@ -239,6 +358,22 @@ func (ac *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ac.mutation.InvitationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.InvitationsTable,
+			Columns: []string{account.InvitationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(invitation.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

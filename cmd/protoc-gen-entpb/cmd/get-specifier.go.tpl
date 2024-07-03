@@ -30,7 +30,7 @@ func Get{{ $.EntMsg.Schema.Name }}Specifier(req *{{ print $.EntMsg.Ident | $.Pb.
 							s, _ := status.FromError(err)
 							return nil, {{ status_errf "InvalidArgument" (print $key_ident ".%s") "s.Message()" }}
 						} else {
-							ps = append(ps, {{ (print "Has" .EntMsg.Schema.Name "With") | $schema.Ident | use }}(p))
+							ps = append(ps, {{ print .Ident | pascal | printf "Has%sWith" | $schema.Ident | use }}(p))
 						}
 					{{ end -}}
 				{{ end -}}

@@ -8,8 +8,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
-	"github.com/lesomnus/entpb/internal/example"
 	"github.com/lesomnus/entpb/internal/example/ent/predicate"
+	"github.com/lesomnus/entpb/internal/example/role"
 )
 
 // ID filters vertices based on their ID field.
@@ -65,6 +65,26 @@ func DateCreated(v time.Time) predicate.Account {
 // Alias applies equality check predicate on the "alias" field. It's identical to AliasEQ.
 func Alias(v string) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldAlias, v))
+}
+
+// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
+func Name(v string) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldName, v))
+}
+
+// Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
+func Description(v string) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldDescription, v))
+}
+
+// OwnerID applies equality check predicate on the "owner_id" field. It's identical to OwnerIDEQ.
+func OwnerID(v uuid.UUID) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldOwnerID, v))
+}
+
+// SiloID applies equality check predicate on the "silo_id" field. It's identical to SiloIDEQ.
+func SiloID(v uuid.UUID) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldSiloID, v))
 }
 
 // DateCreatedEQ applies the EQ predicate on the "date_created" field.
@@ -172,20 +192,190 @@ func AliasContainsFold(v string) predicate.Account {
 	return predicate.Account(sql.FieldContainsFold(FieldAlias, v))
 }
 
+// NameEQ applies the EQ predicate on the "name" field.
+func NameEQ(v string) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldName, v))
+}
+
+// NameNEQ applies the NEQ predicate on the "name" field.
+func NameNEQ(v string) predicate.Account {
+	return predicate.Account(sql.FieldNEQ(FieldName, v))
+}
+
+// NameIn applies the In predicate on the "name" field.
+func NameIn(vs ...string) predicate.Account {
+	return predicate.Account(sql.FieldIn(FieldName, vs...))
+}
+
+// NameNotIn applies the NotIn predicate on the "name" field.
+func NameNotIn(vs ...string) predicate.Account {
+	return predicate.Account(sql.FieldNotIn(FieldName, vs...))
+}
+
+// NameGT applies the GT predicate on the "name" field.
+func NameGT(v string) predicate.Account {
+	return predicate.Account(sql.FieldGT(FieldName, v))
+}
+
+// NameGTE applies the GTE predicate on the "name" field.
+func NameGTE(v string) predicate.Account {
+	return predicate.Account(sql.FieldGTE(FieldName, v))
+}
+
+// NameLT applies the LT predicate on the "name" field.
+func NameLT(v string) predicate.Account {
+	return predicate.Account(sql.FieldLT(FieldName, v))
+}
+
+// NameLTE applies the LTE predicate on the "name" field.
+func NameLTE(v string) predicate.Account {
+	return predicate.Account(sql.FieldLTE(FieldName, v))
+}
+
+// NameContains applies the Contains predicate on the "name" field.
+func NameContains(v string) predicate.Account {
+	return predicate.Account(sql.FieldContains(FieldName, v))
+}
+
+// NameHasPrefix applies the HasPrefix predicate on the "name" field.
+func NameHasPrefix(v string) predicate.Account {
+	return predicate.Account(sql.FieldHasPrefix(FieldName, v))
+}
+
+// NameHasSuffix applies the HasSuffix predicate on the "name" field.
+func NameHasSuffix(v string) predicate.Account {
+	return predicate.Account(sql.FieldHasSuffix(FieldName, v))
+}
+
+// NameEqualFold applies the EqualFold predicate on the "name" field.
+func NameEqualFold(v string) predicate.Account {
+	return predicate.Account(sql.FieldEqualFold(FieldName, v))
+}
+
+// NameContainsFold applies the ContainsFold predicate on the "name" field.
+func NameContainsFold(v string) predicate.Account {
+	return predicate.Account(sql.FieldContainsFold(FieldName, v))
+}
+
+// DescriptionEQ applies the EQ predicate on the "description" field.
+func DescriptionEQ(v string) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldDescription, v))
+}
+
+// DescriptionNEQ applies the NEQ predicate on the "description" field.
+func DescriptionNEQ(v string) predicate.Account {
+	return predicate.Account(sql.FieldNEQ(FieldDescription, v))
+}
+
+// DescriptionIn applies the In predicate on the "description" field.
+func DescriptionIn(vs ...string) predicate.Account {
+	return predicate.Account(sql.FieldIn(FieldDescription, vs...))
+}
+
+// DescriptionNotIn applies the NotIn predicate on the "description" field.
+func DescriptionNotIn(vs ...string) predicate.Account {
+	return predicate.Account(sql.FieldNotIn(FieldDescription, vs...))
+}
+
+// DescriptionGT applies the GT predicate on the "description" field.
+func DescriptionGT(v string) predicate.Account {
+	return predicate.Account(sql.FieldGT(FieldDescription, v))
+}
+
+// DescriptionGTE applies the GTE predicate on the "description" field.
+func DescriptionGTE(v string) predicate.Account {
+	return predicate.Account(sql.FieldGTE(FieldDescription, v))
+}
+
+// DescriptionLT applies the LT predicate on the "description" field.
+func DescriptionLT(v string) predicate.Account {
+	return predicate.Account(sql.FieldLT(FieldDescription, v))
+}
+
+// DescriptionLTE applies the LTE predicate on the "description" field.
+func DescriptionLTE(v string) predicate.Account {
+	return predicate.Account(sql.FieldLTE(FieldDescription, v))
+}
+
+// DescriptionContains applies the Contains predicate on the "description" field.
+func DescriptionContains(v string) predicate.Account {
+	return predicate.Account(sql.FieldContains(FieldDescription, v))
+}
+
+// DescriptionHasPrefix applies the HasPrefix predicate on the "description" field.
+func DescriptionHasPrefix(v string) predicate.Account {
+	return predicate.Account(sql.FieldHasPrefix(FieldDescription, v))
+}
+
+// DescriptionHasSuffix applies the HasSuffix predicate on the "description" field.
+func DescriptionHasSuffix(v string) predicate.Account {
+	return predicate.Account(sql.FieldHasSuffix(FieldDescription, v))
+}
+
+// DescriptionEqualFold applies the EqualFold predicate on the "description" field.
+func DescriptionEqualFold(v string) predicate.Account {
+	return predicate.Account(sql.FieldEqualFold(FieldDescription, v))
+}
+
+// DescriptionContainsFold applies the ContainsFold predicate on the "description" field.
+func DescriptionContainsFold(v string) predicate.Account {
+	return predicate.Account(sql.FieldContainsFold(FieldDescription, v))
+}
+
+// OwnerIDEQ applies the EQ predicate on the "owner_id" field.
+func OwnerIDEQ(v uuid.UUID) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldOwnerID, v))
+}
+
+// OwnerIDNEQ applies the NEQ predicate on the "owner_id" field.
+func OwnerIDNEQ(v uuid.UUID) predicate.Account {
+	return predicate.Account(sql.FieldNEQ(FieldOwnerID, v))
+}
+
+// OwnerIDIn applies the In predicate on the "owner_id" field.
+func OwnerIDIn(vs ...uuid.UUID) predicate.Account {
+	return predicate.Account(sql.FieldIn(FieldOwnerID, vs...))
+}
+
+// OwnerIDNotIn applies the NotIn predicate on the "owner_id" field.
+func OwnerIDNotIn(vs ...uuid.UUID) predicate.Account {
+	return predicate.Account(sql.FieldNotIn(FieldOwnerID, vs...))
+}
+
+// SiloIDEQ applies the EQ predicate on the "silo_id" field.
+func SiloIDEQ(v uuid.UUID) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldSiloID, v))
+}
+
+// SiloIDNEQ applies the NEQ predicate on the "silo_id" field.
+func SiloIDNEQ(v uuid.UUID) predicate.Account {
+	return predicate.Account(sql.FieldNEQ(FieldSiloID, v))
+}
+
+// SiloIDIn applies the In predicate on the "silo_id" field.
+func SiloIDIn(vs ...uuid.UUID) predicate.Account {
+	return predicate.Account(sql.FieldIn(FieldSiloID, vs...))
+}
+
+// SiloIDNotIn applies the NotIn predicate on the "silo_id" field.
+func SiloIDNotIn(vs ...uuid.UUID) predicate.Account {
+	return predicate.Account(sql.FieldNotIn(FieldSiloID, vs...))
+}
+
 // RoleEQ applies the EQ predicate on the "role" field.
-func RoleEQ(v example.Role) predicate.Account {
+func RoleEQ(v role.Role) predicate.Account {
 	vc := v
 	return predicate.Account(sql.FieldEQ(FieldRole, vc))
 }
 
 // RoleNEQ applies the NEQ predicate on the "role" field.
-func RoleNEQ(v example.Role) predicate.Account {
+func RoleNEQ(v role.Role) predicate.Account {
 	vc := v
 	return predicate.Account(sql.FieldNEQ(FieldRole, vc))
 }
 
 // RoleIn applies the In predicate on the "role" field.
-func RoleIn(vs ...example.Role) predicate.Account {
+func RoleIn(vs ...role.Role) predicate.Account {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -194,7 +384,7 @@ func RoleIn(vs ...example.Role) predicate.Account {
 }
 
 // RoleNotIn applies the NotIn predicate on the "role" field.
-func RoleNotIn(vs ...example.Role) predicate.Account {
+func RoleNotIn(vs ...role.Role) predicate.Account {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -225,6 +415,29 @@ func HasOwnerWith(preds ...predicate.User) predicate.Account {
 	})
 }
 
+// HasSilo applies the HasEdge predicate on the "silo" edge.
+func HasSilo() predicate.Account {
+	return predicate.Account(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, SiloTable, SiloColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSiloWith applies the HasEdge predicate on the "silo" edge with a given conditions (other predicates).
+func HasSiloWith(preds ...predicate.Silo) predicate.Account {
+	return predicate.Account(func(s *sql.Selector) {
+		step := newSiloStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasMemberships applies the HasEdge predicate on the "memberships" edge.
 func HasMemberships() predicate.Account {
 	return predicate.Account(func(s *sql.Selector) {
@@ -240,6 +453,29 @@ func HasMemberships() predicate.Account {
 func HasMembershipsWith(preds ...predicate.Membership) predicate.Account {
 	return predicate.Account(func(s *sql.Selector) {
 		step := newMembershipsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasInvitations applies the HasEdge predicate on the "invitations" edge.
+func HasInvitations() predicate.Account {
+	return predicate.Account(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, InvitationsTable, InvitationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasInvitationsWith applies the HasEdge predicate on the "invitations" edge with a given conditions (other predicates).
+func HasInvitationsWith(preds ...predicate.Invitation) predicate.Account {
+	return predicate.Account(func(s *sql.Selector) {
+		step := newInvitationsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

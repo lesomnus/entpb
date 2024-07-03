@@ -29,13 +29,11 @@ func (s *IdentityServiceServer) Create(ctx context.Context, req *pb.CreateIdenti
 	if v := req.Name; v != nil {
 		q.SetName(*v)
 	}
-	if v := req.Email; v != nil {
-		q.SetEmail(*v)
+	if v := req.Description; v != nil {
+		q.SetDescription(*v)
 	}
-	if v := req.GetDateUpdated(); v != nil {
-		w := v.AsTime()
-		q.SetDateUpdated(w)
-	}
+	q.SetKind(req.GetKind())
+	q.SetVerifier(req.GetVerifier())
 	if id, err := GetUserId(ctx, s.db, req.GetOwner()); err != nil {
 		return nil, err
 	} else {
@@ -90,12 +88,11 @@ func (s *IdentityServiceServer) Update(ctx context.Context, req *pb.UpdateIdenti
 	if v := req.Name; v != nil {
 		q.SetName(*v)
 	}
-	if v := req.Email; v != nil {
-		q.SetEmail(*v)
+	if v := req.Description; v != nil {
+		q.SetDescription(*v)
 	}
-	if v := req.DateUpdated; v != nil {
-		w := v.AsTime()
-		q.SetDateUpdated(w)
+	if v := req.Verifier; v != nil {
+		q.SetVerifier(*v)
 	}
 
 	res, err := q.Save(ctx)
@@ -110,10 +107,9 @@ func ToProtoIdentity(v *ent.Identity) *pb.Identity {
 	m.Id = v.ID[:]
 	m.DateCreated = timestamppb.New(v.DateCreated)
 	m.Name = v.Name
-	m.Email = v.Email
-	if v.DateUpdated != nil {
-		m.DateUpdated = timestamppb.New(*v.DateUpdated)
-	}
+	m.Description = v.Description
+	m.Kind = v.Kind
+	m.Verifier = v.Verifier
 	if v := v.Edges.Owner; v != nil {
 		m.Owner = ToProtoUser(v)
 	}

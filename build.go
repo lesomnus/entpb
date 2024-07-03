@@ -499,85 +499,69 @@ func (p *Build) buildGetMessage(d *MessageAnnotation) *MessageAnnotation {
 		key_fields = append(key_fields, field)
 	}
 
-	// Naive implementation...
-	// Only valid if there is a foreign key in the fields of index
-	// and, the edge and fields are must be a proto field.
+	// Referenced edges and fields are must be a proto field.
 	for _, index := range d.Schema.Indexes {
+		k, ok := DecodeAnnotation(&KeyAnnotation{}, index.Annotations)
+		if !ok {
+			continue
+		}
 		if !index.Unique {
 			continue
 		}
 
-		// Why not looking for FieldAnnotation directly?
-		// Since FieldAnnotation does not have field name that index holds.
-		// See schema.Membership; "account_id", the field name "account" edge, is not stored in the FieldAnnotation.
-		var edge *load.Edge
-		for _, field_name := range index.Fields {
-			i := slices.IndexFunc(d.Schema.Edges, func(edge *load.Edge) bool {
-				return edge.Field == field_name
-			})
-			if i < 0 {
-				continue
-			}
-
-			edge = d.Schema.Edges[i]
-			break
-		}
-		if edge == nil {
-			continue
-		}
-
-		var edge_field *FieldAnnotation
-		if i := slices.IndexFunc(d.Fields, func(field *FieldAnnotation) bool {
-			return field.EntName == edge.Name
-		}); i < 0 {
-			continue
-		} else {
-			edge_field = d.Fields[i]
-		}
-
-		ref_msg, ok := p.Schemas[edge.Type]
-		if !ok {
-			panic(fmt.Sprintf("message of schema \"%s\" not found", edge.Type))
-		}
-
-		sub_name := ident.Ident(fmt.Sprintf("Get%sIn%s", d.Ident, strcase.ToCamel(edge.Name)))
 		sub_msg := &MessageAnnotation{
 			Filepath: s.Filepath,
-			Ident:    sub_name,
+			Ident:    ident.Ident(fmt.Sprintf("Get%s%s", d.Ident, strcase.ToCamel(k.Key))),
 			File:     s.File,
 			Schema:   d.Schema,
 			Fields:   []*FieldAnnotation{},
 		}
-		for _, field := range d.Fields {
-			if !slices.ContainsFunc(index.Fields, func(v string) bool {
-				return v == field.EntName
-			}) {
+		for _, field_name := range index.Fields {
+			i := slices.IndexFunc(d.Fields, func(f *FieldAnnotation) bool {
+				return f.Ident == ident.Ident(field_name)
+			})
+			if i >= 0 {
+				field := d.Fields[i]
+				sub_msg.Fields = append(sub_msg.Fields, field)
 				continue
 			}
 
-			sub_msg.Fields = append(sub_msg.Fields, field)
-		}
-		if len(sub_msg.Fields) == 0 {
-			continue
-		}
+			i = slices.IndexFunc(d.Schema.Edges, func(edge *load.Edge) bool {
+				return edge.Field == field_name
+			})
+			if i < 0 {
+				panic(fmt.Errorf("index references non-exist field \"%s\"", field_name))
+			}
+			edge := d.Schema.Edges[i]
 
-		ref_get_msg := p.buildGetMessage(ref_msg)
-		sub_msg.Fields = append([]*FieldAnnotation{{
-			Ident:  edge_field.Ident,
-			Number: edge_field.Number,
-			EntMsg: ref_get_msg,
-			PbType: ref_get_msg.pbType(),
-		}}, sub_msg.Fields...)
+			i = slices.IndexFunc(d.Fields, func(f *FieldAnnotation) bool {
+				return f.EntName == edge.Name
+			})
+			field := d.Fields[i]
+
+			ref_msg, ok := p.Schemas[edge.Type]
+			if !ok {
+				panic(fmt.Sprintf("message of schema \"%s\" not found", edge.Type))
+			}
+
+			ref_get_msg := p.buildGetMessage(ref_msg)
+			sub_msg.Fields = append(sub_msg.Fields, &FieldAnnotation{
+				Ident:  field.Ident,
+				Number: field.Number,
+				EntMsg: ref_get_msg,
+				PbType: ref_get_msg.pbType(),
+			})
+		}
 
 		key_fields = append(key_fields, &FieldAnnotation{
-			Ident:  ident.Ident(fmt.Sprintf("in_%s", edge.Name)),
-			Number: edge_field.Number,
+			Ident:  ident.Ident(k.Key),
+			Number: k.Number,
 			EntMsg: sub_msg,
 			PbType: sub_msg.pbType(),
 		})
 
-		s.File.Messages[sub_name] = sub_msg
-		p.Messages[sub_name] = sub_msg
+		s.File.Messages[sub_msg.Ident] = sub_msg
+		p.Messages[sub_msg.Ident] = sub_msg
 	}
 	if len(key_fields) == 1 {
 		msg.Fields = append(msg.Fields, key_fields[0])

@@ -10,7 +10,7 @@ import (
 	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
 	"github.com/lesomnus/entpb"
-	"github.com/lesomnus/entpb/internal/example"
+	"github.com/lesomnus/entpb/internal/example/role"
 	"github.com/lesomnus/entpb/pbgen"
 	"github.com/lesomnus/entpb/pbgen/ident"
 	"github.com/spf13/afero"
@@ -72,15 +72,13 @@ func main() {
 			entc.Extensions(entpb_ext),
 			entc.Annotations(
 				entpb.ProtoFiles{
-					"entpb/directory/service.proto": entpb.NewProtoFile(proto_file_init),
-					"entpb/directory/common.proto": entpb.NewProtoFile(proto_file_init,
-						entpb.WithEnum(map[example.Role]entpb.EnumDesc{
-							example.RoleOwner:  {Number: 10, Comment: "Holds full control for the group."},
-							example.RoleMember: {Number: 20},
-						},
-							entpb.WithName("GroupRole"),
-							entpb.WithComment("Role for the group."),
-						),
+					"khepri/horus/store.proto": entpb.NewProtoFile(proto_file_init),
+					"khepri/horus/common.proto": entpb.NewProtoFile(proto_file_init,
+						entpb.WithEnum(map[role.Role]entpb.EnumDesc{
+							role.Owner:  {Number: role.Owner.V()},
+							role.Admin:  {Number: role.Admin.V()},
+							role.Member: {Number: role.Member.V()},
+						}),
 					),
 				},
 			),

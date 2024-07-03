@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/lesomnus/entpb/internal/example/ent/membership"
 	"github.com/lesomnus/entpb/internal/example/ent/predicate"
+	"github.com/lesomnus/entpb/internal/example/role"
 )
 
 // MembershipUpdate is the builder for updating Membership entities.
@@ -27,16 +28,16 @@ func (mu *MembershipUpdate) Where(ps ...predicate.Membership) *MembershipUpdate 
 	return mu
 }
 
-// SetName sets the "name" field.
-func (mu *MembershipUpdate) SetName(s string) *MembershipUpdate {
-	mu.mutation.SetName(s)
+// SetRole sets the "role" field.
+func (mu *MembershipUpdate) SetRole(r role.Role) *MembershipUpdate {
+	mu.mutation.SetRole(r)
 	return mu
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (mu *MembershipUpdate) SetNillableName(s *string) *MembershipUpdate {
-	if s != nil {
-		mu.SetName(*s)
+// SetNillableRole sets the "role" field if the given value is not nil.
+func (mu *MembershipUpdate) SetNillableRole(r *role.Role) *MembershipUpdate {
+	if r != nil {
+		mu.SetRole(*r)
 	}
 	return mu
 }
@@ -75,8 +76,16 @@ func (mu *MembershipUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (mu *MembershipUpdate) check() error {
+	if v, ok := mu.mutation.Role(); ok {
+		if err := membership.RoleValidator(v); err != nil {
+			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "Membership.role": %w`, err)}
+		}
+	}
 	if _, ok := mu.mutation.AccountID(); mu.mutation.AccountCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Membership.account"`)
+	}
+	if _, ok := mu.mutation.TeamID(); mu.mutation.TeamCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Membership.team"`)
 	}
 	return nil
 }
@@ -93,8 +102,8 @@ func (mu *MembershipUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := mu.mutation.Name(); ok {
-		_spec.SetField(membership.FieldName, field.TypeString, value)
+	if value, ok := mu.mutation.Role(); ok {
+		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, mu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -116,16 +125,16 @@ type MembershipUpdateOne struct {
 	mutation *MembershipMutation
 }
 
-// SetName sets the "name" field.
-func (muo *MembershipUpdateOne) SetName(s string) *MembershipUpdateOne {
-	muo.mutation.SetName(s)
+// SetRole sets the "role" field.
+func (muo *MembershipUpdateOne) SetRole(r role.Role) *MembershipUpdateOne {
+	muo.mutation.SetRole(r)
 	return muo
 }
 
-// SetNillableName sets the "name" field if the given value is not nil.
-func (muo *MembershipUpdateOne) SetNillableName(s *string) *MembershipUpdateOne {
-	if s != nil {
-		muo.SetName(*s)
+// SetNillableRole sets the "role" field if the given value is not nil.
+func (muo *MembershipUpdateOne) SetNillableRole(r *role.Role) *MembershipUpdateOne {
+	if r != nil {
+		muo.SetRole(*r)
 	}
 	return muo
 }
@@ -177,8 +186,16 @@ func (muo *MembershipUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (muo *MembershipUpdateOne) check() error {
+	if v, ok := muo.mutation.Role(); ok {
+		if err := membership.RoleValidator(v); err != nil {
+			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "Membership.role": %w`, err)}
+		}
+	}
 	if _, ok := muo.mutation.AccountID(); muo.mutation.AccountCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Membership.account"`)
+	}
+	if _, ok := muo.mutation.TeamID(); muo.mutation.TeamCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Membership.team"`)
 	}
 	return nil
 }
@@ -212,8 +229,8 @@ func (muo *MembershipUpdateOne) sqlSave(ctx context.Context) (_node *Membership,
 			}
 		}
 	}
-	if value, ok := muo.mutation.Name(); ok {
-		_spec.SetField(membership.FieldName, field.TypeString, value)
+	if value, ok := muo.mutation.Role(); ok {
+		_spec.SetField(membership.FieldRole, field.TypeEnum, value)
 	}
 	_node = &Membership{config: muo.config}
 	_spec.Assign = _node.assignValues

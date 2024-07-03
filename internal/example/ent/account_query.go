@@ -13,8 +13,10 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/lesomnus/entpb/internal/example/ent/account"
+	"github.com/lesomnus/entpb/internal/example/ent/invitation"
 	"github.com/lesomnus/entpb/internal/example/ent/membership"
 	"github.com/lesomnus/entpb/internal/example/ent/predicate"
+	"github.com/lesomnus/entpb/internal/example/ent/silo"
 	"github.com/lesomnus/entpb/internal/example/ent/user"
 )
 
@@ -26,8 +28,9 @@ type AccountQuery struct {
 	inters          []Interceptor
 	predicates      []predicate.Account
 	withOwner       *UserQuery
+	withSilo        *SiloQuery
 	withMemberships *MembershipQuery
-	withFKs         bool
+	withInvitations *InvitationQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -86,6 +89,28 @@ func (aq *AccountQuery) QueryOwner() *UserQuery {
 	return query
 }
 
+// QuerySilo chains the current query on the "silo" edge.
+func (aq *AccountQuery) QuerySilo() *SiloQuery {
+	query := (&SiloClient{config: aq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := aq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := aq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(account.Table, account.FieldID, selector),
+			sqlgraph.To(silo.Table, silo.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, account.SiloTable, account.SiloColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryMemberships chains the current query on the "memberships" edge.
 func (aq *AccountQuery) QueryMemberships() *MembershipQuery {
 	query := (&MembershipClient{config: aq.config}).Query()
@@ -101,6 +126,28 @@ func (aq *AccountQuery) QueryMemberships() *MembershipQuery {
 			sqlgraph.From(account.Table, account.FieldID, selector),
 			sqlgraph.To(membership.Table, membership.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, account.MembershipsTable, account.MembershipsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryInvitations chains the current query on the "invitations" edge.
+func (aq *AccountQuery) QueryInvitations() *InvitationQuery {
+	query := (&InvitationClient{config: aq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := aq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := aq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(account.Table, account.FieldID, selector),
+			sqlgraph.To(invitation.Table, invitation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, account.InvitationsTable, account.InvitationsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
 		return fromU, nil
@@ -301,7 +348,9 @@ func (aq *AccountQuery) Clone() *AccountQuery {
 		inters:          append([]Interceptor{}, aq.inters...),
 		predicates:      append([]predicate.Account{}, aq.predicates...),
 		withOwner:       aq.withOwner.Clone(),
+		withSilo:        aq.withSilo.Clone(),
 		withMemberships: aq.withMemberships.Clone(),
+		withInvitations: aq.withInvitations.Clone(),
 		// clone intermediate query.
 		sql:  aq.sql.Clone(),
 		path: aq.path,
@@ -319,6 +368,17 @@ func (aq *AccountQuery) WithOwner(opts ...func(*UserQuery)) *AccountQuery {
 	return aq
 }
 
+// WithSilo tells the query-builder to eager-load the nodes that are connected to
+// the "silo" edge. The optional arguments are used to configure the query builder of the edge.
+func (aq *AccountQuery) WithSilo(opts ...func(*SiloQuery)) *AccountQuery {
+	query := (&SiloClient{config: aq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	aq.withSilo = query
+	return aq
+}
+
 // WithMemberships tells the query-builder to eager-load the nodes that are connected to
 // the "memberships" edge. The optional arguments are used to configure the query builder of the edge.
 func (aq *AccountQuery) WithMemberships(opts ...func(*MembershipQuery)) *AccountQuery {
@@ -327,6 +387,17 @@ func (aq *AccountQuery) WithMemberships(opts ...func(*MembershipQuery)) *Account
 		opt(query)
 	}
 	aq.withMemberships = query
+	return aq
+}
+
+// WithInvitations tells the query-builder to eager-load the nodes that are connected to
+// the "invitations" edge. The optional arguments are used to configure the query builder of the edge.
+func (aq *AccountQuery) WithInvitations(opts ...func(*InvitationQuery)) *AccountQuery {
+	query := (&InvitationClient{config: aq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	aq.withInvitations = query
 	return aq
 }
 
@@ -407,19 +478,14 @@ func (aq *AccountQuery) prepareQuery(ctx context.Context) error {
 func (aq *AccountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Account, error) {
 	var (
 		nodes       = []*Account{}
-		withFKs     = aq.withFKs
 		_spec       = aq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [4]bool{
 			aq.withOwner != nil,
+			aq.withSilo != nil,
 			aq.withMemberships != nil,
+			aq.withInvitations != nil,
 		}
 	)
-	if aq.withOwner != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, account.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Account).scanValues(nil, columns)
 	}
@@ -444,10 +510,23 @@ func (aq *AccountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Acco
 			return nil, err
 		}
 	}
+	if query := aq.withSilo; query != nil {
+		if err := aq.loadSilo(ctx, query, nodes, nil,
+			func(n *Account, e *Silo) { n.Edges.Silo = e }); err != nil {
+			return nil, err
+		}
+	}
 	if query := aq.withMemberships; query != nil {
 		if err := aq.loadMemberships(ctx, query, nodes,
 			func(n *Account) { n.Edges.Memberships = []*Membership{} },
 			func(n *Account, e *Membership) { n.Edges.Memberships = append(n.Edges.Memberships, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := aq.withInvitations; query != nil {
+		if err := aq.loadInvitations(ctx, query, nodes,
+			func(n *Account) { n.Edges.Invitations = []*Invitation{} },
+			func(n *Account, e *Invitation) { n.Edges.Invitations = append(n.Edges.Invitations, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -458,10 +537,7 @@ func (aq *AccountQuery) loadOwner(ctx context.Context, query *UserQuery, nodes [
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Account)
 	for i := range nodes {
-		if nodes[i].user_accounts == nil {
-			continue
-		}
-		fk := *nodes[i].user_accounts
+		fk := nodes[i].OwnerID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -478,7 +554,36 @@ func (aq *AccountQuery) loadOwner(ctx context.Context, query *UserQuery, nodes [
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_accounts" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "owner_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (aq *AccountQuery) loadSilo(ctx context.Context, query *SiloQuery, nodes []*Account, init func(*Account), assign func(*Account, *Silo)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Account)
+	for i := range nodes {
+		fk := nodes[i].SiloID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(silo.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "silo_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -496,7 +601,6 @@ func (aq *AccountQuery) loadMemberships(ctx context.Context, query *MembershipQu
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
 	if len(query.ctx.Fields) > 0 {
 		query.ctx.AppendFieldOnce(membership.FieldAccountID)
 	}
@@ -512,6 +616,37 @@ func (aq *AccountQuery) loadMemberships(ctx context.Context, query *MembershipQu
 		node, ok := nodeids[fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "account_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (aq *AccountQuery) loadInvitations(ctx context.Context, query *InvitationQuery, nodes []*Account, init func(*Account), assign func(*Account, *Invitation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Account)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Invitation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(account.InvitationsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.account_invitations
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "account_invitations" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "account_invitations" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -542,6 +677,12 @@ func (aq *AccountQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != account.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if aq.withOwner != nil {
+			_spec.Node.AddColumnOnce(account.FieldOwnerID)
+		}
+		if aq.withSilo != nil {
+			_spec.Node.AddColumnOnce(account.FieldSiloID)
 		}
 	}
 	if ps := aq.predicates; len(ps) > 0 {

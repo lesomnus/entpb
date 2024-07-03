@@ -13,8 +13,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/lesomnus/entpb/internal/example/ent/account"
 	"github.com/lesomnus/entpb/internal/example/ent/identity"
-	"github.com/lesomnus/entpb/internal/example/ent/membership"
 	"github.com/lesomnus/entpb/internal/example/ent/predicate"
+	"github.com/lesomnus/entpb/internal/example/ent/token"
 	"github.com/lesomnus/entpb/internal/example/ent/user"
 )
 
@@ -28,6 +28,20 @@ type UserUpdate struct {
 // Where appends a list predicates to the UserUpdate builder.
 func (uu *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
 	uu.mutation.Where(ps...)
+	return uu
+}
+
+// SetAlias sets the "alias" field.
+func (uu *UserUpdate) SetAlias(s string) *UserUpdate {
+	uu.mutation.SetAlias(s)
+	return uu
+}
+
+// SetNillableAlias sets the "alias" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableAlias(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetAlias(*s)
+	}
 	return uu
 }
 
@@ -95,19 +109,19 @@ func (uu *UserUpdate) AddAccounts(a ...*Account) *UserUpdate {
 	return uu.AddAccountIDs(ids...)
 }
 
-// AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
-func (uu *UserUpdate) AddMembershipIDs(ids ...uuid.UUID) *UserUpdate {
-	uu.mutation.AddMembershipIDs(ids...)
+// AddTokenIDs adds the "tokens" edge to the Token entity by IDs.
+func (uu *UserUpdate) AddTokenIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.AddTokenIDs(ids...)
 	return uu
 }
 
-// AddMemberships adds the "memberships" edges to the Membership entity.
-func (uu *UserUpdate) AddMemberships(m ...*Membership) *UserUpdate {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+// AddTokens adds the "tokens" edges to the Token entity.
+func (uu *UserUpdate) AddTokens(t ...*Token) *UserUpdate {
+	ids := make([]uuid.UUID, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
 	}
-	return uu.AddMembershipIDs(ids...)
+	return uu.AddTokenIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -184,25 +198,25 @@ func (uu *UserUpdate) RemoveAccounts(a ...*Account) *UserUpdate {
 	return uu.RemoveAccountIDs(ids...)
 }
 
-// ClearMemberships clears all "memberships" edges to the Membership entity.
-func (uu *UserUpdate) ClearMemberships() *UserUpdate {
-	uu.mutation.ClearMemberships()
+// ClearTokens clears all "tokens" edges to the Token entity.
+func (uu *UserUpdate) ClearTokens() *UserUpdate {
+	uu.mutation.ClearTokens()
 	return uu
 }
 
-// RemoveMembershipIDs removes the "memberships" edge to Membership entities by IDs.
-func (uu *UserUpdate) RemoveMembershipIDs(ids ...uuid.UUID) *UserUpdate {
-	uu.mutation.RemoveMembershipIDs(ids...)
+// RemoveTokenIDs removes the "tokens" edge to Token entities by IDs.
+func (uu *UserUpdate) RemoveTokenIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.RemoveTokenIDs(ids...)
 	return uu
 }
 
-// RemoveMemberships removes "memberships" edges to Membership entities.
-func (uu *UserUpdate) RemoveMemberships(m ...*Membership) *UserUpdate {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+// RemoveTokens removes "tokens" edges to Token entities.
+func (uu *UserUpdate) RemoveTokens(t ...*Token) *UserUpdate {
+	ids := make([]uuid.UUID, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
 	}
-	return uu.RemoveMembershipIDs(ids...)
+	return uu.RemoveTokenIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -232,7 +246,20 @@ func (uu *UserUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (uu *UserUpdate) check() error {
+	if v, ok := uu.mutation.Alias(); ok {
+		if err := user.AliasValidator(v); err != nil {
+			return &ValidationError{Name: "alias", err: fmt.Errorf(`ent: validator failed for field "User.alias": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := uu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID))
 	if ps := uu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -240,6 +267,9 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := uu.mutation.Alias(); ok {
+		_spec.SetField(user.FieldAlias, field.TypeString, value)
 	}
 	if uu.mutation.ParentCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -405,28 +435,28 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uu.mutation.MembershipsCleared() {
+	if uu.mutation.TokensCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.MembershipsTable,
-			Columns: []string{user.MembershipsColumn},
+			Table:   user.TokensTable,
+			Columns: []string{user.TokensColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(token.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.RemovedMembershipsIDs(); len(nodes) > 0 && !uu.mutation.MembershipsCleared() {
+	if nodes := uu.mutation.RemovedTokensIDs(); len(nodes) > 0 && !uu.mutation.TokensCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.MembershipsTable,
-			Columns: []string{user.MembershipsColumn},
+			Table:   user.TokensTable,
+			Columns: []string{user.TokensColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(token.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -434,15 +464,15 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.MembershipsIDs(); len(nodes) > 0 {
+	if nodes := uu.mutation.TokensIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.MembershipsTable,
-			Columns: []string{user.MembershipsColumn},
+			Table:   user.TokensTable,
+			Columns: []string{user.TokensColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(token.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -468,6 +498,20 @@ type UserUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *UserMutation
+}
+
+// SetAlias sets the "alias" field.
+func (uuo *UserUpdateOne) SetAlias(s string) *UserUpdateOne {
+	uuo.mutation.SetAlias(s)
+	return uuo
+}
+
+// SetNillableAlias sets the "alias" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableAlias(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetAlias(*s)
+	}
+	return uuo
 }
 
 // SetParentID sets the "parent" edge to the User entity by ID.
@@ -534,19 +578,19 @@ func (uuo *UserUpdateOne) AddAccounts(a ...*Account) *UserUpdateOne {
 	return uuo.AddAccountIDs(ids...)
 }
 
-// AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
-func (uuo *UserUpdateOne) AddMembershipIDs(ids ...uuid.UUID) *UserUpdateOne {
-	uuo.mutation.AddMembershipIDs(ids...)
+// AddTokenIDs adds the "tokens" edge to the Token entity by IDs.
+func (uuo *UserUpdateOne) AddTokenIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.AddTokenIDs(ids...)
 	return uuo
 }
 
-// AddMemberships adds the "memberships" edges to the Membership entity.
-func (uuo *UserUpdateOne) AddMemberships(m ...*Membership) *UserUpdateOne {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+// AddTokens adds the "tokens" edges to the Token entity.
+func (uuo *UserUpdateOne) AddTokens(t ...*Token) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
 	}
-	return uuo.AddMembershipIDs(ids...)
+	return uuo.AddTokenIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -623,25 +667,25 @@ func (uuo *UserUpdateOne) RemoveAccounts(a ...*Account) *UserUpdateOne {
 	return uuo.RemoveAccountIDs(ids...)
 }
 
-// ClearMemberships clears all "memberships" edges to the Membership entity.
-func (uuo *UserUpdateOne) ClearMemberships() *UserUpdateOne {
-	uuo.mutation.ClearMemberships()
+// ClearTokens clears all "tokens" edges to the Token entity.
+func (uuo *UserUpdateOne) ClearTokens() *UserUpdateOne {
+	uuo.mutation.ClearTokens()
 	return uuo
 }
 
-// RemoveMembershipIDs removes the "memberships" edge to Membership entities by IDs.
-func (uuo *UserUpdateOne) RemoveMembershipIDs(ids ...uuid.UUID) *UserUpdateOne {
-	uuo.mutation.RemoveMembershipIDs(ids...)
+// RemoveTokenIDs removes the "tokens" edge to Token entities by IDs.
+func (uuo *UserUpdateOne) RemoveTokenIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.RemoveTokenIDs(ids...)
 	return uuo
 }
 
-// RemoveMemberships removes "memberships" edges to Membership entities.
-func (uuo *UserUpdateOne) RemoveMemberships(m ...*Membership) *UserUpdateOne {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+// RemoveTokens removes "tokens" edges to Token entities.
+func (uuo *UserUpdateOne) RemoveTokens(t ...*Token) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
 	}
-	return uuo.RemoveMembershipIDs(ids...)
+	return uuo.RemoveTokenIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -684,7 +728,20 @@ func (uuo *UserUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (uuo *UserUpdateOne) check() error {
+	if v, ok := uuo.mutation.Alias(); ok {
+		if err := user.AliasValidator(v); err != nil {
+			return &ValidationError{Name: "alias", err: fmt.Errorf(`ent: validator failed for field "User.alias": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
+	if err := uuo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID))
 	id, ok := uuo.mutation.ID()
 	if !ok {
@@ -709,6 +766,9 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := uuo.mutation.Alias(); ok {
+		_spec.SetField(user.FieldAlias, field.TypeString, value)
 	}
 	if uuo.mutation.ParentCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -874,28 +934,28 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uuo.mutation.MembershipsCleared() {
+	if uuo.mutation.TokensCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.MembershipsTable,
-			Columns: []string{user.MembershipsColumn},
+			Table:   user.TokensTable,
+			Columns: []string{user.TokensColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(token.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.RemovedMembershipsIDs(); len(nodes) > 0 && !uuo.mutation.MembershipsCleared() {
+	if nodes := uuo.mutation.RemovedTokensIDs(); len(nodes) > 0 && !uuo.mutation.TokensCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.MembershipsTable,
-			Columns: []string{user.MembershipsColumn},
+			Table:   user.TokensTable,
+			Columns: []string{user.TokensColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(token.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -903,15 +963,15 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.MembershipsIDs(); len(nodes) > 0 {
+	if nodes := uuo.mutation.TokensIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.MembershipsTable,
-			Columns: []string{user.MembershipsColumn},
+			Table:   user.TokensTable,
+			Columns: []string{user.TokensColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(token.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

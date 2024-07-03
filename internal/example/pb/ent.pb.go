@@ -12,14 +12,21 @@ func AccountById(k uuid.UUID) *GetAccountRequest {
 func AccountByIdV(k []byte) *GetAccountRequest {
 	return &GetAccountRequest{Key: &GetAccountRequest_Id{Id: k}}
 }
-func AccountByAlias(k string) *GetAccountRequest {
-	return &GetAccountRequest{Key: &GetAccountRequest_Alias{Alias: k}}
+func AccountByAliasInSilo(alias string, silo *GetSiloRequest) *GetAccountRequest {
+	return &GetAccountRequest{Key: &GetAccountRequest_ByAliasInSilo{
+		ByAliasInSilo: &GetAccountByAliasInSilo{
+			Alias: alias,
+			Silo:  silo,
+		},
+	}}
 }
-func UserById(k uuid.UUID) *GetActorRequest {
-	return &GetActorRequest{Id: k[:]}
-}
-func UserByIdV(k []byte) *GetActorRequest {
-	return &GetActorRequest{Id: k}
+func AccountByOwnerInSilo(owner *GetUserRequest, silo *GetSiloRequest) *GetAccountRequest {
+	return &GetAccountRequest{Key: &GetAccountRequest_ByOwnerInSilo{
+		ByOwnerInSilo: &GetAccountByOwnerInSilo{
+			Owner: owner,
+			Silo:  silo,
+		},
+	}}
 }
 func IdentityById(k uuid.UUID) *GetIdentityRequest {
 	return &GetIdentityRequest{Id: k[:]}
@@ -27,17 +34,48 @@ func IdentityById(k uuid.UUID) *GetIdentityRequest {
 func IdentityByIdV(k []byte) *GetIdentityRequest {
 	return &GetIdentityRequest{Id: k}
 }
+func InvitationById(k uuid.UUID) *GetInvitationRequest {
+	return &GetInvitationRequest{Id: k[:]}
+}
+func InvitationByIdV(k []byte) *GetInvitationRequest {
+	return &GetInvitationRequest{Id: k}
+}
 func MembershipById(k uuid.UUID) *GetMembershipRequest {
-	return &GetMembershipRequest{Key: &GetMembershipRequest_Id{Id: k[:]}}
+	return &GetMembershipRequest{Id: k[:]}
 }
 func MembershipByIdV(k []byte) *GetMembershipRequest {
-	return &GetMembershipRequest{Key: &GetMembershipRequest_Id{Id: k}}
+	return &GetMembershipRequest{Id: k}
 }
-func MembershipInAccount(k *GetAccountRequest, name string) *GetMembershipRequest {
-	return &GetMembershipRequest{Key: &GetMembershipRequest_InAccount{
-		InAccount: &GetMembershipInAccount{
-			Account: k,
-			Name:    name,
-		},
-	}}
+func SiloById(k uuid.UUID) *GetSiloRequest {
+	return &GetSiloRequest{Key: &GetSiloRequest_Id{Id: k[:]}}
+}
+func SiloByIdV(k []byte) *GetSiloRequest {
+	return &GetSiloRequest{Key: &GetSiloRequest_Id{Id: k}}
+}
+func SiloByAlias(k string) *GetSiloRequest {
+	return &GetSiloRequest{Key: &GetSiloRequest_Alias{Alias: k}}
+}
+func TeamById(k uuid.UUID) *GetTeamRequest {
+	return &GetTeamRequest{Id: k[:]}
+}
+func TeamByIdV(k []byte) *GetTeamRequest {
+	return &GetTeamRequest{Id: k}
+}
+func TokenById(k uuid.UUID) *GetTokenRequest {
+	return &GetTokenRequest{Key: &GetTokenRequest_Id{Id: k[:]}}
+}
+func TokenByIdV(k []byte) *GetTokenRequest {
+	return &GetTokenRequest{Key: &GetTokenRequest_Id{Id: k}}
+}
+func TokenByValue(k string) *GetTokenRequest {
+	return &GetTokenRequest{Key: &GetTokenRequest_Value{Value: k}}
+}
+func UserById(k uuid.UUID) *GetUserRequest {
+	return &GetUserRequest{Key: &GetUserRequest_Id{Id: k[:]}}
+}
+func UserByIdV(k []byte) *GetUserRequest {
+	return &GetUserRequest{Key: &GetUserRequest_Id{Id: k}}
+}
+func UserByAlias(k string) *GetUserRequest {
+	return &GetUserRequest{Key: &GetUserRequest_Alias{Alias: k}}
 }

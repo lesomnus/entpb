@@ -7,7 +7,9 @@ import (
 	uuid "github.com/google/uuid"
 	ent "github.com/lesomnus/entpb/internal/example/ent"
 	account "github.com/lesomnus/entpb/internal/example/ent/account"
+	membership "github.com/lesomnus/entpb/internal/example/ent/membership"
 	predicate "github.com/lesomnus/entpb/internal/example/ent/predicate"
+	silo "github.com/lesomnus/entpb/internal/example/ent/silo"
 	user "github.com/lesomnus/entpb/internal/example/ent/user"
 	pb "github.com/lesomnus/entpb/internal/example/pb"
 	codes "google.golang.org/grpc/codes"
@@ -29,11 +31,22 @@ func (s *AccountServiceServer) Create(ctx context.Context, req *pb.CreateAccount
 	if v := req.Alias; v != nil {
 		q.SetAlias(*v)
 	}
+	if v := req.Name; v != nil {
+		q.SetName(*v)
+	}
+	if v := req.Description; v != nil {
+		q.SetDescription(*v)
+	}
 	q.SetRole(toEntRole(req.GetRole()))
 	if id, err := GetUserId(ctx, s.db, req.GetOwner()); err != nil {
 		return nil, err
 	} else {
 		q.SetOwnerID(id)
+	}
+	if id, err := GetSiloId(ctx, s.db, req.GetSilo()); err != nil {
+		return nil, err
+	} else {
+		q.SetSiloID(id)
 	}
 
 	res, err := q.Save(ctx)
@@ -71,6 +84,8 @@ func (s *AccountServiceServer) Get(ctx context.Context, req *pb.GetAccountReques
 }
 func QueryAccountWithEdgeIds(q *ent.AccountQuery) *ent.AccountQuery {
 	q.WithOwner(func(q *ent.UserQuery) { q.Select(user.FieldID) })
+	q.WithSilo(func(q *ent.SiloQuery) { q.Select(silo.FieldID) })
+	q.WithMemberships(func(q *ent.MembershipQuery) { q.Select(membership.FieldID) })
 
 	return q
 }
@@ -83,6 +98,12 @@ func (s *AccountServiceServer) Update(ctx context.Context, req *pb.UpdateAccount
 	q := s.db.Account.UpdateOneID(id)
 	if v := req.Alias; v != nil {
 		q.SetAlias(*v)
+	}
+	if v := req.Name; v != nil {
+		q.SetName(*v)
+	}
+	if v := req.Description; v != nil {
+		q.SetDescription(*v)
 	}
 	if v := req.Role; v != nil {
 		q.SetRole(toEntRole(*v))
@@ -100,9 +121,17 @@ func ToProtoAccount(v *ent.Account) *pb.Account {
 	m.Id = v.ID[:]
 	m.DateCreated = timestamppb.New(v.DateCreated)
 	m.Alias = v.Alias
-	m.Role = toPbGroupRole(v.Role)
+	m.Name = v.Name
+	m.Description = v.Description
+	m.Role = toPbRole(v.Role)
 	if v := v.Edges.Owner; v != nil {
 		m.Owner = ToProtoUser(v)
+	}
+	if v := v.Edges.Silo; v != nil {
+		m.Silo = ToProtoSilo(v)
+	}
+	for _, v := range v.Edges.Memberships {
+		m.Memberships = append(m.Memberships, ToProtoMembership(v))
 	}
 	return m
 }
@@ -137,8 +166,31 @@ func GetAccountSpecifier(req *pb.GetAccountRequest) (predicate.Account, error) {
 		} else {
 			return account.IDEQ(v), nil
 		}
-	case *pb.GetAccountRequest_Alias:
-		return account.AliasEQ(t.Alias), nil
+	case *pb.GetAccountRequest_ByAliasInSilo:
+		ps := make([]predicate.Account, 0, 2)
+		ps = append(ps, account.AliasEQ(t.ByAliasInSilo.GetAlias()))
+		if p, err := GetSiloSpecifier(t.ByAliasInSilo.GetSilo()); err != nil {
+			s, _ := status.FromError(err)
+			return nil, status.Errorf(codes.InvalidArgument, "by_alias_in_silo.%s", s.Message())
+		} else {
+			ps = append(ps, account.HasSiloWith(p))
+		}
+		return account.And(ps...), nil
+	case *pb.GetAccountRequest_ByOwnerInSilo:
+		ps := make([]predicate.Account, 0, 2)
+		if p, err := GetUserSpecifier(t.ByOwnerInSilo.GetOwner()); err != nil {
+			s, _ := status.FromError(err)
+			return nil, status.Errorf(codes.InvalidArgument, "by_owner_in_silo.%s", s.Message())
+		} else {
+			ps = append(ps, account.HasOwnerWith(p))
+		}
+		if p, err := GetSiloSpecifier(t.ByOwnerInSilo.GetSilo()); err != nil {
+			s, _ := status.FromError(err)
+			return nil, status.Errorf(codes.InvalidArgument, "by_owner_in_silo.%s", s.Message())
+		} else {
+			ps = append(ps, account.HasSiloWith(p))
+		}
+		return account.And(ps...), nil
 	case nil:
 		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
 	default:

@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 	"github.com/lesomnus/entpb/internal/example/ent/predicate"
+	"github.com/lesomnus/entpb/internal/example/role"
 )
 
 // ID filters vertices based on their ID field.
@@ -66,9 +67,9 @@ func AccountID(v uuid.UUID) predicate.Membership {
 	return predicate.Membership(sql.FieldEQ(FieldAccountID, v))
 }
 
-// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
-func Name(v string) predicate.Membership {
-	return predicate.Membership(sql.FieldEQ(FieldName, v))
+// TeamID applies equality check predicate on the "team_id" field. It's identical to TeamIDEQ.
+func TeamID(v uuid.UUID) predicate.Membership {
+	return predicate.Membership(sql.FieldEQ(FieldTeamID, v))
 }
 
 // DateCreatedEQ applies the EQ predicate on the "date_created" field.
@@ -131,69 +132,54 @@ func AccountIDNotIn(vs ...uuid.UUID) predicate.Membership {
 	return predicate.Membership(sql.FieldNotIn(FieldAccountID, vs...))
 }
 
-// NameEQ applies the EQ predicate on the "name" field.
-func NameEQ(v string) predicate.Membership {
-	return predicate.Membership(sql.FieldEQ(FieldName, v))
+// TeamIDEQ applies the EQ predicate on the "team_id" field.
+func TeamIDEQ(v uuid.UUID) predicate.Membership {
+	return predicate.Membership(sql.FieldEQ(FieldTeamID, v))
 }
 
-// NameNEQ applies the NEQ predicate on the "name" field.
-func NameNEQ(v string) predicate.Membership {
-	return predicate.Membership(sql.FieldNEQ(FieldName, v))
+// TeamIDNEQ applies the NEQ predicate on the "team_id" field.
+func TeamIDNEQ(v uuid.UUID) predicate.Membership {
+	return predicate.Membership(sql.FieldNEQ(FieldTeamID, v))
 }
 
-// NameIn applies the In predicate on the "name" field.
-func NameIn(vs ...string) predicate.Membership {
-	return predicate.Membership(sql.FieldIn(FieldName, vs...))
+// TeamIDIn applies the In predicate on the "team_id" field.
+func TeamIDIn(vs ...uuid.UUID) predicate.Membership {
+	return predicate.Membership(sql.FieldIn(FieldTeamID, vs...))
 }
 
-// NameNotIn applies the NotIn predicate on the "name" field.
-func NameNotIn(vs ...string) predicate.Membership {
-	return predicate.Membership(sql.FieldNotIn(FieldName, vs...))
+// TeamIDNotIn applies the NotIn predicate on the "team_id" field.
+func TeamIDNotIn(vs ...uuid.UUID) predicate.Membership {
+	return predicate.Membership(sql.FieldNotIn(FieldTeamID, vs...))
 }
 
-// NameGT applies the GT predicate on the "name" field.
-func NameGT(v string) predicate.Membership {
-	return predicate.Membership(sql.FieldGT(FieldName, v))
+// RoleEQ applies the EQ predicate on the "role" field.
+func RoleEQ(v role.Role) predicate.Membership {
+	vc := v
+	return predicate.Membership(sql.FieldEQ(FieldRole, vc))
 }
 
-// NameGTE applies the GTE predicate on the "name" field.
-func NameGTE(v string) predicate.Membership {
-	return predicate.Membership(sql.FieldGTE(FieldName, v))
+// RoleNEQ applies the NEQ predicate on the "role" field.
+func RoleNEQ(v role.Role) predicate.Membership {
+	vc := v
+	return predicate.Membership(sql.FieldNEQ(FieldRole, vc))
 }
 
-// NameLT applies the LT predicate on the "name" field.
-func NameLT(v string) predicate.Membership {
-	return predicate.Membership(sql.FieldLT(FieldName, v))
+// RoleIn applies the In predicate on the "role" field.
+func RoleIn(vs ...role.Role) predicate.Membership {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Membership(sql.FieldIn(FieldRole, v...))
 }
 
-// NameLTE applies the LTE predicate on the "name" field.
-func NameLTE(v string) predicate.Membership {
-	return predicate.Membership(sql.FieldLTE(FieldName, v))
-}
-
-// NameContains applies the Contains predicate on the "name" field.
-func NameContains(v string) predicate.Membership {
-	return predicate.Membership(sql.FieldContains(FieldName, v))
-}
-
-// NameHasPrefix applies the HasPrefix predicate on the "name" field.
-func NameHasPrefix(v string) predicate.Membership {
-	return predicate.Membership(sql.FieldHasPrefix(FieldName, v))
-}
-
-// NameHasSuffix applies the HasSuffix predicate on the "name" field.
-func NameHasSuffix(v string) predicate.Membership {
-	return predicate.Membership(sql.FieldHasSuffix(FieldName, v))
-}
-
-// NameEqualFold applies the EqualFold predicate on the "name" field.
-func NameEqualFold(v string) predicate.Membership {
-	return predicate.Membership(sql.FieldEqualFold(FieldName, v))
-}
-
-// NameContainsFold applies the ContainsFold predicate on the "name" field.
-func NameContainsFold(v string) predicate.Membership {
-	return predicate.Membership(sql.FieldContainsFold(FieldName, v))
+// RoleNotIn applies the NotIn predicate on the "role" field.
+func RoleNotIn(vs ...role.Role) predicate.Membership {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Membership(sql.FieldNotIn(FieldRole, v...))
 }
 
 // HasAccount applies the HasEdge predicate on the "account" edge.
@@ -211,6 +197,29 @@ func HasAccount() predicate.Membership {
 func HasAccountWith(preds ...predicate.Account) predicate.Membership {
 	return predicate.Membership(func(s *sql.Selector) {
 		step := newAccountStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasTeam applies the HasEdge predicate on the "team" edge.
+func HasTeam() predicate.Membership {
+	return predicate.Membership(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, TeamTable, TeamColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTeamWith applies the HasEdge predicate on the "team" edge with a given conditions (other predicates).
+func HasTeamWith(preds ...predicate.Team) predicate.Membership {
+	return predicate.Membership(func(s *sql.Selector) {
+		step := newTeamStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

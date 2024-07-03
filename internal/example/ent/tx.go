@@ -16,8 +16,16 @@ type Tx struct {
 	Account *AccountClient
 	// Identity is the client for interacting with the Identity builders.
 	Identity *IdentityClient
+	// Invitation is the client for interacting with the Invitation builders.
+	Invitation *InvitationClient
 	// Membership is the client for interacting with the Membership builders.
 	Membership *MembershipClient
+	// Silo is the client for interacting with the Silo builders.
+	Silo *SiloClient
+	// Team is the client for interacting with the Team builders.
+	Team *TeamClient
+	// Token is the client for interacting with the Token builders.
+	Token *TokenClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -153,7 +161,11 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Account = NewAccountClient(tx.config)
 	tx.Identity = NewIdentityClient(tx.config)
+	tx.Invitation = NewInvitationClient(tx.config)
 	tx.Membership = NewMembershipClient(tx.config)
+	tx.Silo = NewSiloClient(tx.config)
+	tx.Team = NewTeamClient(tx.config)
+	tx.Token = NewTokenClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

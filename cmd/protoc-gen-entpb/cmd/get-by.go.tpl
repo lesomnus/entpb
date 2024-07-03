@@ -28,15 +28,14 @@
 			{{ end -}}
 		{{ else -}}
 			{{ $fields := .EntMsg.Fields -}}
-			func {{ $.EntMsg.Schema.Name }}{{ $key_name }}(k *{{ (index $fields 0).EntMsg.Ident -}},
-				{{- range slice $fields 1 -}}
-					{{ .Ident }} {{ ent_type . }},
+			func {{ $.EntMsg.Schema.Name }}{{ $key_name }}(
+				{{- range $fields -}}
+					{{ .Ident }} {{ if .IsTypeMessage }}*{{ end}}{{ ent_type . }},
 				{{- end -}}
 			) *{{ $msg_type }} {
 				return &{{ $msg_type }}{Key: &{{ $msg_type }}_{{ $key_name }}{
 					{{ $key_name }}: &{{ .EntMsg.Ident }}{
-						{{ print (index $fields 0).Ident | pascal }}: k,
-						{{ range slice $fields 1 -}}
+						{{ range $fields -}}
 							{{ print .Ident | pascal }}: {{ to_pb_v . (print .Ident) }},
 						{{ end -}}
 					},

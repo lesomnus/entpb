@@ -14,7 +14,11 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/lesomnus/entpb/internal/example/ent/account"
 	"github.com/lesomnus/entpb/internal/example/ent/identity"
+	"github.com/lesomnus/entpb/internal/example/ent/invitation"
 	"github.com/lesomnus/entpb/internal/example/ent/membership"
+	"github.com/lesomnus/entpb/internal/example/ent/silo"
+	"github.com/lesomnus/entpb/internal/example/ent/team"
+	"github.com/lesomnus/entpb/internal/example/ent/token"
 	"github.com/lesomnus/entpb/internal/example/ent/user"
 )
 
@@ -78,7 +82,11 @@ func checkColumn(table, column string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			account.Table:    account.ValidColumn,
 			identity.Table:   identity.ValidColumn,
+			invitation.Table: invitation.ValidColumn,
 			membership.Table: membership.ValidColumn,
+			silo.Table:       silo.ValidColumn,
+			team.Table:       team.ValidColumn,
+			token.Table:      token.ValidColumn,
 			user.Table:       user.ValidColumn,
 		})
 	})

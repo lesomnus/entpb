@@ -14,6 +14,7 @@ import (
 	"github.com/lesomnus/entpb/internal/example/ent/account"
 	"github.com/lesomnus/entpb/internal/example/ent/membership"
 	"github.com/lesomnus/entpb/internal/example/ent/predicate"
+	"github.com/lesomnus/entpb/internal/example/ent/team"
 )
 
 // MembershipQuery is the builder for querying Membership entities.
@@ -24,7 +25,7 @@ type MembershipQuery struct {
 	inters      []Interceptor
 	predicates  []predicate.Membership
 	withAccount *AccountQuery
-	withFKs     bool
+	withTeam    *TeamQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -76,6 +77,28 @@ func (mq *MembershipQuery) QueryAccount() *AccountQuery {
 			sqlgraph.From(membership.Table, membership.FieldID, selector),
 			sqlgraph.To(account.Table, account.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, membership.AccountTable, membership.AccountColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTeam chains the current query on the "team" edge.
+func (mq *MembershipQuery) QueryTeam() *TeamQuery {
+	query := (&TeamClient{config: mq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := mq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := mq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(membership.Table, membership.FieldID, selector),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, membership.TeamTable, membership.TeamColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
 		return fromU, nil
@@ -276,6 +299,7 @@ func (mq *MembershipQuery) Clone() *MembershipQuery {
 		inters:      append([]Interceptor{}, mq.inters...),
 		predicates:  append([]predicate.Membership{}, mq.predicates...),
 		withAccount: mq.withAccount.Clone(),
+		withTeam:    mq.withTeam.Clone(),
 		// clone intermediate query.
 		sql:  mq.sql.Clone(),
 		path: mq.path,
@@ -290,6 +314,17 @@ func (mq *MembershipQuery) WithAccount(opts ...func(*AccountQuery)) *MembershipQ
 		opt(query)
 	}
 	mq.withAccount = query
+	return mq
+}
+
+// WithTeam tells the query-builder to eager-load the nodes that are connected to
+// the "team" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MembershipQuery) WithTeam(opts ...func(*TeamQuery)) *MembershipQuery {
+	query := (&TeamClient{config: mq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	mq.withTeam = query
 	return mq
 }
 
@@ -370,15 +405,12 @@ func (mq *MembershipQuery) prepareQuery(ctx context.Context) error {
 func (mq *MembershipQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Membership, error) {
 	var (
 		nodes       = []*Membership{}
-		withFKs     = mq.withFKs
 		_spec       = mq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			mq.withAccount != nil,
+			mq.withTeam != nil,
 		}
 	)
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, membership.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Membership).scanValues(nil, columns)
 	}
@@ -400,6 +432,12 @@ func (mq *MembershipQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*M
 	if query := mq.withAccount; query != nil {
 		if err := mq.loadAccount(ctx, query, nodes, nil,
 			func(n *Membership, e *Account) { n.Edges.Account = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := mq.withTeam; query != nil {
+		if err := mq.loadTeam(ctx, query, nodes, nil,
+			func(n *Membership, e *Team) { n.Edges.Team = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -435,6 +473,35 @@ func (mq *MembershipQuery) loadAccount(ctx context.Context, query *AccountQuery,
 	}
 	return nil
 }
+func (mq *MembershipQuery) loadTeam(ctx context.Context, query *TeamQuery, nodes []*Membership, init func(*Membership), assign func(*Membership, *Team)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Membership)
+	for i := range nodes {
+		fk := nodes[i].TeamID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(team.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "team_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (mq *MembershipQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := mq.querySpec()
@@ -463,6 +530,9 @@ func (mq *MembershipQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if mq.withAccount != nil {
 			_spec.Node.AddColumnOnce(membership.FieldAccountID)
+		}
+		if mq.withTeam != nil {
+			_spec.Node.AddColumnOnce(membership.FieldTeamID)
 		}
 	}
 	if ps := mq.predicates; len(ps) > 0 {

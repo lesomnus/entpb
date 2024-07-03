@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -42,43 +41,31 @@ func (iu *IdentityUpdate) SetNillableName(s *string) *IdentityUpdate {
 	return iu
 }
 
-// SetEmail sets the "email" field.
-func (iu *IdentityUpdate) SetEmail(s string) *IdentityUpdate {
-	iu.mutation.SetEmail(s)
+// SetDescription sets the "description" field.
+func (iu *IdentityUpdate) SetDescription(s string) *IdentityUpdate {
+	iu.mutation.SetDescription(s)
 	return iu
 }
 
-// SetNillableEmail sets the "email" field if the given value is not nil.
-func (iu *IdentityUpdate) SetNillableEmail(s *string) *IdentityUpdate {
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (iu *IdentityUpdate) SetNillableDescription(s *string) *IdentityUpdate {
 	if s != nil {
-		iu.SetEmail(*s)
+		iu.SetDescription(*s)
 	}
 	return iu
 }
 
-// ClearEmail clears the value of the "email" field.
-func (iu *IdentityUpdate) ClearEmail() *IdentityUpdate {
-	iu.mutation.ClearEmail()
+// SetVerifier sets the "verifier" field.
+func (iu *IdentityUpdate) SetVerifier(s string) *IdentityUpdate {
+	iu.mutation.SetVerifier(s)
 	return iu
 }
 
-// SetDateUpdated sets the "date_updated" field.
-func (iu *IdentityUpdate) SetDateUpdated(t time.Time) *IdentityUpdate {
-	iu.mutation.SetDateUpdated(t)
-	return iu
-}
-
-// SetNillableDateUpdated sets the "date_updated" field if the given value is not nil.
-func (iu *IdentityUpdate) SetNillableDateUpdated(t *time.Time) *IdentityUpdate {
-	if t != nil {
-		iu.SetDateUpdated(*t)
+// SetNillableVerifier sets the "verifier" field if the given value is not nil.
+func (iu *IdentityUpdate) SetNillableVerifier(s *string) *IdentityUpdate {
+	if s != nil {
+		iu.SetVerifier(*s)
 	}
-	return iu
-}
-
-// ClearDateUpdated clears the value of the "date_updated" field.
-func (iu *IdentityUpdate) ClearDateUpdated() *IdentityUpdate {
-	iu.mutation.ClearDateUpdated()
 	return iu
 }
 
@@ -116,6 +103,21 @@ func (iu *IdentityUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (iu *IdentityUpdate) check() error {
+	if v, ok := iu.mutation.Name(); ok {
+		if err := identity.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Identity.name": %w`, err)}
+		}
+	}
+	if v, ok := iu.mutation.Description(); ok {
+		if err := identity.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Identity.description": %w`, err)}
+		}
+	}
+	if v, ok := iu.mutation.Verifier(); ok {
+		if err := identity.VerifierValidator(v); err != nil {
+			return &ValidationError{Name: "verifier", err: fmt.Errorf(`ent: validator failed for field "Identity.verifier": %w`, err)}
+		}
+	}
 	if _, ok := iu.mutation.OwnerID(); iu.mutation.OwnerCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Identity.owner"`)
 	}
@@ -137,17 +139,11 @@ func (iu *IdentityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := iu.mutation.Name(); ok {
 		_spec.SetField(identity.FieldName, field.TypeString, value)
 	}
-	if value, ok := iu.mutation.Email(); ok {
-		_spec.SetField(identity.FieldEmail, field.TypeString, value)
+	if value, ok := iu.mutation.Description(); ok {
+		_spec.SetField(identity.FieldDescription, field.TypeString, value)
 	}
-	if iu.mutation.EmailCleared() {
-		_spec.ClearField(identity.FieldEmail, field.TypeString)
-	}
-	if value, ok := iu.mutation.DateUpdated(); ok {
-		_spec.SetField(identity.FieldDateUpdated, field.TypeTime, value)
-	}
-	if iu.mutation.DateUpdatedCleared() {
-		_spec.ClearField(identity.FieldDateUpdated, field.TypeTime)
+	if value, ok := iu.mutation.Verifier(); ok {
+		_spec.SetField(identity.FieldVerifier, field.TypeString, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, iu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -183,43 +179,31 @@ func (iuo *IdentityUpdateOne) SetNillableName(s *string) *IdentityUpdateOne {
 	return iuo
 }
 
-// SetEmail sets the "email" field.
-func (iuo *IdentityUpdateOne) SetEmail(s string) *IdentityUpdateOne {
-	iuo.mutation.SetEmail(s)
+// SetDescription sets the "description" field.
+func (iuo *IdentityUpdateOne) SetDescription(s string) *IdentityUpdateOne {
+	iuo.mutation.SetDescription(s)
 	return iuo
 }
 
-// SetNillableEmail sets the "email" field if the given value is not nil.
-func (iuo *IdentityUpdateOne) SetNillableEmail(s *string) *IdentityUpdateOne {
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (iuo *IdentityUpdateOne) SetNillableDescription(s *string) *IdentityUpdateOne {
 	if s != nil {
-		iuo.SetEmail(*s)
+		iuo.SetDescription(*s)
 	}
 	return iuo
 }
 
-// ClearEmail clears the value of the "email" field.
-func (iuo *IdentityUpdateOne) ClearEmail() *IdentityUpdateOne {
-	iuo.mutation.ClearEmail()
+// SetVerifier sets the "verifier" field.
+func (iuo *IdentityUpdateOne) SetVerifier(s string) *IdentityUpdateOne {
+	iuo.mutation.SetVerifier(s)
 	return iuo
 }
 
-// SetDateUpdated sets the "date_updated" field.
-func (iuo *IdentityUpdateOne) SetDateUpdated(t time.Time) *IdentityUpdateOne {
-	iuo.mutation.SetDateUpdated(t)
-	return iuo
-}
-
-// SetNillableDateUpdated sets the "date_updated" field if the given value is not nil.
-func (iuo *IdentityUpdateOne) SetNillableDateUpdated(t *time.Time) *IdentityUpdateOne {
-	if t != nil {
-		iuo.SetDateUpdated(*t)
+// SetNillableVerifier sets the "verifier" field if the given value is not nil.
+func (iuo *IdentityUpdateOne) SetNillableVerifier(s *string) *IdentityUpdateOne {
+	if s != nil {
+		iuo.SetVerifier(*s)
 	}
-	return iuo
-}
-
-// ClearDateUpdated clears the value of the "date_updated" field.
-func (iuo *IdentityUpdateOne) ClearDateUpdated() *IdentityUpdateOne {
-	iuo.mutation.ClearDateUpdated()
 	return iuo
 }
 
@@ -270,6 +254,21 @@ func (iuo *IdentityUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (iuo *IdentityUpdateOne) check() error {
+	if v, ok := iuo.mutation.Name(); ok {
+		if err := identity.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Identity.name": %w`, err)}
+		}
+	}
+	if v, ok := iuo.mutation.Description(); ok {
+		if err := identity.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Identity.description": %w`, err)}
+		}
+	}
+	if v, ok := iuo.mutation.Verifier(); ok {
+		if err := identity.VerifierValidator(v); err != nil {
+			return &ValidationError{Name: "verifier", err: fmt.Errorf(`ent: validator failed for field "Identity.verifier": %w`, err)}
+		}
+	}
 	if _, ok := iuo.mutation.OwnerID(); iuo.mutation.OwnerCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Identity.owner"`)
 	}
@@ -308,17 +307,11 @@ func (iuo *IdentityUpdateOne) sqlSave(ctx context.Context) (_node *Identity, err
 	if value, ok := iuo.mutation.Name(); ok {
 		_spec.SetField(identity.FieldName, field.TypeString, value)
 	}
-	if value, ok := iuo.mutation.Email(); ok {
-		_spec.SetField(identity.FieldEmail, field.TypeString, value)
+	if value, ok := iuo.mutation.Description(); ok {
+		_spec.SetField(identity.FieldDescription, field.TypeString, value)
 	}
-	if iuo.mutation.EmailCleared() {
-		_spec.ClearField(identity.FieldEmail, field.TypeString)
-	}
-	if value, ok := iuo.mutation.DateUpdated(); ok {
-		_spec.SetField(identity.FieldDateUpdated, field.TypeTime, value)
-	}
-	if iuo.mutation.DateUpdatedCleared() {
-		_spec.ClearField(identity.FieldDateUpdated, field.TypeTime)
+	if value, ok := iuo.mutation.Verifier(); ok {
+		_spec.SetField(identity.FieldVerifier, field.TypeString, value)
 	}
 	_node = &Identity{config: iuo.config}
 	_spec.Assign = _node.assignValues

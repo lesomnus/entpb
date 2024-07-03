@@ -12,6 +12,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/lesomnus/entpb/internal/example/ent/account"
 	"github.com/lesomnus/entpb/internal/example/ent/membership"
+	"github.com/lesomnus/entpb/internal/example/ent/team"
+	"github.com/lesomnus/entpb/internal/example/role"
 )
 
 // Membership is the model entity for the Membership schema.
@@ -23,22 +25,25 @@ type Membership struct {
 	DateCreated time.Time `json:"date_created,omitempty"`
 	// AccountID holds the value of the "account_id" field.
 	AccountID uuid.UUID `json:"account_id,omitempty"`
-	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
+	// TeamID holds the value of the "team_id" field.
+	TeamID uuid.UUID `json:"team_id,omitempty"`
+	// Role holds the value of the "role" field.
+	Role role.Role `json:"role,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the MembershipQuery when eager-loading is set.
-	Edges            MembershipEdges `json:"edges"`
-	user_memberships *uuid.UUID
-	selectValues     sql.SelectValues
+	Edges        MembershipEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // MembershipEdges holds the relations/edges for other nodes in the graph.
 type MembershipEdges struct {
 	// Account holds the value of the account edge.
 	Account *Account `json:"account,omitempty"`
+	// Team holds the value of the team edge.
+	Team *Team `json:"team,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // AccountOrErr returns the Account value or an error if the edge
@@ -52,19 +57,28 @@ func (e MembershipEdges) AccountOrErr() (*Account, error) {
 	return nil, &NotLoadedError{edge: "account"}
 }
 
+// TeamOrErr returns the Team value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MembershipEdges) TeamOrErr() (*Team, error) {
+	if e.Team != nil {
+		return e.Team, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: team.Label}
+	}
+	return nil, &NotLoadedError{edge: "team"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Membership) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case membership.FieldName:
+		case membership.FieldRole:
 			values[i] = new(sql.NullString)
 		case membership.FieldDateCreated:
 			values[i] = new(sql.NullTime)
-		case membership.FieldID, membership.FieldAccountID:
+		case membership.FieldID, membership.FieldAccountID, membership.FieldTeamID:
 			values[i] = new(uuid.UUID)
-		case membership.ForeignKeys[0]: // user_memberships
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -98,18 +112,17 @@ func (m *Membership) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				m.AccountID = *value
 			}
-		case membership.FieldName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name", values[i])
-			} else if value.Valid {
-				m.Name = value.String
+		case membership.FieldTeamID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field team_id", values[i])
+			} else if value != nil {
+				m.TeamID = *value
 			}
-		case membership.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field user_memberships", values[i])
+		case membership.FieldRole:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field role", values[i])
 			} else if value.Valid {
-				m.user_memberships = new(uuid.UUID)
-				*m.user_memberships = *value.S.(*uuid.UUID)
+				m.Role = role.Role(value.String)
 			}
 		default:
 			m.selectValues.Set(columns[i], values[i])
@@ -127,6 +140,11 @@ func (m *Membership) Value(name string) (ent.Value, error) {
 // QueryAccount queries the "account" edge of the Membership entity.
 func (m *Membership) QueryAccount() *AccountQuery {
 	return NewMembershipClient(m.config).QueryAccount(m)
+}
+
+// QueryTeam queries the "team" edge of the Membership entity.
+func (m *Membership) QueryTeam() *TeamQuery {
+	return NewMembershipClient(m.config).QueryTeam(m)
 }
 
 // Update returns a builder for updating this Membership.
@@ -158,8 +176,11 @@ func (m *Membership) String() string {
 	builder.WriteString("account_id=")
 	builder.WriteString(fmt.Sprintf("%v", m.AccountID))
 	builder.WriteString(", ")
-	builder.WriteString("name=")
-	builder.WriteString(m.Name)
+	builder.WriteString("team_id=")
+	builder.WriteString(fmt.Sprintf("%v", m.TeamID))
+	builder.WriteString(", ")
+	builder.WriteString("role=")
+	builder.WriteString(fmt.Sprintf("%v", m.Role))
 	builder.WriteByte(')')
 	return builder.String()
 }

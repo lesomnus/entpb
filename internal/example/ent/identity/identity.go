@@ -19,10 +19,12 @@ const (
 	FieldDateCreated = "date_created"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-	// FieldEmail holds the string denoting the email field in the database.
-	FieldEmail = "email"
-	// FieldDateUpdated holds the string denoting the date_updated field in the database.
-	FieldDateUpdated = "date_updated"
+	// FieldDescription holds the string denoting the description field in the database.
+	FieldDescription = "description"
+	// FieldKind holds the string denoting the kind field in the database.
+	FieldKind = "kind"
+	// FieldVerifier holds the string denoting the verifier field in the database.
+	FieldVerifier = "verifier"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// Table holds the table name of the identity in the database.
@@ -41,8 +43,9 @@ var Columns = []string{
 	FieldID,
 	FieldDateCreated,
 	FieldName,
-	FieldEmail,
-	FieldDateUpdated,
+	FieldDescription,
+	FieldKind,
+	FieldVerifier,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "identities"
@@ -71,6 +74,16 @@ var (
 	DefaultDateCreated func() time.Time
 	// DefaultName holds the default value on creation for the "name" field.
 	DefaultName string
+	// NameValidator is a validator for the "name" field. It is called by the builders before save.
+	NameValidator func(string) error
+	// DefaultDescription holds the default value on creation for the "description" field.
+	DefaultDescription string
+	// DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	DescriptionValidator func(string) error
+	// KindValidator is a validator for the "kind" field. It is called by the builders before save.
+	KindValidator func(string) error
+	// VerifierValidator is a validator for the "verifier" field. It is called by the builders before save.
+	VerifierValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -93,14 +106,19 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
 }
 
-// ByEmail orders the results by the email field.
-func ByEmail(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldEmail, opts...).ToFunc()
+// ByDescription orders the results by the description field.
+func ByDescription(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDescription, opts...).ToFunc()
 }
 
-// ByDateUpdated orders the results by the date_updated field.
-func ByDateUpdated(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDateUpdated, opts...).ToFunc()
+// ByKind orders the results by the kind field.
+func ByKind(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldKind, opts...).ToFunc()
+}
+
+// ByVerifier orders the results by the verifier field.
+func ByVerifier(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVerifier, opts...).ToFunc()
 }
 
 // ByOwnerField orders the results by owner field.

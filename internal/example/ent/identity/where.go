@@ -66,14 +66,19 @@ func Name(v string) predicate.Identity {
 	return predicate.Identity(sql.FieldEQ(FieldName, v))
 }
 
-// Email applies equality check predicate on the "email" field. It's identical to EmailEQ.
-func Email(v string) predicate.Identity {
-	return predicate.Identity(sql.FieldEQ(FieldEmail, v))
+// Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
+func Description(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldEQ(FieldDescription, v))
 }
 
-// DateUpdated applies equality check predicate on the "date_updated" field. It's identical to DateUpdatedEQ.
-func DateUpdated(v time.Time) predicate.Identity {
-	return predicate.Identity(sql.FieldEQ(FieldDateUpdated, v))
+// Kind applies equality check predicate on the "kind" field. It's identical to KindEQ.
+func Kind(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldEQ(FieldKind, v))
+}
+
+// Verifier applies equality check predicate on the "verifier" field. It's identical to VerifierEQ.
+func Verifier(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldEQ(FieldVerifier, v))
 }
 
 // DateCreatedEQ applies the EQ predicate on the "date_created" field.
@@ -181,129 +186,199 @@ func NameContainsFold(v string) predicate.Identity {
 	return predicate.Identity(sql.FieldContainsFold(FieldName, v))
 }
 
-// EmailEQ applies the EQ predicate on the "email" field.
-func EmailEQ(v string) predicate.Identity {
-	return predicate.Identity(sql.FieldEQ(FieldEmail, v))
+// DescriptionEQ applies the EQ predicate on the "description" field.
+func DescriptionEQ(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldEQ(FieldDescription, v))
 }
 
-// EmailNEQ applies the NEQ predicate on the "email" field.
-func EmailNEQ(v string) predicate.Identity {
-	return predicate.Identity(sql.FieldNEQ(FieldEmail, v))
+// DescriptionNEQ applies the NEQ predicate on the "description" field.
+func DescriptionNEQ(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldNEQ(FieldDescription, v))
 }
 
-// EmailIn applies the In predicate on the "email" field.
-func EmailIn(vs ...string) predicate.Identity {
-	return predicate.Identity(sql.FieldIn(FieldEmail, vs...))
+// DescriptionIn applies the In predicate on the "description" field.
+func DescriptionIn(vs ...string) predicate.Identity {
+	return predicate.Identity(sql.FieldIn(FieldDescription, vs...))
 }
 
-// EmailNotIn applies the NotIn predicate on the "email" field.
-func EmailNotIn(vs ...string) predicate.Identity {
-	return predicate.Identity(sql.FieldNotIn(FieldEmail, vs...))
+// DescriptionNotIn applies the NotIn predicate on the "description" field.
+func DescriptionNotIn(vs ...string) predicate.Identity {
+	return predicate.Identity(sql.FieldNotIn(FieldDescription, vs...))
 }
 
-// EmailGT applies the GT predicate on the "email" field.
-func EmailGT(v string) predicate.Identity {
-	return predicate.Identity(sql.FieldGT(FieldEmail, v))
+// DescriptionGT applies the GT predicate on the "description" field.
+func DescriptionGT(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldGT(FieldDescription, v))
 }
 
-// EmailGTE applies the GTE predicate on the "email" field.
-func EmailGTE(v string) predicate.Identity {
-	return predicate.Identity(sql.FieldGTE(FieldEmail, v))
+// DescriptionGTE applies the GTE predicate on the "description" field.
+func DescriptionGTE(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldGTE(FieldDescription, v))
 }
 
-// EmailLT applies the LT predicate on the "email" field.
-func EmailLT(v string) predicate.Identity {
-	return predicate.Identity(sql.FieldLT(FieldEmail, v))
+// DescriptionLT applies the LT predicate on the "description" field.
+func DescriptionLT(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldLT(FieldDescription, v))
 }
 
-// EmailLTE applies the LTE predicate on the "email" field.
-func EmailLTE(v string) predicate.Identity {
-	return predicate.Identity(sql.FieldLTE(FieldEmail, v))
+// DescriptionLTE applies the LTE predicate on the "description" field.
+func DescriptionLTE(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldLTE(FieldDescription, v))
 }
 
-// EmailContains applies the Contains predicate on the "email" field.
-func EmailContains(v string) predicate.Identity {
-	return predicate.Identity(sql.FieldContains(FieldEmail, v))
+// DescriptionContains applies the Contains predicate on the "description" field.
+func DescriptionContains(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldContains(FieldDescription, v))
 }
 
-// EmailHasPrefix applies the HasPrefix predicate on the "email" field.
-func EmailHasPrefix(v string) predicate.Identity {
-	return predicate.Identity(sql.FieldHasPrefix(FieldEmail, v))
+// DescriptionHasPrefix applies the HasPrefix predicate on the "description" field.
+func DescriptionHasPrefix(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldHasPrefix(FieldDescription, v))
 }
 
-// EmailHasSuffix applies the HasSuffix predicate on the "email" field.
-func EmailHasSuffix(v string) predicate.Identity {
-	return predicate.Identity(sql.FieldHasSuffix(FieldEmail, v))
+// DescriptionHasSuffix applies the HasSuffix predicate on the "description" field.
+func DescriptionHasSuffix(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldHasSuffix(FieldDescription, v))
 }
 
-// EmailIsNil applies the IsNil predicate on the "email" field.
-func EmailIsNil() predicate.Identity {
-	return predicate.Identity(sql.FieldIsNull(FieldEmail))
+// DescriptionEqualFold applies the EqualFold predicate on the "description" field.
+func DescriptionEqualFold(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldEqualFold(FieldDescription, v))
 }
 
-// EmailNotNil applies the NotNil predicate on the "email" field.
-func EmailNotNil() predicate.Identity {
-	return predicate.Identity(sql.FieldNotNull(FieldEmail))
+// DescriptionContainsFold applies the ContainsFold predicate on the "description" field.
+func DescriptionContainsFold(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldContainsFold(FieldDescription, v))
 }
 
-// EmailEqualFold applies the EqualFold predicate on the "email" field.
-func EmailEqualFold(v string) predicate.Identity {
-	return predicate.Identity(sql.FieldEqualFold(FieldEmail, v))
+// KindEQ applies the EQ predicate on the "kind" field.
+func KindEQ(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldEQ(FieldKind, v))
 }
 
-// EmailContainsFold applies the ContainsFold predicate on the "email" field.
-func EmailContainsFold(v string) predicate.Identity {
-	return predicate.Identity(sql.FieldContainsFold(FieldEmail, v))
+// KindNEQ applies the NEQ predicate on the "kind" field.
+func KindNEQ(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldNEQ(FieldKind, v))
 }
 
-// DateUpdatedEQ applies the EQ predicate on the "date_updated" field.
-func DateUpdatedEQ(v time.Time) predicate.Identity {
-	return predicate.Identity(sql.FieldEQ(FieldDateUpdated, v))
+// KindIn applies the In predicate on the "kind" field.
+func KindIn(vs ...string) predicate.Identity {
+	return predicate.Identity(sql.FieldIn(FieldKind, vs...))
 }
 
-// DateUpdatedNEQ applies the NEQ predicate on the "date_updated" field.
-func DateUpdatedNEQ(v time.Time) predicate.Identity {
-	return predicate.Identity(sql.FieldNEQ(FieldDateUpdated, v))
+// KindNotIn applies the NotIn predicate on the "kind" field.
+func KindNotIn(vs ...string) predicate.Identity {
+	return predicate.Identity(sql.FieldNotIn(FieldKind, vs...))
 }
 
-// DateUpdatedIn applies the In predicate on the "date_updated" field.
-func DateUpdatedIn(vs ...time.Time) predicate.Identity {
-	return predicate.Identity(sql.FieldIn(FieldDateUpdated, vs...))
+// KindGT applies the GT predicate on the "kind" field.
+func KindGT(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldGT(FieldKind, v))
 }
 
-// DateUpdatedNotIn applies the NotIn predicate on the "date_updated" field.
-func DateUpdatedNotIn(vs ...time.Time) predicate.Identity {
-	return predicate.Identity(sql.FieldNotIn(FieldDateUpdated, vs...))
+// KindGTE applies the GTE predicate on the "kind" field.
+func KindGTE(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldGTE(FieldKind, v))
 }
 
-// DateUpdatedGT applies the GT predicate on the "date_updated" field.
-func DateUpdatedGT(v time.Time) predicate.Identity {
-	return predicate.Identity(sql.FieldGT(FieldDateUpdated, v))
+// KindLT applies the LT predicate on the "kind" field.
+func KindLT(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldLT(FieldKind, v))
 }
 
-// DateUpdatedGTE applies the GTE predicate on the "date_updated" field.
-func DateUpdatedGTE(v time.Time) predicate.Identity {
-	return predicate.Identity(sql.FieldGTE(FieldDateUpdated, v))
+// KindLTE applies the LTE predicate on the "kind" field.
+func KindLTE(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldLTE(FieldKind, v))
 }
 
-// DateUpdatedLT applies the LT predicate on the "date_updated" field.
-func DateUpdatedLT(v time.Time) predicate.Identity {
-	return predicate.Identity(sql.FieldLT(FieldDateUpdated, v))
+// KindContains applies the Contains predicate on the "kind" field.
+func KindContains(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldContains(FieldKind, v))
 }
 
-// DateUpdatedLTE applies the LTE predicate on the "date_updated" field.
-func DateUpdatedLTE(v time.Time) predicate.Identity {
-	return predicate.Identity(sql.FieldLTE(FieldDateUpdated, v))
+// KindHasPrefix applies the HasPrefix predicate on the "kind" field.
+func KindHasPrefix(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldHasPrefix(FieldKind, v))
 }
 
-// DateUpdatedIsNil applies the IsNil predicate on the "date_updated" field.
-func DateUpdatedIsNil() predicate.Identity {
-	return predicate.Identity(sql.FieldIsNull(FieldDateUpdated))
+// KindHasSuffix applies the HasSuffix predicate on the "kind" field.
+func KindHasSuffix(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldHasSuffix(FieldKind, v))
 }
 
-// DateUpdatedNotNil applies the NotNil predicate on the "date_updated" field.
-func DateUpdatedNotNil() predicate.Identity {
-	return predicate.Identity(sql.FieldNotNull(FieldDateUpdated))
+// KindEqualFold applies the EqualFold predicate on the "kind" field.
+func KindEqualFold(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldEqualFold(FieldKind, v))
+}
+
+// KindContainsFold applies the ContainsFold predicate on the "kind" field.
+func KindContainsFold(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldContainsFold(FieldKind, v))
+}
+
+// VerifierEQ applies the EQ predicate on the "verifier" field.
+func VerifierEQ(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldEQ(FieldVerifier, v))
+}
+
+// VerifierNEQ applies the NEQ predicate on the "verifier" field.
+func VerifierNEQ(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldNEQ(FieldVerifier, v))
+}
+
+// VerifierIn applies the In predicate on the "verifier" field.
+func VerifierIn(vs ...string) predicate.Identity {
+	return predicate.Identity(sql.FieldIn(FieldVerifier, vs...))
+}
+
+// VerifierNotIn applies the NotIn predicate on the "verifier" field.
+func VerifierNotIn(vs ...string) predicate.Identity {
+	return predicate.Identity(sql.FieldNotIn(FieldVerifier, vs...))
+}
+
+// VerifierGT applies the GT predicate on the "verifier" field.
+func VerifierGT(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldGT(FieldVerifier, v))
+}
+
+// VerifierGTE applies the GTE predicate on the "verifier" field.
+func VerifierGTE(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldGTE(FieldVerifier, v))
+}
+
+// VerifierLT applies the LT predicate on the "verifier" field.
+func VerifierLT(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldLT(FieldVerifier, v))
+}
+
+// VerifierLTE applies the LTE predicate on the "verifier" field.
+func VerifierLTE(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldLTE(FieldVerifier, v))
+}
+
+// VerifierContains applies the Contains predicate on the "verifier" field.
+func VerifierContains(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldContains(FieldVerifier, v))
+}
+
+// VerifierHasPrefix applies the HasPrefix predicate on the "verifier" field.
+func VerifierHasPrefix(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldHasPrefix(FieldVerifier, v))
+}
+
+// VerifierHasSuffix applies the HasSuffix predicate on the "verifier" field.
+func VerifierHasSuffix(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldHasSuffix(FieldVerifier, v))
+}
+
+// VerifierEqualFold applies the EqualFold predicate on the "verifier" field.
+func VerifierEqualFold(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldEqualFold(FieldVerifier, v))
+}
+
+// VerifierContainsFold applies the ContainsFold predicate on the "verifier" field.
+func VerifierContainsFold(v string) predicate.Identity {
+	return predicate.Identity(sql.FieldContainsFold(FieldVerifier, v))
 }
 
 // HasOwner applies the HasEdge predicate on the "owner" edge.

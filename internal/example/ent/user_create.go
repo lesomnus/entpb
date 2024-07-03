@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lesomnus/entpb/internal/example/ent/account"
 	"github.com/lesomnus/entpb/internal/example/ent/identity"
-	"github.com/lesomnus/entpb/internal/example/ent/membership"
+	"github.com/lesomnus/entpb/internal/example/ent/token"
 	"github.com/lesomnus/entpb/internal/example/ent/user"
 )
 
@@ -34,6 +34,20 @@ func (uc *UserCreate) SetDateCreated(t time.Time) *UserCreate {
 func (uc *UserCreate) SetNillableDateCreated(t *time.Time) *UserCreate {
 	if t != nil {
 		uc.SetDateCreated(*t)
+	}
+	return uc
+}
+
+// SetAlias sets the "alias" field.
+func (uc *UserCreate) SetAlias(s string) *UserCreate {
+	uc.mutation.SetAlias(s)
+	return uc
+}
+
+// SetNillableAlias sets the "alias" field if the given value is not nil.
+func (uc *UserCreate) SetNillableAlias(s *string) *UserCreate {
+	if s != nil {
+		uc.SetAlias(*s)
 	}
 	return uc
 }
@@ -116,19 +130,19 @@ func (uc *UserCreate) AddAccounts(a ...*Account) *UserCreate {
 	return uc.AddAccountIDs(ids...)
 }
 
-// AddMembershipIDs adds the "memberships" edge to the Membership entity by IDs.
-func (uc *UserCreate) AddMembershipIDs(ids ...uuid.UUID) *UserCreate {
-	uc.mutation.AddMembershipIDs(ids...)
+// AddTokenIDs adds the "tokens" edge to the Token entity by IDs.
+func (uc *UserCreate) AddTokenIDs(ids ...uuid.UUID) *UserCreate {
+	uc.mutation.AddTokenIDs(ids...)
 	return uc
 }
 
-// AddMemberships adds the "memberships" edges to the Membership entity.
-func (uc *UserCreate) AddMemberships(m ...*Membership) *UserCreate {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+// AddTokens adds the "tokens" edges to the Token entity.
+func (uc *UserCreate) AddTokens(t ...*Token) *UserCreate {
+	ids := make([]uuid.UUID, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
 	}
-	return uc.AddMembershipIDs(ids...)
+	return uc.AddTokenIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -170,6 +184,10 @@ func (uc *UserCreate) defaults() {
 		v := user.DefaultDateCreated()
 		uc.mutation.SetDateCreated(v)
 	}
+	if _, ok := uc.mutation.Alias(); !ok {
+		v := user.DefaultAlias()
+		uc.mutation.SetAlias(v)
+	}
 	if _, ok := uc.mutation.ID(); !ok {
 		v := user.DefaultID()
 		uc.mutation.SetID(v)
@@ -180,6 +198,14 @@ func (uc *UserCreate) defaults() {
 func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.DateCreated(); !ok {
 		return &ValidationError{Name: "date_created", err: errors.New(`ent: missing required field "User.date_created"`)}
+	}
+	if _, ok := uc.mutation.Alias(); !ok {
+		return &ValidationError{Name: "alias", err: errors.New(`ent: missing required field "User.alias"`)}
+	}
+	if v, ok := uc.mutation.Alias(); ok {
+		if err := user.AliasValidator(v); err != nil {
+			return &ValidationError{Name: "alias", err: fmt.Errorf(`ent: validator failed for field "User.alias": %w`, err)}
+		}
 	}
 	return nil
 }
@@ -219,6 +245,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.DateCreated(); ok {
 		_spec.SetField(user.FieldDateCreated, field.TypeTime, value)
 		_node.DateCreated = value
+	}
+	if value, ok := uc.mutation.Alias(); ok {
+		_spec.SetField(user.FieldAlias, field.TypeString, value)
+		_node.Alias = value
 	}
 	if nodes := uc.mutation.ParentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -285,15 +315,15 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := uc.mutation.MembershipsIDs(); len(nodes) > 0 {
+	if nodes := uc.mutation.TokensIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.MembershipsTable,
-			Columns: []string{user.MembershipsColumn},
+			Table:   user.TokensTable,
+			Columns: []string{user.TokensColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(token.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

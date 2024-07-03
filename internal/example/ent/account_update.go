@@ -11,10 +11,11 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
-	"github.com/lesomnus/entpb/internal/example"
 	"github.com/lesomnus/entpb/internal/example/ent/account"
+	"github.com/lesomnus/entpb/internal/example/ent/invitation"
 	"github.com/lesomnus/entpb/internal/example/ent/membership"
 	"github.com/lesomnus/entpb/internal/example/ent/predicate"
+	"github.com/lesomnus/entpb/internal/example/role"
 )
 
 // AccountUpdate is the builder for updating Account entities.
@@ -44,16 +45,44 @@ func (au *AccountUpdate) SetNillableAlias(s *string) *AccountUpdate {
 	return au
 }
 
+// SetName sets the "name" field.
+func (au *AccountUpdate) SetName(s string) *AccountUpdate {
+	au.mutation.SetName(s)
+	return au
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (au *AccountUpdate) SetNillableName(s *string) *AccountUpdate {
+	if s != nil {
+		au.SetName(*s)
+	}
+	return au
+}
+
+// SetDescription sets the "description" field.
+func (au *AccountUpdate) SetDescription(s string) *AccountUpdate {
+	au.mutation.SetDescription(s)
+	return au
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (au *AccountUpdate) SetNillableDescription(s *string) *AccountUpdate {
+	if s != nil {
+		au.SetDescription(*s)
+	}
+	return au
+}
+
 // SetRole sets the "role" field.
-func (au *AccountUpdate) SetRole(e example.Role) *AccountUpdate {
-	au.mutation.SetRole(e)
+func (au *AccountUpdate) SetRole(r role.Role) *AccountUpdate {
+	au.mutation.SetRole(r)
 	return au
 }
 
 // SetNillableRole sets the "role" field if the given value is not nil.
-func (au *AccountUpdate) SetNillableRole(e *example.Role) *AccountUpdate {
-	if e != nil {
-		au.SetRole(*e)
+func (au *AccountUpdate) SetNillableRole(r *role.Role) *AccountUpdate {
+	if r != nil {
+		au.SetRole(*r)
 	}
 	return au
 }
@@ -71,6 +100,21 @@ func (au *AccountUpdate) AddMemberships(m ...*Membership) *AccountUpdate {
 		ids[i] = m[i].ID
 	}
 	return au.AddMembershipIDs(ids...)
+}
+
+// AddInvitationIDs adds the "invitations" edge to the Invitation entity by IDs.
+func (au *AccountUpdate) AddInvitationIDs(ids ...uuid.UUID) *AccountUpdate {
+	au.mutation.AddInvitationIDs(ids...)
+	return au
+}
+
+// AddInvitations adds the "invitations" edges to the Invitation entity.
+func (au *AccountUpdate) AddInvitations(i ...*Invitation) *AccountUpdate {
+	ids := make([]uuid.UUID, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return au.AddInvitationIDs(ids...)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -97,6 +141,27 @@ func (au *AccountUpdate) RemoveMemberships(m ...*Membership) *AccountUpdate {
 		ids[i] = m[i].ID
 	}
 	return au.RemoveMembershipIDs(ids...)
+}
+
+// ClearInvitations clears all "invitations" edges to the Invitation entity.
+func (au *AccountUpdate) ClearInvitations() *AccountUpdate {
+	au.mutation.ClearInvitations()
+	return au
+}
+
+// RemoveInvitationIDs removes the "invitations" edge to Invitation entities by IDs.
+func (au *AccountUpdate) RemoveInvitationIDs(ids ...uuid.UUID) *AccountUpdate {
+	au.mutation.RemoveInvitationIDs(ids...)
+	return au
+}
+
+// RemoveInvitations removes "invitations" edges to Invitation entities.
+func (au *AccountUpdate) RemoveInvitations(i ...*Invitation) *AccountUpdate {
+	ids := make([]uuid.UUID, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return au.RemoveInvitationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -128,6 +193,21 @@ func (au *AccountUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (au *AccountUpdate) check() error {
+	if v, ok := au.mutation.Alias(); ok {
+		if err := account.AliasValidator(v); err != nil {
+			return &ValidationError{Name: "alias", err: fmt.Errorf(`ent: validator failed for field "Account.alias": %w`, err)}
+		}
+	}
+	if v, ok := au.mutation.Name(); ok {
+		if err := account.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Account.name": %w`, err)}
+		}
+	}
+	if v, ok := au.mutation.Description(); ok {
+		if err := account.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Account.description": %w`, err)}
+		}
+	}
 	if v, ok := au.mutation.Role(); ok {
 		if err := account.RoleValidator(v); err != nil {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "Account.role": %w`, err)}
@@ -135,6 +215,9 @@ func (au *AccountUpdate) check() error {
 	}
 	if _, ok := au.mutation.OwnerID(); au.mutation.OwnerCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Account.owner"`)
+	}
+	if _, ok := au.mutation.SiloID(); au.mutation.SiloCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Account.silo"`)
 	}
 	return nil
 }
@@ -153,6 +236,12 @@ func (au *AccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := au.mutation.Alias(); ok {
 		_spec.SetField(account.FieldAlias, field.TypeString, value)
+	}
+	if value, ok := au.mutation.Name(); ok {
+		_spec.SetField(account.FieldName, field.TypeString, value)
+	}
+	if value, ok := au.mutation.Description(); ok {
+		_spec.SetField(account.FieldDescription, field.TypeString, value)
 	}
 	if value, ok := au.mutation.Role(); ok {
 		_spec.SetField(account.FieldRole, field.TypeEnum, value)
@@ -202,6 +291,51 @@ func (au *AccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if au.mutation.InvitationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.InvitationsTable,
+			Columns: []string{account.InvitationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(invitation.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.RemovedInvitationsIDs(); len(nodes) > 0 && !au.mutation.InvitationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.InvitationsTable,
+			Columns: []string{account.InvitationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(invitation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.InvitationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.InvitationsTable,
+			Columns: []string{account.InvitationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(invitation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, au.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{account.Label}
@@ -236,16 +370,44 @@ func (auo *AccountUpdateOne) SetNillableAlias(s *string) *AccountUpdateOne {
 	return auo
 }
 
+// SetName sets the "name" field.
+func (auo *AccountUpdateOne) SetName(s string) *AccountUpdateOne {
+	auo.mutation.SetName(s)
+	return auo
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (auo *AccountUpdateOne) SetNillableName(s *string) *AccountUpdateOne {
+	if s != nil {
+		auo.SetName(*s)
+	}
+	return auo
+}
+
+// SetDescription sets the "description" field.
+func (auo *AccountUpdateOne) SetDescription(s string) *AccountUpdateOne {
+	auo.mutation.SetDescription(s)
+	return auo
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (auo *AccountUpdateOne) SetNillableDescription(s *string) *AccountUpdateOne {
+	if s != nil {
+		auo.SetDescription(*s)
+	}
+	return auo
+}
+
 // SetRole sets the "role" field.
-func (auo *AccountUpdateOne) SetRole(e example.Role) *AccountUpdateOne {
-	auo.mutation.SetRole(e)
+func (auo *AccountUpdateOne) SetRole(r role.Role) *AccountUpdateOne {
+	auo.mutation.SetRole(r)
 	return auo
 }
 
 // SetNillableRole sets the "role" field if the given value is not nil.
-func (auo *AccountUpdateOne) SetNillableRole(e *example.Role) *AccountUpdateOne {
-	if e != nil {
-		auo.SetRole(*e)
+func (auo *AccountUpdateOne) SetNillableRole(r *role.Role) *AccountUpdateOne {
+	if r != nil {
+		auo.SetRole(*r)
 	}
 	return auo
 }
@@ -263,6 +425,21 @@ func (auo *AccountUpdateOne) AddMemberships(m ...*Membership) *AccountUpdateOne 
 		ids[i] = m[i].ID
 	}
 	return auo.AddMembershipIDs(ids...)
+}
+
+// AddInvitationIDs adds the "invitations" edge to the Invitation entity by IDs.
+func (auo *AccountUpdateOne) AddInvitationIDs(ids ...uuid.UUID) *AccountUpdateOne {
+	auo.mutation.AddInvitationIDs(ids...)
+	return auo
+}
+
+// AddInvitations adds the "invitations" edges to the Invitation entity.
+func (auo *AccountUpdateOne) AddInvitations(i ...*Invitation) *AccountUpdateOne {
+	ids := make([]uuid.UUID, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return auo.AddInvitationIDs(ids...)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -289,6 +466,27 @@ func (auo *AccountUpdateOne) RemoveMemberships(m ...*Membership) *AccountUpdateO
 		ids[i] = m[i].ID
 	}
 	return auo.RemoveMembershipIDs(ids...)
+}
+
+// ClearInvitations clears all "invitations" edges to the Invitation entity.
+func (auo *AccountUpdateOne) ClearInvitations() *AccountUpdateOne {
+	auo.mutation.ClearInvitations()
+	return auo
+}
+
+// RemoveInvitationIDs removes the "invitations" edge to Invitation entities by IDs.
+func (auo *AccountUpdateOne) RemoveInvitationIDs(ids ...uuid.UUID) *AccountUpdateOne {
+	auo.mutation.RemoveInvitationIDs(ids...)
+	return auo
+}
+
+// RemoveInvitations removes "invitations" edges to Invitation entities.
+func (auo *AccountUpdateOne) RemoveInvitations(i ...*Invitation) *AccountUpdateOne {
+	ids := make([]uuid.UUID, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return auo.RemoveInvitationIDs(ids...)
 }
 
 // Where appends a list predicates to the AccountUpdate builder.
@@ -333,6 +531,21 @@ func (auo *AccountUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (auo *AccountUpdateOne) check() error {
+	if v, ok := auo.mutation.Alias(); ok {
+		if err := account.AliasValidator(v); err != nil {
+			return &ValidationError{Name: "alias", err: fmt.Errorf(`ent: validator failed for field "Account.alias": %w`, err)}
+		}
+	}
+	if v, ok := auo.mutation.Name(); ok {
+		if err := account.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Account.name": %w`, err)}
+		}
+	}
+	if v, ok := auo.mutation.Description(); ok {
+		if err := account.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Account.description": %w`, err)}
+		}
+	}
 	if v, ok := auo.mutation.Role(); ok {
 		if err := account.RoleValidator(v); err != nil {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "Account.role": %w`, err)}
@@ -340,6 +553,9 @@ func (auo *AccountUpdateOne) check() error {
 	}
 	if _, ok := auo.mutation.OwnerID(); auo.mutation.OwnerCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Account.owner"`)
+	}
+	if _, ok := auo.mutation.SiloID(); auo.mutation.SiloCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Account.silo"`)
 	}
 	return nil
 }
@@ -375,6 +591,12 @@ func (auo *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err e
 	}
 	if value, ok := auo.mutation.Alias(); ok {
 		_spec.SetField(account.FieldAlias, field.TypeString, value)
+	}
+	if value, ok := auo.mutation.Name(); ok {
+		_spec.SetField(account.FieldName, field.TypeString, value)
+	}
+	if value, ok := auo.mutation.Description(); ok {
+		_spec.SetField(account.FieldDescription, field.TypeString, value)
 	}
 	if value, ok := auo.mutation.Role(); ok {
 		_spec.SetField(account.FieldRole, field.TypeEnum, value)
@@ -417,6 +639,51 @@ func (auo *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(membership.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if auo.mutation.InvitationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.InvitationsTable,
+			Columns: []string{account.InvitationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(invitation.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.RemovedInvitationsIDs(); len(nodes) > 0 && !auo.mutation.InvitationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.InvitationsTable,
+			Columns: []string{account.InvitationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(invitation.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.InvitationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.InvitationsTable,
+			Columns: []string{account.InvitationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(invitation.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

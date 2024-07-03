@@ -21,12 +21,14 @@ type Identity struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// DateCreated holds the value of the "date_created" field.
 	DateCreated time.Time `json:"date_created,omitempty"`
-	// Name of the user
+	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
-	// Email holds the value of the "email" field.
-	Email *string `json:"email,omitempty"`
-	// DateUpdated holds the value of the "date_updated" field.
-	DateUpdated *time.Time `json:"date_updated,omitempty"`
+	// Description holds the value of the "description" field.
+	Description string `json:"description,omitempty"`
+	// Kind holds the value of the "kind" field.
+	Kind string `json:"kind,omitempty"`
+	// Verifier holds the value of the "verifier" field.
+	Verifier string `json:"verifier,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the IdentityQuery when eager-loading is set.
 	Edges           IdentityEdges `json:"edges"`
@@ -59,9 +61,9 @@ func (*Identity) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case identity.FieldName, identity.FieldEmail:
+		case identity.FieldName, identity.FieldDescription, identity.FieldKind, identity.FieldVerifier:
 			values[i] = new(sql.NullString)
-		case identity.FieldDateCreated, identity.FieldDateUpdated:
+		case identity.FieldDateCreated:
 			values[i] = new(sql.NullTime)
 		case identity.FieldID:
 			values[i] = new(uuid.UUID)
@@ -100,19 +102,23 @@ func (i *Identity) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				i.Name = value.String
 			}
-		case identity.FieldEmail:
+		case identity.FieldDescription:
 			if value, ok := values[j].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field email", values[j])
+				return fmt.Errorf("unexpected type %T for field description", values[j])
 			} else if value.Valid {
-				i.Email = new(string)
-				*i.Email = value.String
+				i.Description = value.String
 			}
-		case identity.FieldDateUpdated:
-			if value, ok := values[j].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field date_updated", values[j])
+		case identity.FieldKind:
+			if value, ok := values[j].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field kind", values[j])
 			} else if value.Valid {
-				i.DateUpdated = new(time.Time)
-				*i.DateUpdated = value.Time
+				i.Kind = value.String
+			}
+		case identity.FieldVerifier:
+			if value, ok := values[j].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field verifier", values[j])
+			} else if value.Valid {
+				i.Verifier = value.String
 			}
 		case identity.ForeignKeys[0]:
 			if value, ok := values[j].(*sql.NullScanner); !ok {
@@ -168,15 +174,14 @@ func (i *Identity) String() string {
 	builder.WriteString("name=")
 	builder.WriteString(i.Name)
 	builder.WriteString(", ")
-	if v := i.Email; v != nil {
-		builder.WriteString("email=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("description=")
+	builder.WriteString(i.Description)
 	builder.WriteString(", ")
-	if v := i.DateUpdated; v != nil {
-		builder.WriteString("date_updated=")
-		builder.WriteString(v.Format(time.ANSIC))
-	}
+	builder.WriteString("kind=")
+	builder.WriteString(i.Kind)
+	builder.WriteString(", ")
+	builder.WriteString("verifier=")
+	builder.WriteString(i.Verifier)
 	builder.WriteByte(')')
 	return builder.String()
 }

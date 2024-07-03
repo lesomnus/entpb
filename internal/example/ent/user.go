@@ -13,14 +13,15 @@ import (
 	"github.com/lesomnus/entpb/internal/example/ent/user"
 )
 
-// Entity interacting with the service,
-// it can be either a human or a computer.
+// User is the model entity for the User schema.
 type User struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// DateCreated holds the value of the "date_created" field.
 	DateCreated time.Time `json:"date_created,omitempty"`
+	// Alias holds the value of the "alias" field.
+	Alias string `json:"alias,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges         UserEdges `json:"edges"`
@@ -38,8 +39,8 @@ type UserEdges struct {
 	Identities []*Identity `json:"identities,omitempty"`
 	// Accounts holds the value of the accounts edge.
 	Accounts []*Account `json:"accounts,omitempty"`
-	// Memberships holds the value of the memberships edge.
-	Memberships []*Membership `json:"memberships,omitempty"`
+	// Tokens holds the value of the tokens edge.
+	Tokens []*Token `json:"tokens,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [5]bool
@@ -83,13 +84,13 @@ func (e UserEdges) AccountsOrErr() ([]*Account, error) {
 	return nil, &NotLoadedError{edge: "accounts"}
 }
 
-// MembershipsOrErr returns the Memberships value or an error if the edge
+// TokensOrErr returns the Tokens value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserEdges) MembershipsOrErr() ([]*Membership, error) {
+func (e UserEdges) TokensOrErr() ([]*Token, error) {
 	if e.loadedTypes[4] {
-		return e.Memberships, nil
+		return e.Tokens, nil
 	}
-	return nil, &NotLoadedError{edge: "memberships"}
+	return nil, &NotLoadedError{edge: "tokens"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -97,6 +98,8 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case user.FieldAlias:
+			values[i] = new(sql.NullString)
 		case user.FieldDateCreated:
 			values[i] = new(sql.NullTime)
 		case user.FieldID:
@@ -129,6 +132,12 @@ func (u *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field date_created", values[i])
 			} else if value.Valid {
 				u.DateCreated = value.Time
+			}
+		case user.FieldAlias:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field alias", values[i])
+			} else if value.Valid {
+				u.Alias = value.String
 			}
 		case user.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -170,9 +179,9 @@ func (u *User) QueryAccounts() *AccountQuery {
 	return NewUserClient(u.config).QueryAccounts(u)
 }
 
-// QueryMemberships queries the "memberships" edge of the User entity.
-func (u *User) QueryMemberships() *MembershipQuery {
-	return NewUserClient(u.config).QueryMemberships(u)
+// QueryTokens queries the "tokens" edge of the User entity.
+func (u *User) QueryTokens() *TokenQuery {
+	return NewUserClient(u.config).QueryTokens(u)
 }
 
 // Update returns a builder for updating this User.
@@ -200,6 +209,9 @@ func (u *User) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", u.ID))
 	builder.WriteString("date_created=")
 	builder.WriteString(u.DateCreated.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("alias=")
+	builder.WriteString(u.Alias)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -9,6 +9,7 @@ import (
 	account "github.com/lesomnus/entpb/internal/example/ent/account"
 	membership "github.com/lesomnus/entpb/internal/example/ent/membership"
 	predicate "github.com/lesomnus/entpb/internal/example/ent/predicate"
+	team "github.com/lesomnus/entpb/internal/example/ent/team"
 	pb "github.com/lesomnus/entpb/internal/example/pb"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -26,13 +27,16 @@ func NewMembershipServiceServer(db *ent.Client) *MembershipServiceServer {
 }
 func (s *MembershipServiceServer) Create(ctx context.Context, req *pb.CreateMembershipRequest) (*pb.Membership, error) {
 	q := s.db.Membership.Create()
-	if v := req.Name; v != nil {
-		q.SetName(*v)
-	}
+	q.SetRole(toEntRole(req.GetRole()))
 	if id, err := GetAccountId(ctx, s.db, req.GetAccount()); err != nil {
 		return nil, err
 	} else {
 		q.SetAccountID(id)
+	}
+	if id, err := GetTeamId(ctx, s.db, req.GetTeam()); err != nil {
+		return nil, err
+	} else {
+		q.SetTeamID(id)
 	}
 
 	res, err := q.Save(ctx)
@@ -70,6 +74,7 @@ func (s *MembershipServiceServer) Get(ctx context.Context, req *pb.GetMembership
 }
 func QueryMembershipWithEdgeIds(q *ent.MembershipQuery) *ent.MembershipQuery {
 	q.WithAccount(func(q *ent.AccountQuery) { q.Select(account.FieldID) })
+	q.WithTeam(func(q *ent.TeamQuery) { q.Select(team.FieldID) })
 
 	return q
 }
@@ -80,8 +85,8 @@ func (s *MembershipServiceServer) Update(ctx context.Context, req *pb.UpdateMemb
 	}
 
 	q := s.db.Membership.UpdateOneID(id)
-	if v := req.Name; v != nil {
-		q.SetName(*v)
+	if v := req.Role; v != nil {
+		q.SetRole(toEntRole(*v))
 	}
 
 	res, err := q.Save(ctx)
@@ -95,56 +100,27 @@ func ToProtoMembership(v *ent.Membership) *pb.Membership {
 	m := &pb.Membership{}
 	m.Id = v.ID[:]
 	m.DateCreated = timestamppb.New(v.DateCreated)
-	m.Name = v.Name
+	m.Role = toPbRole(v.Role)
 	if v := v.Edges.Account; v != nil {
 		m.Account = ToProtoAccount(v)
+	}
+	if v := v.Edges.Team; v != nil {
+		m.Team = ToProtoTeam(v)
 	}
 	return m
 }
 func GetMembershipId(ctx context.Context, db *ent.Client, req *pb.GetMembershipRequest) (uuid.UUID, error) {
 	var r uuid.UUID
-	k := req.GetKey()
-	if t, ok := k.(*pb.GetMembershipRequest_Id); ok {
-		if v, err := uuid.FromBytes(t.Id); err != nil {
-			return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
-		} else {
-			return v, nil
-		}
+	if v, err := uuid.FromBytes(req.GetId()); err != nil {
+		return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
+	} else {
+		return v, nil
 	}
-
-	p, err := GetMembershipSpecifier(req)
-	if err != nil {
-		return r, err
-	}
-
-	v, err := db.Membership.Query().Where(p).OnlyID(ctx)
-	if err != nil {
-		return r, ToStatus(err)
-	}
-
-	return v, nil
 }
 func GetMembershipSpecifier(req *pb.GetMembershipRequest) (predicate.Membership, error) {
-	switch t := req.GetKey().(type) {
-	case *pb.GetMembershipRequest_Id:
-		if v, err := uuid.FromBytes(t.Id); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
-		} else {
-			return membership.IDEQ(v), nil
-		}
-	case *pb.GetMembershipRequest_InAccount:
-		ps := make([]predicate.Membership, 0, 2)
-		if p, err := GetAccountSpecifier(t.InAccount.GetAccount()); err != nil {
-			s, _ := status.FromError(err)
-			return nil, status.Errorf(codes.InvalidArgument, "in_account.%s", s.Message())
-		} else {
-			ps = append(ps, membership.HasAccountWith(p))
-		}
-		ps = append(ps, membership.NameEQ(t.InAccount.GetName()))
-		return membership.And(ps...), nil
-	case nil:
-		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
-	default:
-		return nil, status.Errorf(codes.Unimplemented, "unknown type of key")
+	if v, err := uuid.FromBytes(req.GetId()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+	} else {
+		return membership.IDEQ(v), nil
 	}
 }
