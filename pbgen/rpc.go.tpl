@@ -8,5 +8,10 @@ rpc {{ .Name }} (
 	{{ if .Stream }}stream {{ end -}}
 	{{ .Type -}}
 {{- end -}}
-);
-{{- /**/ -}}
+)
+{{- if eq 0 (len .Options) -}}
+;
+{{- else }} {
+	{{ include "options" .Options | indent 1 }}
+}
+{{- end -}}

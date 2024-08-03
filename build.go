@@ -20,7 +20,7 @@ type Build struct {
 	// Filepath or alias to proto file to be output.
 	Files map[string]*ProtoFile
 
-	// Key is global name of the Go type that bound to enum.
+	// Key is a global name of the Go type that bound to enum.
 	// e.g. for enum "Role" that bound to Go type "Role" in package "github.com/lesomnus/entpb/example",
 	// the key would be its global name, "github.com/lesomnus/entpb/example:example.Role".
 	// Global name can be built using following functions:
@@ -577,5 +577,4 @@ func (p *Build) buildGetMessage(d *MessageAnnotation) *MessageAnnotation {
 	s.File.Messages[req_name] = msg
 	p.Messages[req_name] = msg
 	return msg
-
 }

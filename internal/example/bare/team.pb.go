@@ -120,7 +120,8 @@ func GetTeamId(ctx context.Context, db *ent.Client, req *pb.GetTeamRequest) (uui
 	if v, err := uuid.FromBytes(req.GetId()); err != nil {
 		return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
 	} else {
-		return v, nil
+		r = v
+		return r, nil
 	}
 }
 func GetTeamSpecifier(req *pb.GetTeamRequest) (predicate.Team, error) {

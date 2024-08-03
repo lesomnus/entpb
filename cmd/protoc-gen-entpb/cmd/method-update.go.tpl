@@ -25,7 +25,11 @@ func (s *{{ print $.PbSvc.GoName "Server" }}) {{ $.PbMethod.GoName }}(ctx {{ imp
 					q.Set{{ entname .EntName }}ID(id)
 				}
 				{{ else -}}
-				{{ print "q.Set" (entname .EntName) "(@)" | to_ent . "*v" "w" }}
+					{{ $in := "v" -}}
+					{{ if and .IsDereferenceable .IsOptional -}}
+						{{ $in = "*v" -}}
+					{{ end -}}
+					{{ print "q.Set" (entname .EntName) "(@)" | to_ent . $in "w" }}
 				{{ end -}}
 			}
 		{{ end -}}

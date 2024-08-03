@@ -64,6 +64,26 @@ func (a *FieldAnnotation) IsTypeMessage() bool {
 	return a.EntMsg != nil
 }
 
+func (a *FieldAnnotation) IsDereferenceable() bool {
+	if a.IsEdge() {
+		return true
+	}
+	switch a.EntInfo.Type {
+	case field.TypeTime:
+		fallthrough
+	case field.TypeJSON:
+		fallthrough
+	case field.TypeUUID:
+		fallthrough
+	case field.TypeBytes:
+		fallthrough
+	case field.TypeOther:
+		return false
+	default:
+		return true
+	}
+}
+
 func (a *FieldAnnotation) IsRequired() bool {
 	return !a.IsOptional
 }

@@ -1,6 +1,8 @@
 package ident
 
-import "strings"
+import (
+	"strings"
+)
 
 type Ident string
 

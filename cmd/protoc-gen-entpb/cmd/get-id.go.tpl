@@ -15,7 +15,7 @@
 func Get{{ $.EntMsg.Schema.Name }}Id(ctx {{ import "context" | ident "Context" }}, db *{{ $.Ent.Ident "Client" | use }}, req *{{ print $.EntMsg.Ident | $.Pb.Ident | use }}) ({{ $id_type }}, error) {
 	var r {{ $id_type }}
 	{{ if not $isOneof -}}
-		{{ to_ent_with_rv $id_field "req.GetId()" "v" "return @, nil" "r" }}
+		{{ to_ent_with_rv $id_field "req.GetId()" "v" "r = @\nreturn r, nil" "r" }}
 	{{ else -}}
 		k := req.GetKey()
 		if t, ok := k.(*{{ print $.EntMsg.Ident "_Id" | $.Pb.Ident | use }}); ok {

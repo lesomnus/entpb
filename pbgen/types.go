@@ -180,6 +180,8 @@ type Rpc struct {
 	Request  RpcType
 	Response RpcType
 
+	Options []Option
+
 	serviceBody_
 }
 
@@ -192,13 +194,14 @@ type RpcType struct {
 	Stream bool
 }
 
+type OptionValue interface{ optionValue() }
+type optionValue_ struct{}
+
+func (optionValue_) optionValue() {}
+
 type Option struct {
 	Name  ident.Full
-	Value string
-}
-
-func (Option) TemplateName() string {
-	return "option"
+	Value OptionValue
 }
 
 type Comment struct {
@@ -220,3 +223,34 @@ type TopLevelDef interface{ topLevelDef() }
 type topLevelDef_ struct{}
 
 func (topLevelDef_) topLevelDef() {}
+
+type Data struct {
+	Fields []DataField
+
+	optionValue_
+}
+
+func (Data) TemplateName() string {
+	return "data"
+}
+
+type DataField struct {
+	Name  string
+	Value DataValue
+}
+
+type DataValue interface{ dataValue() }
+type dataValue_ struct{}
+
+func (dataValue_) dataValue() {}
+
+type UnsafeLiteral struct {
+	Value string
+
+	optionValue_
+	dataValue_
+}
+
+func (UnsafeLiteral) TemplateName() string {
+	return "unsafe-literal"
+}

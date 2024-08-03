@@ -1,4 +1,4 @@
 {{ range $i, $_ := . }}{{ if ne $i 0 }}
 {{ end -}}
-option {{ .Name }} = {{ .Value }};
+option {{ .Name }} = {{ with .Value }}{{ include .TemplateName . }};{{ end -}}
 {{- end -}}

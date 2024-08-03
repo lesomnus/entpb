@@ -57,4 +57,42 @@ func TestRpc(t *testing.T) {
 		v := o.String()
 		require.Equal(`rpc Create (User) returns (stream User);`, v)
 	})
+
+	t.Run("with options", func(t *testing.T) {
+		require := require.New(t)
+
+		d := pbgen.Rpc{
+			Name:     "Create",
+			Request:  pbgen.RpcType{Type: ident.Full{"User"}},
+			Response: pbgen.RpcType{Type: ident.Full{"User"}},
+			Options: []pbgen.Option{
+				{
+					Name: ident.Must([]string{"foo", "bar"}),
+					Value: pbgen.Data{
+						Fields: []pbgen.DataField{
+							{
+								Name:  "a",
+								Value: pbgen.UnsafeLiteral{Value: "\"b\""},
+							},
+							{
+								Name:  "c",
+								Value: pbgen.UnsafeLiteral{Value: "\"d\""},
+							},
+						},
+					},
+				},
+			},
+		}
+		o := bytes.Buffer{}
+		err := pbgen.Execute(&o, &d)
+		require.NoError(err)
+
+		v := o.String()
+		require.Equal(`rpc Create (User) returns (User) {
+	option foo.bar = {
+		a: "b"
+		c: "d"
+	};
+}`, v)
+	})
 }

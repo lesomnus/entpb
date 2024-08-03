@@ -114,7 +114,8 @@ func GetMembershipId(ctx context.Context, db *ent.Client, req *pb.GetMembershipR
 	if v, err := uuid.FromBytes(req.GetId()); err != nil {
 		return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
 	} else {
-		return v, nil
+		r = v
+		return r, nil
 	}
 }
 func GetMembershipSpecifier(req *pb.GetMembershipRequest) (predicate.Membership, error) {
