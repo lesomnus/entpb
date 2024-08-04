@@ -7,21 +7,21 @@ import (
 type Type = ident.Full
 
 var (
-	TypeDouble   = Type{"double"}
-	TypeFloat    = Type{"float"}
-	TypeInt32    = Type{"int32"}
-	TypeInt64    = Type{"int64"}
-	TypeUint32   = Type{"uint32"}
-	TypeUint64   = Type{"uint64"}
-	TypeSint32   = Type{"sint32"}
-	TypeSint64   = Type{"sint64"}
-	TypeFixed32  = Type{"fixed32"}
-	TypeFixed64  = Type{"fixed64"}
-	TypeSfixed32 = Type{"sfixed32"}
-	TypeSfixed64 = Type{"sfixed64"}
-	TypeBool     = Type{"bool"}
-	TypeString   = Type{"string"}
-	TypeBytes    = Type{"bytes"}
+	TypeDouble   = Type{Segments: []string{"double"}}
+	TypeFloat    = Type{Segments: []string{"float"}}
+	TypeInt32    = Type{Segments: []string{"int32"}}
+	TypeInt64    = Type{Segments: []string{"int64"}}
+	TypeUint32   = Type{Segments: []string{"uint32"}}
+	TypeUint64   = Type{Segments: []string{"uint64"}}
+	TypeSint32   = Type{Segments: []string{"sint32"}}
+	TypeSint64   = Type{Segments: []string{"sint64"}}
+	TypeFixed32  = Type{Segments: []string{"fixed32"}}
+	TypeFixed64  = Type{Segments: []string{"fixed64"}}
+	TypeSfixed32 = Type{Segments: []string{"sfixed32"}}
+	TypeSfixed64 = Type{Segments: []string{"sfixed64"}}
+	TypeBool     = Type{Segments: []string{"bool"}}
+	TypeString   = Type{Segments: []string{"string"}}
+	TypeBytes    = Type{Segments: []string{"bytes"}}
 )
 
 type Label string
@@ -228,6 +228,7 @@ type Data struct {
 	Fields []DataField
 
 	optionValue_
+	dataValue_
 }
 
 func (Data) TemplateName() string {

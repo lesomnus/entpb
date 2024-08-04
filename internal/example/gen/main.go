@@ -60,7 +60,7 @@ func main() {
 		}
 
 		proto_file_init := entpb.ProtoFileInit{
-			PbPackage: ident.Full{"entpb", "directory"},
+			PbPackage: ident.Must("entpb", "directory"),
 			GoPackage: "github.com/lesomnus/entpb/internal/example/pb",
 		}
 		err = entc.Generate(

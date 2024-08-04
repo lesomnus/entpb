@@ -15,8 +15,8 @@ func TestRpc(t *testing.T) {
 
 		d := pbgen.Rpc{
 			Name:     "Create",
-			Request:  pbgen.RpcType{Type: ident.Full{"User"}},
-			Response: pbgen.RpcType{Type: ident.Full{"User"}},
+			Request:  pbgen.RpcType{Type: ident.Must("User")},
+			Response: pbgen.RpcType{Type: ident.Must("User")},
 		}
 		o := bytes.Buffer{}
 		err := pbgen.Execute(&o, &d)
@@ -31,8 +31,8 @@ func TestRpc(t *testing.T) {
 
 		d := pbgen.Rpc{
 			Name:     "Create",
-			Request:  pbgen.RpcType{Type: ident.Full{"User"}, Stream: true},
-			Response: pbgen.RpcType{Type: ident.Full{"User"}},
+			Request:  pbgen.RpcType{Type: ident.Must("User"), Stream: true},
+			Response: pbgen.RpcType{Type: ident.Must("User")},
 		}
 		o := bytes.Buffer{}
 		err := pbgen.Execute(&o, &d)
@@ -47,8 +47,8 @@ func TestRpc(t *testing.T) {
 
 		d := pbgen.Rpc{
 			Name:     "Create",
-			Request:  pbgen.RpcType{Type: ident.Full{"User"}},
-			Response: pbgen.RpcType{Type: ident.Full{"User"}, Stream: true},
+			Request:  pbgen.RpcType{Type: ident.Must("User")},
+			Response: pbgen.RpcType{Type: ident.Must("User"), Stream: true},
 		}
 		o := bytes.Buffer{}
 		err := pbgen.Execute(&o, &d)
@@ -58,16 +58,16 @@ func TestRpc(t *testing.T) {
 		require.Equal(`rpc Create (User) returns (stream User);`, v)
 	})
 
-	t.Run("with options", func(t *testing.T) {
+	t.Run("options", func(t *testing.T) {
 		require := require.New(t)
 
 		d := pbgen.Rpc{
 			Name:     "Create",
-			Request:  pbgen.RpcType{Type: ident.Full{"User"}},
-			Response: pbgen.RpcType{Type: ident.Full{"User"}},
+			Request:  pbgen.RpcType{Type: ident.Must("User")},
+			Response: pbgen.RpcType{Type: ident.Must("User")},
 			Options: []pbgen.Option{
 				{
-					Name: ident.Must([]string{"foo", "bar"}),
+					Name: ident.Must("foo", "bar"),
 					Value: pbgen.Data{
 						Fields: []pbgen.DataField{
 							{
@@ -92,6 +92,63 @@ func TestRpc(t *testing.T) {
 	option foo.bar = {
 		a: "b"
 		c: "d"
+	};
+}`, v)
+	})
+
+	t.Run("options with nested message", func(t *testing.T) {
+		require := require.New(t)
+
+		d := pbgen.Rpc{
+			Name:     "Create",
+			Request:  pbgen.RpcType{Type: ident.Must("User")},
+			Response: pbgen.RpcType{Type: ident.Must("User")},
+			Options: []pbgen.Option{
+				{
+					Name: ident.Must("foo", "bar").WithBraces(),
+					Value: pbgen.Data{
+						Fields: []pbgen.DataField{
+							{
+								Name:  "a",
+								Value: pbgen.UnsafeLiteral{Value: "\"b\""},
+							},
+							{
+								Name:  "c",
+								Value: pbgen.UnsafeLiteral{Value: "\"d\""},
+							},
+							{
+								Name: "nested",
+								Value: pbgen.Data{
+									Fields: []pbgen.DataField{
+										{
+											Name:  "nested_a",
+											Value: pbgen.UnsafeLiteral{Value: "\"b\""},
+										},
+										{
+											Name:  "nested_c",
+											Value: pbgen.UnsafeLiteral{Value: "\"d\""},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		o := bytes.Buffer{}
+		err := pbgen.Execute(&o, &d)
+		require.NoError(err)
+
+		v := o.String()
+		require.Equal(`rpc Create (User) returns (User) {
+	option (foo.bar) = {
+		a: "b"
+		c: "d"
+		nested: {
+			nested_a: "b"
+			nested_c: "d"
+		}
 	};
 }`, v)
 	})

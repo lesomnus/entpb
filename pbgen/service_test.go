@@ -18,8 +18,8 @@ func TestService(t *testing.T) {
 			Body: []pbgen.ServiceBody{
 				pbgen.Rpc{
 					Name:     "Create",
-					Request:  pbgen.RpcType{Type: ident.Full{"User"}},
-					Response: pbgen.RpcType{Type: ident.Full{"User"}},
+					Request:  pbgen.RpcType{Type: ident.Must("User")},
+					Response: pbgen.RpcType{Type: ident.Must("User")},
 				},
 			},
 		}
@@ -41,13 +41,13 @@ func TestService(t *testing.T) {
 			Body: []pbgen.ServiceBody{
 				pbgen.Rpc{
 					Name:     "Create",
-					Request:  pbgen.RpcType{Type: ident.Full{"User"}},
-					Response: pbgen.RpcType{Type: ident.Full{"User"}},
+					Request:  pbgen.RpcType{Type: ident.Must("User")},
+					Response: pbgen.RpcType{Type: ident.Must("User")},
 				},
 				pbgen.Rpc{
 					Name:     "Update",
-					Request:  pbgen.RpcType{Type: ident.Full{"User"}},
-					Response: pbgen.RpcType{Type: ident.Full{"User"}},
+					Request:  pbgen.RpcType{Type: ident.Must("User")},
+					Response: pbgen.RpcType{Type: ident.Must("User")},
 				},
 			},
 		}
@@ -72,14 +72,14 @@ func TestService(t *testing.T) {
 				pbgen.Comment{Value: "Royale"},
 				pbgen.Rpc{
 					Name:     "Create",
-					Request:  pbgen.RpcType{Type: ident.Full{"User"}},
-					Response: pbgen.RpcType{Type: ident.Full{"User"}},
+					Request:  pbgen.RpcType{Type: ident.Must("User")},
+					Response: pbgen.RpcType{Type: ident.Must("User")},
 				},
 				pbgen.Comment{Value: "with"},
 				pbgen.Rpc{
 					Name:     "Update",
-					Request:  pbgen.RpcType{Type: ident.Full{"User"}},
-					Response: pbgen.RpcType{Type: ident.Full{"User"}},
+					Request:  pbgen.RpcType{Type: ident.Must("User")},
+					Response: pbgen.RpcType{Type: ident.Must("User")},
 				},
 				pbgen.Comment{Value: "cheese"},
 			},

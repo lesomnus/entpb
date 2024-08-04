@@ -1,8 +1,6 @@
 package entpb
 
 import (
-	"slices"
-
 	ent "entgo.io/ent/schema/field"
 	"github.com/lesomnus/entpb/pbgen/ident"
 )
@@ -22,15 +20,15 @@ func (t *PbType) IsMessage() bool {
 }
 
 func (t *PbType) FullIdent() ident.Full {
-	return append(t.Package, t.Ident)
+	return t.Package.Append(t.Ident)
 }
 
 func (t *PbType) ReferencedIn(other ident.Full) ident.Full {
-	if slices.Equal(t.Package, other) {
-		return ident.Full{t.Ident}
+	if t.Package.Equals(other) {
+		return t.Ident.Full()
 	}
 
-	return append(t.Package, t.Ident)
+	return t.FullIdent()
 }
 
 func (t *PbType) Equal(other *PbType) bool {
@@ -41,8 +39,8 @@ var (
 	PbThis = PbType{Ident: "@this", Import: "@this"}
 
 	PbUuid      = PbType{Ident: "bytes"}
-	PbEmpty     = PbType{Ident: "Empty", Package: ident.Full{"google", "protobuf"}, Import: "google/protobuf/empty.proto"}
-	PbTimestamp = PbType{Ident: "Timestamp", Package: ident.Full{"google", "protobuf"}, Import: "google/protobuf/timestamp.proto"}
+	PbEmpty     = PbType{Ident: "Empty", Package: ident.Must("google", "protobuf"), Import: "google/protobuf/empty.proto"}
+	PbTimestamp = PbType{Ident: "Timestamp", Package: ident.Must("google", "protobuf"), Import: "google/protobuf/timestamp.proto"}
 )
 
 var pb_types = [...]PbType{

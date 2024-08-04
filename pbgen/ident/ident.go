@@ -1,31 +1,57 @@
 package ident
 
 import (
+	"fmt"
 	"strings"
 )
 
 type Ident string
 
-type Full []Ident
+func (i Ident) Full() Full {
+	return Full{Segments: []string{string(i)}}
+}
 
-func (i Full) StringSlice() []string {
-	vs := make([]string, len(i))
-	for j, v := range i {
-		vs[j] = string(v)
-	}
-
-	return vs
+type Full struct {
+	Segments []string
+	Braced   bool
 }
 
 func (i Full) String() string {
-	return strings.Join(i.StringSlice(), ".")
-}
-
-func Must(vs []string) Full {
-	is := make([]Ident, len(vs))
-	for i, v := range vs {
-		is[i] = Ident(v)
+	v := strings.Join(i.Segments, ".")
+	if i.Braced {
+		v = fmt.Sprintf("(%s)", v)
 	}
 
-	return is
+	return v
+}
+
+func Must(v string, vs ...string) Full {
+	return Full{
+		Segments: append([]string{v}, vs...),
+	}
+}
+
+func (i Full) WithBraces() Full {
+	i.Braced = true
+	return i
+}
+
+func (i Full) Last() Ident {
+	if len(i.Segments) == 0 {
+		return ""
+	}
+
+	return Ident(i.Segments[len(i.Segments)-1])
+}
+
+func (i Full) Append(vs ...Ident) Full {
+	for _, v := range vs {
+		i.Segments = append(i.Segments, string(v))
+	}
+
+	return i
+}
+
+func (i Full) Equals(other Full) bool {
+	return i.String() == other.String()
 }

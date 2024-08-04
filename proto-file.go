@@ -205,7 +205,8 @@ func ForwardDeclarations(files map[string]*protogen.File, graph *gen.Graph) {
 		}
 
 		if pkg := proto_file.Proto.GetPackage(); pkg != "" {
-			f.PbPackage = ident.Must(strings.Split(pkg, "."))
+			segs := strings.Split(pkg, ".")
+			f.PbPackage = ident.Must(segs[0], segs...)
 		}
 		f.GoPackage = string(proto_file.GoPackageName)
 	}

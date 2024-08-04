@@ -46,7 +46,7 @@ func TestMessageOneof(t *testing.T) {
 				},
 				pbgen.Comment{Value: "Baz"},
 				pbgen.MessageOneofField{
-					Type:   ident.Full{"foo", "bar", "baz"},
+					Type:   ident.Must("foo", "bar", "baz"),
 					Name:   "alias",
 					Number: 2,
 				},

@@ -30,7 +30,7 @@ func TestProtoFile(t *testing.T) {
 
 		d := pbgen.ProtoFile{
 			Edition: pbgen.Edition2023,
-			Package: ident.Full{"foo", "bar", "baz"},
+			Package: ident.Must("foo", "bar", "baz"),
 		}
 		o := bytes.Buffer{}
 		err := pbgen.Execute(&o, &d)

@@ -1,8 +1,8 @@
 {{ with .Edition }}{{ .Keyword }} = "{{ .Value }}"{{ end }};
 
-{{- with .Package }}
+{{- with .Package.Segments }}
 
-package {{ . }};
+package {{ print $.Package }};
 {{- end }}
 
 {{- range $i, $_ := .Imports }}{{ if eq $i 0 }}

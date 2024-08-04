@@ -47,7 +47,7 @@ func TestMessageField(t *testing.T) {
 		require := require.New(t)
 
 		d := pbgen.MessageField{
-			Type:   ident.Full{"foo", "bar", "baz"},
+			Type:   ident.Must("foo", "bar", "baz"),
 			Name:   "id",
 			Number: 1,
 		}
@@ -106,7 +106,7 @@ func TestMessageField(t *testing.T) {
 
 		d := pbgen.MessageField{
 			Labels: []pbgen.Label{pbgen.LabelRepeated, pbgen.LabelOptional},
-			Type:   ident.Full{"foo", "bar", "baz"},
+			Type:   ident.Must("foo", "bar", "baz"),
 			Name:   "id",
 			Number: 1,
 			Options: []pbgen.Option{
