@@ -1,0 +1,3802 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "khepri/horus/common.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "AccountService"
+    },
+    {
+      "name": "ConfService"
+    },
+    {
+      "name": "IdentityService"
+    },
+    {
+      "name": "InvitationService"
+    },
+    {
+      "name": "MembershipService"
+    },
+    {
+      "name": "SiloService"
+    },
+    {
+      "name": "TeamService"
+    },
+    {
+      "name": "TokenService"
+    },
+    {
+      "name": "UserService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/account": {
+      "post": {
+        "operationId": "AccountService_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryAccount"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryCreateAccountRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      }
+    },
+    "/account/{key.query}": {
+      "patch": {
+        "operationId": "AccountService_Update",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryAccount"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryAccountServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      }
+    },
+    "/account/{query}": {
+      "get": {
+        "operationId": "AccountService_Get",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryAccount"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAliasInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAliasInSilo.silo.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.owner.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byOwnerInSilo.owner.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.owner.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byOwnerInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.silo.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      },
+      "delete": {
+        "operationId": "AccountService_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAliasInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAliasInSilo.silo.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.owner.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byOwnerInSilo.owner.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.owner.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byOwnerInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.silo.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      }
+    },
+    "/conf": {
+      "post": {
+        "operationId": "ConfService_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryConf"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryCreateConfRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ConfService"
+        ]
+      }
+    },
+    "/conf/{key.query}": {
+      "patch": {
+        "operationId": "ConfService_Update",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryConf"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryConfServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "ConfService"
+        ]
+      }
+    },
+    "/conf/{query}": {
+      "get": {
+        "operationId": "ConfService_Get",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryConf"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ConfService"
+        ]
+      },
+      "delete": {
+        "operationId": "ConfService_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ConfService"
+        ]
+      }
+    },
+    "/identity": {
+      "post": {
+        "operationId": "IdentityService_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryIdentity"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryCreateIdentityRequest"
+            }
+          }
+        ],
+        "tags": [
+          "IdentityService"
+        ]
+      }
+    },
+    "/identity/{key.query}": {
+      "patch": {
+        "operationId": "IdentityService_Update",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryIdentity"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryIdentityServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "IdentityService"
+        ]
+      }
+    },
+    "/identity/{query}": {
+      "get": {
+        "operationId": "IdentityService_Get",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryIdentity"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          }
+        ],
+        "tags": [
+          "IdentityService"
+        ]
+      },
+      "delete": {
+        "operationId": "IdentityService_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          }
+        ],
+        "tags": [
+          "IdentityService"
+        ]
+      }
+    },
+    "/invitation": {
+      "post": {
+        "operationId": "InvitationService_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryInvitation"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryCreateInvitationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "InvitationService"
+        ]
+      }
+    },
+    "/invitation/{key.query}": {
+      "patch": {
+        "operationId": "InvitationService_Update",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryInvitation"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryInvitationServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "InvitationService"
+        ]
+      }
+    },
+    "/invitation/{query}": {
+      "get": {
+        "operationId": "InvitationService_Get",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryInvitation"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          }
+        ],
+        "tags": [
+          "InvitationService"
+        ]
+      },
+      "delete": {
+        "operationId": "InvitationService_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          }
+        ],
+        "tags": [
+          "InvitationService"
+        ]
+      }
+    },
+    "/membership": {
+      "post": {
+        "operationId": "MembershipService_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryMembership"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryCreateMembershipRequest"
+            }
+          }
+        ],
+        "tags": [
+          "MembershipService"
+        ]
+      }
+    },
+    "/membership/{key.query}": {
+      "patch": {
+        "operationId": "MembershipService_Update",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryMembership"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryMembershipServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "MembershipService"
+        ]
+      }
+    },
+    "/membership/{query}": {
+      "get": {
+        "operationId": "MembershipService_Get",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryMembership"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAccountInTeam.account.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAccountInTeam.account.byAliasInSilo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.account.byAliasInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAccountInTeam.account.byAliasInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.account.byAliasInSilo.silo.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.account.byOwnerInSilo.owner.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAccountInTeam.account.byOwnerInSilo.owner.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.account.byOwnerInSilo.owner.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.account.byOwnerInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAccountInTeam.account.byOwnerInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.account.byOwnerInSilo.silo.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.account.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.team.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAccountInTeam.team.byAliasInSilo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.team.byAliasInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAccountInTeam.team.byAliasInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.team.byAliasInSilo.silo.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.team.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "MembershipService"
+        ]
+      },
+      "delete": {
+        "operationId": "MembershipService_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAccountInTeam.account.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAccountInTeam.account.byAliasInSilo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.account.byAliasInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAccountInTeam.account.byAliasInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.account.byAliasInSilo.silo.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.account.byOwnerInSilo.owner.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAccountInTeam.account.byOwnerInSilo.owner.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.account.byOwnerInSilo.owner.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.account.byOwnerInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAccountInTeam.account.byOwnerInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.account.byOwnerInSilo.silo.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.account.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.team.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAccountInTeam.team.byAliasInSilo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.team.byAliasInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAccountInTeam.team.byAliasInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.team.byAliasInSilo.silo.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAccountInTeam.team.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "MembershipService"
+        ]
+      }
+    },
+    "/silo": {
+      "post": {
+        "operationId": "SiloService_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directorySilo"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryCreateSiloRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SiloService"
+        ]
+      }
+    },
+    "/silo/{byAliasInSilo.silo.query}/account/{byAliasInSilo.alias}": {
+      "get": {
+        "operationId": "AccountService_Get2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryAccount"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "byAliasInSilo.silo.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "byAliasInSilo.alias",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.owner.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byOwnerInSilo.owner.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.owner.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byOwnerInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      },
+      "delete": {
+        "operationId": "AccountService_Delete2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "byAliasInSilo.silo.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "byAliasInSilo.alias",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.owner.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byOwnerInSilo.owner.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.owner.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byOwnerInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      }
+    },
+    "/silo/{byAliasInSilo.silo.query}/team/{byAliasInSilo.alias}": {
+      "get": {
+        "operationId": "TeamService_Get2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryTeam"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "byAliasInSilo.silo.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "byAliasInSilo.alias",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "TeamService"
+        ]
+      },
+      "delete": {
+        "operationId": "TeamService_Delete2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "byAliasInSilo.silo.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "byAliasInSilo.alias",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "TeamService"
+        ]
+      }
+    },
+    "/silo/{byOwnerInSilo.silo.query}/user/{byOwnerInSilo.owner.query}/account": {
+      "get": {
+        "operationId": "AccountService_Get3",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryAccount"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "byOwnerInSilo.silo.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.owner.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAliasInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.owner.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byOwnerInSilo.owner.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byOwnerInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      },
+      "delete": {
+        "operationId": "AccountService_Delete3",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "byOwnerInSilo.silo.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.owner.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAliasInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.owner.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byOwnerInSilo.owner.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byOwnerInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byOwnerInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      }
+    },
+    "/silo/{key.byAliasInSilo.silo.query}/account/{key.byAliasInSilo.alias}": {
+      "patch": {
+        "operationId": "AccountService_Update2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryAccount"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.byAliasInSilo.silo.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "key.byAliasInSilo.alias",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryAccountServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      }
+    },
+    "/silo/{key.byAliasInSilo.silo.query}/team/{key.byAliasInSilo.alias}": {
+      "patch": {
+        "operationId": "TeamService_Update2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryTeam"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.byAliasInSilo.silo.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "key.byAliasInSilo.alias",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryTeamServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "TeamService"
+        ]
+      }
+    },
+    "/silo/{key.byOwnerInSilo.silo.query}/user/{key.byOwnerInSilo.owner.query}/account": {
+      "patch": {
+        "operationId": "AccountService_Update3",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryAccount"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.byOwnerInSilo.silo.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "key.byOwnerInSilo.owner.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryAccountServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      }
+    },
+    "/silo/{key.query}": {
+      "patch": {
+        "operationId": "SiloService_Update",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directorySilo"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directorySiloServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "SiloService"
+        ]
+      }
+    },
+    "/silo/{query}": {
+      "get": {
+        "operationId": "SiloService_Get",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directorySilo"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "SiloService"
+        ]
+      },
+      "delete": {
+        "operationId": "SiloService_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "SiloService"
+        ]
+      }
+    },
+    "/silo/{silo.query}/account/{inviter.query}/invitation": {
+      "post": {
+        "operationId": "InvitationService_Create2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryInvitation"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "silo.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "inviter.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryInvitationServiceCreateBody"
+            }
+          }
+        ],
+        "tags": [
+          "InvitationService"
+        ]
+      }
+    },
+    "/silo/{silo.query}/team": {
+      "post": {
+        "operationId": "TeamService_Create2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryTeam"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "silo.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryTeamServiceCreateBody"
+            }
+          }
+        ],
+        "tags": [
+          "TeamService"
+        ]
+      }
+    },
+    "/silo/{silo.query}/user/{owner.query}/account": {
+      "post": {
+        "operationId": "AccountService_Create2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryAccount"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "silo.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "owner.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryAccountServiceCreateBody"
+            }
+          }
+        ],
+        "tags": [
+          "AccountService"
+        ]
+      }
+    },
+    "/team": {
+      "post": {
+        "operationId": "TeamService_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryTeam"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryCreateTeamRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TeamService"
+        ]
+      }
+    },
+    "/team/{key.query}": {
+      "patch": {
+        "operationId": "TeamService_Update",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryTeam"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryTeamServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "TeamService"
+        ]
+      }
+    },
+    "/team/{query}": {
+      "get": {
+        "operationId": "TeamService_Get",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryTeam"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAliasInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAliasInSilo.silo.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "TeamService"
+        ]
+      },
+      "delete": {
+        "operationId": "TeamService_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAliasInSilo.silo.id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "byAliasInSilo.silo.alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "byAliasInSilo.silo.query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "TeamService"
+        ]
+      }
+    },
+    "/team/{team.query}/account/{account.query}/membership": {
+      "post": {
+        "operationId": "MembershipService_Create2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryMembership"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "team.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "account.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryMembershipServiceCreateBody"
+            }
+          }
+        ],
+        "tags": [
+          "MembershipService"
+        ]
+      }
+    },
+    "/token": {
+      "post": {
+        "operationId": "TokenService_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryToken"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryCreateTokenRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TokenService"
+        ]
+      }
+    },
+    "/token/{key.query}": {
+      "patch": {
+        "operationId": "TokenService_Update",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryToken"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryTokenServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "TokenService"
+        ]
+      }
+    },
+    "/token/{query}": {
+      "get": {
+        "operationId": "TokenService_Get",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryToken"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "value",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "TokenService"
+        ]
+      },
+      "delete": {
+        "operationId": "TokenService_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "value",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "TokenService"
+        ]
+      }
+    },
+    "/user": {
+      "post": {
+        "operationId": "UserService_Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryUser"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryCreateUserRequest"
+            }
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      }
+    },
+    "/user/{key.query}": {
+      "patch": {
+        "operationId": "UserService_Update",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryUser"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryUserServiceUpdateBody"
+            }
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      }
+    },
+    "/user/{owner.query}/identity": {
+      "post": {
+        "operationId": "IdentityService_Create2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryIdentity"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "owner.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryIdentityServiceCreateBody"
+            }
+          }
+        ],
+        "tags": [
+          "IdentityService"
+        ]
+      }
+    },
+    "/user/{owner.query}/token": {
+      "post": {
+        "operationId": "TokenService_Create2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryToken"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "owner.query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/directoryTokenServiceCreateBody"
+            }
+          }
+        ],
+        "tags": [
+          "TokenService"
+        ]
+      }
+    },
+    "/user/{query}": {
+      "get": {
+        "operationId": "UserService_Get",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/directoryUser"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      },
+      "delete": {
+        "operationId": "UserService_Delete",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "alias",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "directoryAccount": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/directoryUser"
+        },
+        "silo": {
+          "$ref": "#/definitions/directorySilo"
+        },
+        "memberships": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/directoryMembership"
+          }
+        },
+        "role": {
+          "$ref": "#/definitions/directoryRole"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dateCreated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "directoryAccountServiceCreateBody": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            },
+            "alias": {
+              "type": "string"
+            }
+          }
+        },
+        "silo": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            },
+            "alias": {
+              "type": "string"
+            }
+          }
+        },
+        "role": {
+          "$ref": "#/definitions/directoryRole"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryAccountServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            },
+            "byAliasInSilo": {
+              "$ref": "#/definitions/directoryGetAccountByAliasInSilo"
+            },
+            "byOwnerInSilo": {
+              "type": "object",
+              "properties": {
+                "owner": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "byte"
+                    },
+                    "alias": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "silo": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "byte"
+                    },
+                    "alias": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "query": {
+              "type": "string"
+            }
+          }
+        },
+        "alias": {
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/definitions/directoryRole"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryConf": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "dateUpdated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dateCreated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "directoryConfServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          }
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryCreateAccountRequest": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/directoryGetUserRequest"
+        },
+        "silo": {
+          "$ref": "#/definitions/directoryGetSiloRequest"
+        },
+        "role": {
+          "$ref": "#/definitions/directoryRole"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryCreateConfRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryCreateIdentityRequest": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "$ref": "#/definitions/directoryGetUserRequest"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryCreateInvitationRequest": {
+      "type": "object",
+      "properties": {
+        "inviter": {
+          "$ref": "#/definitions/directoryGetAccountRequest"
+        },
+        "silo": {
+          "$ref": "#/definitions/directoryGetSiloRequest"
+        },
+        "invitee": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "dateCanceled": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dateDeclined": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dateAccepted": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dateExpired": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "directoryCreateMembershipRequest": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "$ref": "#/definitions/directoryGetAccountRequest"
+        },
+        "team": {
+          "$ref": "#/definitions/directoryGetTeamRequest"
+        },
+        "role": {
+          "$ref": "#/definitions/directoryRole"
+        }
+      }
+    },
+    "directoryCreateSiloRequest": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryCreateTeamRequest": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "silo": {
+          "$ref": "#/definitions/directoryGetSiloRequest"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryCreateTokenRequest": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/directoryGetUserRequest"
+        },
+        "parent": {
+          "$ref": "#/definitions/directoryGetTokenRequest"
+        },
+        "useCountLimit": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "dateExpired": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "directoryCreateUserRequest": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "parent": {
+          "$ref": "#/definitions/directoryGetUserRequest"
+        }
+      }
+    },
+    "directoryGetAccountByAliasInSilo": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "silo": {
+          "$ref": "#/definitions/directoryGetSiloRequest"
+        }
+      }
+    },
+    "directoryGetAccountByOwnerInSilo": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "$ref": "#/definitions/directoryGetUserRequest"
+        },
+        "silo": {
+          "$ref": "#/definitions/directoryGetSiloRequest"
+        }
+      }
+    },
+    "directoryGetAccountRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "byAliasInSilo": {
+          "$ref": "#/definitions/directoryGetAccountByAliasInSilo"
+        },
+        "byOwnerInSilo": {
+          "$ref": "#/definitions/directoryGetAccountByOwnerInSilo"
+        },
+        "query": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryGetConfRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryGetIdentityRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "query": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryGetInvitationRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "query": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryGetMembershipByAccountInTeam": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "$ref": "#/definitions/directoryGetAccountRequest"
+        },
+        "team": {
+          "$ref": "#/definitions/directoryGetTeamRequest"
+        }
+      }
+    },
+    "directoryGetMembershipRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "byAccountInTeam": {
+          "$ref": "#/definitions/directoryGetMembershipByAccountInTeam"
+        },
+        "query": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryGetSiloRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryGetTeamByAliasInSilo": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "silo": {
+          "$ref": "#/definitions/directoryGetSiloRequest"
+        }
+      }
+    },
+    "directoryGetTeamRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "byAliasInSilo": {
+          "$ref": "#/definitions/directoryGetTeamByAliasInSilo"
+        },
+        "query": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryGetTokenRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "value": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryGetUserRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryIdentity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "owner": {
+          "$ref": "#/definitions/directoryUser"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "verifier": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dateCreated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "directoryIdentityServiceCreateBody": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            },
+            "alias": {
+              "type": "string"
+            }
+          }
+        },
+        "kind": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryIdentityServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            }
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryInvitation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "inviter": {
+          "$ref": "#/definitions/directoryAccount"
+        },
+        "silo": {
+          "$ref": "#/definitions/directorySilo"
+        },
+        "invitee": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "dateCanceled": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dateDeclined": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dateAccepted": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dateExpired": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dateCreated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "directoryInvitationServiceCreateBody": {
+      "type": "object",
+      "properties": {
+        "inviter": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            },
+            "byAliasInSilo": {
+              "$ref": "#/definitions/directoryGetAccountByAliasInSilo"
+            },
+            "byOwnerInSilo": {
+              "$ref": "#/definitions/directoryGetAccountByOwnerInSilo"
+            }
+          }
+        },
+        "silo": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            },
+            "alias": {
+              "type": "string"
+            }
+          }
+        },
+        "invitee": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "dateCanceled": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dateDeclined": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dateAccepted": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dateExpired": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "directoryInvitationServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            }
+          }
+        },
+        "dateCanceled": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dateDeclined": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dateAccepted": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dateExpired": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "directoryMembership": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "account": {
+          "$ref": "#/definitions/directoryAccount"
+        },
+        "team": {
+          "$ref": "#/definitions/directoryTeam"
+        },
+        "role": {
+          "$ref": "#/definitions/directoryRole"
+        },
+        "dateCreated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "directoryMembershipServiceCreateBody": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            },
+            "byAliasInSilo": {
+              "$ref": "#/definitions/directoryGetAccountByAliasInSilo"
+            },
+            "byOwnerInSilo": {
+              "$ref": "#/definitions/directoryGetAccountByOwnerInSilo"
+            }
+          }
+        },
+        "team": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            },
+            "byAliasInSilo": {
+              "$ref": "#/definitions/directoryGetTeamByAliasInSilo"
+            }
+          }
+        },
+        "role": {
+          "$ref": "#/definitions/directoryRole"
+        }
+      }
+    },
+    "directoryMembershipServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            },
+            "byAccountInTeam": {
+              "$ref": "#/definitions/directoryGetMembershipByAccountInTeam"
+            }
+          }
+        },
+        "role": {
+          "$ref": "#/definitions/directoryRole"
+        }
+      }
+    },
+    "directoryRole": {
+      "type": "string",
+      "enum": [
+        "ROLE_UNSPECIFIED",
+        "ROLE_MEMBER",
+        "ROLE_ADMIN",
+        "ROLE_OWNER"
+      ],
+      "default": "ROLE_UNSPECIFIED"
+    },
+    "directorySilo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dateCreated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "directorySiloServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            },
+            "alias": {
+              "type": "string"
+            }
+          }
+        },
+        "alias": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryTeam": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "silo": {
+          "$ref": "#/definitions/directorySilo"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dateCreated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "directoryTeamServiceCreateBody": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "silo": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            },
+            "alias": {
+              "type": "string"
+            }
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryTeamServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            },
+            "byAliasInSilo": {
+              "type": "object",
+              "properties": {
+                "silo": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "byte"
+                    },
+                    "alias": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "query": {
+              "type": "string"
+            }
+          }
+        },
+        "alias": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "directoryToken": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "value": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/directoryUser"
+        },
+        "parent": {
+          "$ref": "#/definitions/directoryToken"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/directoryToken"
+          }
+        },
+        "useCountLimit": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "dateExpired": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dateCreated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "directoryTokenServiceCreateBody": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            },
+            "alias": {
+              "type": "string"
+            }
+          }
+        },
+        "parent": {
+          "$ref": "#/definitions/directoryGetTokenRequest"
+        },
+        "useCountLimit": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "dateExpired": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "directoryTokenServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            },
+            "value": {
+              "type": "string"
+            }
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "useCountLimit": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "dateExpired": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "directoryUser": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "parent": {
+          "$ref": "#/definitions/directoryUser"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/directoryUser"
+          }
+        },
+        "identities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/directoryIdentity"
+          }
+        },
+        "accounts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/directoryAccount"
+          }
+        },
+        "dateUnlocked": {
+          "type": "string",
+          "format": "date-time",
+          "description": "For users created by other users, this value is initially NULL."
+        },
+        "dateCreated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "directoryUserServiceUpdateBody": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "byte"
+            },
+            "alias": {
+              "type": "string"
+            }
+          }
+        },
+        "alias": {
+          "type": "string"
+        },
+        "parent": {
+          "$ref": "#/definitions/directoryGetUserRequest"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

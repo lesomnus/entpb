@@ -32,4 +32,11 @@ protoc \
 	--entpb_opt=ent_package="${MODULE_NAME}/ent" \
 	--entpb_opt=package="${MODULE_NAME}/bare" \
 	\
+	--grpc-gateway_out="${OUTPUT_DIR}/gw" \
+	--grpc-gateway_opt=module="${MODULE_NAME}" \
+    --grpc-gateway_opt="standalone=true" \
+	\
+	--openapiv2_out="${OUTPUT_DIR}/openapiv2" \
+	--openapiv2_opt="allow_merge=true" \
+	\
 	"${PROTO_ROOT}"/**/*.proto

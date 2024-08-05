@@ -24,6 +24,7 @@ type ProtoFile struct {
 
 	PbPackage ident.Full
 	GoPackage string
+	Imports   map[string]struct{}
 
 	Enums    map[string]*Enum // key is global type name of the type bound to mapping enum.
 	Messages map[ident.Ident]*MessageAnnotation
@@ -58,7 +59,7 @@ func (ProtoFiles) Name() string {
 }
 
 func (f *ProtoFile) ImportPaths() []string {
-	ps := map[string]struct{}{}
+	ps := maps.Clone(f.Imports)
 	for _, message := range f.Messages {
 		for _, field := range message.Fields {
 			ps[field.PbType.Import] = struct{}{}

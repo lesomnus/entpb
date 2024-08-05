@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lesomnus/entpb/internal/example/ent/account"
+	"github.com/lesomnus/entpb/internal/example/ent/conf"
 	"github.com/lesomnus/entpb/internal/example/ent/identity"
 	"github.com/lesomnus/entpb/internal/example/ent/invitation"
 	"github.com/lesomnus/entpb/internal/example/ent/membership"
@@ -71,6 +72,25 @@ func init() {
 	accountDescID := accountMixinFields0[0].Descriptor()
 	// account.DefaultID holds the default value on creation for the id field.
 	account.DefaultID = accountDescID.Default.(func() uuid.UUID)
+	confMixin := schema.Conf{}.Mixin()
+	confMixinFields0 := confMixin[0].Fields()
+	_ = confMixinFields0
+	confFields := schema.Conf{}.Fields()
+	_ = confFields
+	// confDescDateCreated is the schema descriptor for date_created field.
+	confDescDateCreated := confMixinFields0[1].Descriptor()
+	// conf.DefaultDateCreated holds the default value on creation for the date_created field.
+	conf.DefaultDateCreated = confDescDateCreated.Default.(func() time.Time)
+	// confDescValue is the schema descriptor for value field.
+	confDescValue := confFields[0].Descriptor()
+	// conf.ValueValidator is a validator for the "value" field. It is called by the builders before save.
+	conf.ValueValidator = confDescValue.Validators[0].(func(string) error)
+	// confDescDateUpdated is the schema descriptor for date_updated field.
+	confDescDateUpdated := confFields[1].Descriptor()
+	// conf.DefaultDateUpdated holds the default value on creation for the date_updated field.
+	conf.DefaultDateUpdated = confDescDateUpdated.Default.(func() time.Time)
+	// conf.UpdateDefaultDateUpdated holds the default value on update for the date_updated field.
+	conf.UpdateDefaultDateUpdated = confDescDateUpdated.UpdateDefault.(func() time.Time)
 	identityMixin := schema.Identity{}.Mixin()
 	identityMixinFields0 := identityMixin[0].Fields()
 	_ = identityMixinFields0
@@ -95,13 +115,9 @@ func init() {
 	// identity.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
 	identity.DescriptionValidator = identityDescDescription.Validators[0].(func(string) error)
 	// identityDescKind is the schema descriptor for kind field.
-	identityDescKind := identityFields[0].Descriptor()
+	identityDescKind := identityFields[1].Descriptor()
 	// identity.KindValidator is a validator for the "kind" field. It is called by the builders before save.
 	identity.KindValidator = identityDescKind.Validators[0].(func(string) error)
-	// identityDescVerifier is the schema descriptor for verifier field.
-	identityDescVerifier := identityFields[1].Descriptor()
-	// identity.VerifierValidator is a validator for the "verifier" field. It is called by the builders before save.
-	identity.VerifierValidator = identityDescVerifier.Validators[0].(func(string) error)
 	// identityDescID is the schema descriptor for id field.
 	identityDescID := identityMixinFields0[0].Descriptor()
 	// identity.DefaultID holds the default value on creation for the id field.
@@ -261,6 +277,10 @@ func init() {
 	tokenDescName := tokenFields[2].Descriptor()
 	// token.DefaultName holds the default value on creation for the name field.
 	token.DefaultName = tokenDescName.Default.(string)
+	// tokenDescUseCountLimit is the schema descriptor for use_count_limit field.
+	tokenDescUseCountLimit := tokenFields[3].Descriptor()
+	// token.DefaultUseCountLimit holds the default value on creation for the use_count_limit field.
+	token.DefaultUseCountLimit = tokenDescUseCountLimit.Default.(uint64)
 	// tokenDescID is the schema descriptor for id field.
 	tokenDescID := tokenMixinFields0[0].Descriptor()
 	// token.DefaultID holds the default value on creation for the id field.
@@ -297,6 +317,10 @@ func init() {
 			return nil
 		}
 	}()
+	// userDescSignInAttemptCount is the schema descriptor for sign_in_attempt_count field.
+	userDescSignInAttemptCount := userFields[1].Descriptor()
+	// user.DefaultSignInAttemptCount holds the default value on creation for the sign_in_attempt_count field.
+	user.DefaultSignInAttemptCount = userDescSignInAttemptCount.Default.(uint)
 	// userDescID is the schema descriptor for id field.
 	userDescID := userMixinFields0[0].Descriptor()
 	// user.DefaultID holds the default value on creation for the id field.

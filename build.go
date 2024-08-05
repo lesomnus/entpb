@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
 	"github.com/iancoleman/strcase"
+	"github.com/lesomnus/entpb/pbgen"
 	"github.com/lesomnus/entpb/pbgen/ident"
 	"github.com/lesomnus/entpb/utils"
 )
@@ -67,6 +68,7 @@ func (b *Build) parse(graph *gen.Graph) error {
 			}
 
 			f.Filepath = p
+			f.Imports = map[string]struct{}{}
 			b.Files[p] = f
 		}
 	}
@@ -336,6 +338,7 @@ func (p *Build) parseServiceRpcs(d *MessageAnnotation) error {
 				Filepath: s.Filepath,
 				Ident:    req_name,
 				File:     s.File,
+				Schema:   d.Schema,
 			}
 			for _, field := range d.Fields {
 				if field.IsReadOnly() {
@@ -383,6 +386,29 @@ func (p *Build) parseServiceRpcs(d *MessageAnnotation) error {
 			rpc.EntReq = msg
 			rpc.EntRes = d
 
+			ps := getCreateRestPaths(msg)
+			base := []pbgen.DataField{
+				{Name: "post", Value: pbgen.DataString{Value: ps[0]}},
+				{Name: "body", Value: pbgen.DataString{Value: "*"}},
+			}
+			extra := []pbgen.Data{}
+			for _, p := range ps[1:] {
+				extra = append(extra, pbgen.Data{Fields: []pbgen.DataField{
+					{Name: "post", Value: pbgen.DataString{Value: p}},
+					{Name: "body", Value: pbgen.DataString{Value: "*"}},
+				}})
+			}
+			if len(extra) > 0 {
+				base = append(base, pbgen.DataField{
+					Name: "additional_bindings", Value: pbgen.DataList{Values: extra},
+				})
+			}
+
+			rpc.Opts = []pbgen.Option{{
+				Name:  ident.Must("google", "api", "http").WithBraces(),
+				Value: pbgen.Data{Fields: base},
+			}}
+
 		case "Get":
 			msg := p.buildGetMessage(d)
 
@@ -392,6 +418,27 @@ func (p *Build) parseServiceRpcs(d *MessageAnnotation) error {
 
 			rpc.EntReq = msg
 			rpc.EntRes = d
+
+			ps := getSpecifierRestPaths(msg, "")
+			base := []pbgen.DataField{
+				{Name: "get", Value: pbgen.DataString{Value: ps[0]}},
+			}
+			extra := []pbgen.Data{}
+			for _, p := range ps[1:] {
+				extra = append(extra, pbgen.Data{Fields: []pbgen.DataField{
+					{Name: "get", Value: pbgen.DataString{Value: p}},
+				}})
+			}
+			if len(extra) > 0 {
+				base = append(base, pbgen.DataField{
+					Name: "additional_bindings", Value: pbgen.DataList{Values: extra},
+				})
+			}
+
+			rpc.Opts = []pbgen.Option{{
+				Name:  ident.Must("google", "api", "http").WithBraces(),
+				Value: pbgen.Data{Fields: base},
+			}}
 
 		case "Update":
 			req_name := ident.Ident(fmt.Sprintf("Update%sRequest", d.Ident))
@@ -404,11 +451,11 @@ func (p *Build) parseServiceRpcs(d *MessageAnnotation) error {
 				Ident:    req_name,
 				File:     s.File,
 			}
+			get_msg := p.buildGetMessage(d)
 			for _, field := range d.Fields {
 				if field.EntName == "id" {
 					v := *field
 					v.Ident = "key"
-					get_msg := p.buildGetMessage(d)
 					v.EntMsg = get_msg
 					v.PbType = get_msg.pbType()
 					msg.Fields = append(msg.Fields, &v)
@@ -442,6 +489,29 @@ func (p *Build) parseServiceRpcs(d *MessageAnnotation) error {
 			rpc.EntReq = msg
 			rpc.EntRes = d
 
+			ps := getSpecifierRestPaths(get_msg, "key")
+			base := []pbgen.DataField{
+				{Name: "patch", Value: pbgen.DataString{Value: ps[0]}},
+				{Name: "body", Value: pbgen.DataString{Value: "*"}},
+			}
+			extra := []pbgen.Data{}
+			for _, p := range ps[1:] {
+				extra = append(extra, pbgen.Data{Fields: []pbgen.DataField{
+					{Name: "patch", Value: pbgen.DataString{Value: p}},
+					{Name: "body", Value: pbgen.DataString{Value: "*"}},
+				}})
+			}
+			if len(extra) > 0 {
+				base = append(base, pbgen.DataField{
+					Name: "additional_bindings", Value: pbgen.DataList{Values: extra},
+				})
+			}
+
+			rpc.Opts = []pbgen.Option{{
+				Name:  ident.Must("google", "api", "http").WithBraces(),
+				Value: pbgen.Data{Fields: base},
+			}}
+
 		case "Delete":
 			msg := p.buildGetMessage(d)
 
@@ -451,6 +521,27 @@ func (p *Build) parseServiceRpcs(d *MessageAnnotation) error {
 
 			rpc.EntReq = msg
 			rpc.EntRes = d
+
+			ps := getSpecifierRestPaths(msg, "")
+			base := []pbgen.DataField{
+				{Name: "delete", Value: pbgen.DataString{Value: ps[0]}},
+			}
+			extra := []pbgen.Data{}
+			for _, p := range ps[1:] {
+				extra = append(extra, pbgen.Data{Fields: []pbgen.DataField{
+					{Name: "delete", Value: pbgen.DataString{Value: p}},
+				}})
+			}
+			if len(extra) > 0 {
+				base = append(base, pbgen.DataField{
+					Name: "additional_bindings", Value: pbgen.DataList{Values: extra},
+				})
+			}
+
+			rpc.Opts = []pbgen.Option{{
+				Name:  ident.Must("google", "api", "http").WithBraces(),
+				Value: pbgen.Data{Fields: base},
+			}}
 
 		default:
 			r := strings.NewReplacer(PbThis.Import, string(d.pbType().Ident))
@@ -563,18 +654,122 @@ func (p *Build) buildGetMessage(d *MessageAnnotation) *MessageAnnotation {
 		s.File.Messages[sub_msg.Ident] = sub_msg
 		p.Messages[sub_msg.Ident] = sub_msg
 	}
-	if len(key_fields) == 1 {
-		msg.Fields = append(msg.Fields, key_fields[0])
-	} else {
-		field := &FieldAnnotation{Ident: "key"}
-		field.Oneof = append(field.Oneof, key_fields...)
-		field.Number = slices.MinFunc(key_fields, func(a, b *FieldAnnotation) int {
+
+	key_fields = append(key_fields, &FieldAnnotation{
+		Ident: "query",
+		// Note that this prevents the user from using field 14 as the key field.
+		Number:  14,
+		EntInfo: &field.TypeInfo{Type: field.TypeString},
+		PbType:  pb_types[field.TypeString],
+	})
+
+	msg.Fields = append(msg.Fields, &FieldAnnotation{
+		Ident: "key",
+		Oneof: key_fields,
+		Number: slices.MinFunc(key_fields, func(a, b *FieldAnnotation) int {
 			return cmp.Compare(a.Number, b.Number)
-		}).Number
-		msg.Fields = append(msg.Fields, field)
-	}
+		}).Number,
+	})
 
 	s.File.Messages[req_name] = msg
 	p.Messages[req_name] = msg
 	return msg
+}
+
+// `msg` must be GetXXXRequest
+func getSpecifierRestPathEntries(msg *MessageAnnotation, query_prefix string) [][]string {
+	if query_prefix != "" {
+		query_prefix += "."
+	}
+
+	msg.File.Imports["google/api/annotations.proto"] = struct{}{}
+
+	name := strings.ToLower(msg.Schema.Name)
+	ps := [][]string{}
+	ps = append(ps, []string{name, fmt.Sprintf("{%squery}", query_prefix)})
+
+L:
+	for _, k := range msg.Fields[0].Oneof {
+		if !k.IsTypeMessage() {
+			continue
+		}
+
+		p := []string{}
+		fields := slices.Clone(k.EntMsg.Fields)
+		slices.Reverse(fields)
+		for _, field := range fields {
+			if !field.IsTypeMessage() {
+				p = append(p, name, fmt.Sprintf("{%s%s.%s}", query_prefix, k.Ident, field.Ident))
+				continue
+			}
+
+			branch_cnt := 0
+			for _, sub := range field.EntMsg.Fields[0].Oneof {
+				if sub.IsTypeMessage() {
+					branch_cnt++
+				}
+				if branch_cnt > 1 {
+					// ramified.
+					// How to make path flexibly?
+					// How can I decide main branch?
+					continue L
+				}
+			}
+
+			name := strings.ToLower(field.EntMsg.Schema.Name)
+			p = append(p, name, fmt.Sprintf("{%s%s.%s.query}", query_prefix, k.Ident, field.Ident))
+		}
+		if fields[len(fields)-1].IsTypeMessage() {
+			p = append(p, name)
+		}
+
+		ps = append(ps, p)
+	}
+
+	return ps
+}
+
+func getSpecifierRestPaths(msg *MessageAnnotation, query_prefix string) []string {
+	entries := getSpecifierRestPathEntries(msg, query_prefix)
+
+	ps := []string{}
+	for _, v := range entries {
+		p := "/" + strings.Join(v, "/")
+		ps = append(ps, p)
+	}
+
+	return ps
+}
+
+// `msg` must be CreateXXXRequest
+func getCreateRestPaths(msg *MessageAnnotation) []string {
+	msg.File.Imports["google/api/annotations.proto"] = struct{}{}
+
+	name := strings.ToLower(msg.Schema.Name)
+	ps := []string{}
+	ps = append(ps, fmt.Sprintf("/%s", name))
+
+	edges := []*FieldAnnotation{}
+	for _, f := range msg.Fields {
+		if !f.IsEdge() {
+			continue
+		}
+		if f.IsOptional {
+			continue
+		}
+
+		edges = append(edges, f)
+	}
+	slices.Reverse(edges)
+	p := ""
+	for _, edge := range edges {
+		name := strings.ToLower(edge.EntMsg.Schema.Name)
+		p += fmt.Sprintf("/%s/{%s.query}", name, edge.Ident)
+	}
+	if len(edges) > 0 {
+		p += fmt.Sprintf("/%s", name)
+		ps = append(ps, p)
+	}
+
+	return ps
 }

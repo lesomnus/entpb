@@ -33,7 +33,7 @@ func (s *IdentityServiceServer) Create(ctx context.Context, req *pb.CreateIdenti
 		q.SetDescription(*v)
 	}
 	q.SetKind(req.GetKind())
-	q.SetVerifier(req.GetVerifier())
+	q.SetValue(req.GetValue())
 	if id, err := GetUserId(ctx, s.db, req.GetOwner()); err != nil {
 		return nil, err
 	} else {
@@ -91,9 +91,6 @@ func (s *IdentityServiceServer) Update(ctx context.Context, req *pb.UpdateIdenti
 	if v := req.Description; v != nil {
 		q.SetDescription(*v)
 	}
-	if v := req.Verifier; v != nil {
-		q.SetVerifier(*v)
-	}
 
 	res, err := q.Save(ctx)
 	if err != nil {
@@ -109,6 +106,7 @@ func ToProtoIdentity(v *ent.Identity) *pb.Identity {
 	m.Name = v.Name
 	m.Description = v.Description
 	m.Kind = v.Kind
+	m.Value = v.Value
 	m.Verifier = v.Verifier
 	if v := v.Edges.Owner; v != nil {
 		m.Owner = ToProtoUser(v)
@@ -117,17 +115,60 @@ func ToProtoIdentity(v *ent.Identity) *pb.Identity {
 }
 func GetIdentityId(ctx context.Context, db *ent.Client, req *pb.GetIdentityRequest) (uuid.UUID, error) {
 	var r uuid.UUID
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
-	} else {
-		r = v
-		return r, nil
+	k := req.GetKey()
+	if t, ok := k.(*pb.GetIdentityRequest_Id); ok {
+		if v, err := uuid.FromBytes(t.Id); err != nil {
+			return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			return v, nil
+		}
+	}
+
+	p, err := GetIdentitySpecifier(req)
+	if err != nil {
+		return r, err
+	}
+
+	v, err := db.Identity.Query().Where(p).OnlyID(ctx)
+	if err != nil {
+		return r, ToStatus(err)
+	}
+
+	return v, nil
+}
+
+func GetIdentitySpecifier(req *pb.GetIdentityRequest) (predicate.Identity, error) {
+	switch t := req.GetKey().(type) {
+	case *pb.GetIdentityRequest_Id:
+		if v, err := uuid.FromBytes(t.Id); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			return identity.IDEQ(v), nil
+		}
+	case *pb.GetIdentityRequest_Query:
+		if req, err := ResolveGetIdentityQuery(req); err != nil {
+			return nil, err
+		} else {
+			return GetIdentitySpecifier(req)
+		}
+	case nil:
+		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
+	default:
+		return nil, status.Errorf(codes.Unimplemented, "unknown type of key")
 	}
 }
-func GetIdentitySpecifier(req *pb.GetIdentityRequest) (predicate.Identity, error) {
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
-	} else {
-		return identity.IDEQ(v), nil
+
+func ResolveGetIdentityQuery(req *pb.GetIdentityRequest) (*pb.GetIdentityRequest, error) {
+	t, ok := req.Key.(*pb.GetIdentityRequest_Query)
+	if !ok {
+		return req, nil
 	}
+
+	q := t.Query
+
+	v, err := uuid.Parse(q)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid query string: %s", err)
+	}
+	return pb.IdentityById(v), nil
 }

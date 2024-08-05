@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/lesomnus/entpb/internal/example/ent/account"
+	"github.com/lesomnus/entpb/internal/example/ent/conf"
 	"github.com/lesomnus/entpb/internal/example/ent/identity"
 	"github.com/lesomnus/entpb/internal/example/ent/invitation"
 	"github.com/lesomnus/entpb/internal/example/ent/membership"
@@ -81,6 +82,7 @@ func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			account.Table:    account.ValidColumn,
+			conf.Table:       conf.ValidColumn,
 			identity.Table:   identity.ValidColumn,
 			invitation.Table: invitation.ValidColumn,
 			membership.Table: membership.ValidColumn,

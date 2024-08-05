@@ -3,6 +3,7 @@ package cmd
 import (
 	"embed"
 	"fmt"
+	"slices"
 	"strings"
 	"text/template"
 
@@ -73,6 +74,11 @@ func (p *Printer) NewTemplate(g *protogen.GeneratedFile) *template.Template {
 		"singular": inflect.Singularize,
 		"plural":   inflect.Pluralize,
 		"pascal":   strcase.ToCamel,
+		"reverse_fields": func(vs []*entpb.FieldAnnotation) []*entpb.FieldAnnotation {
+			rst := slices.Clone(vs)
+			slices.Reverse(rst)
+			return rst
+		},
 		"entname": func(name string) string {
 			// FIXME: I don't know how Ent make acronym from the arbitrary input
 			// but current example only have this so I hard-coded it.

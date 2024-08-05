@@ -158,6 +158,7 @@ func GetAccountId(ctx context.Context, db *ent.Client, req *pb.GetAccountRequest
 
 	return v, nil
 }
+
 func GetAccountSpecifier(req *pb.GetAccountRequest) (predicate.Account, error) {
 	switch t := req.GetKey().(type) {
 	case *pb.GetAccountRequest_Id:
@@ -191,9 +192,30 @@ func GetAccountSpecifier(req *pb.GetAccountRequest) (predicate.Account, error) {
 			ps = append(ps, account.HasSiloWith(p))
 		}
 		return account.And(ps...), nil
+	case *pb.GetAccountRequest_Query:
+		if req, err := ResolveGetAccountQuery(req); err != nil {
+			return nil, err
+		} else {
+			return GetAccountSpecifier(req)
+		}
 	case nil:
 		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
 	default:
 		return nil, status.Errorf(codes.Unimplemented, "unknown type of key")
 	}
+}
+
+func ResolveGetAccountQuery(req *pb.GetAccountRequest) (*pb.GetAccountRequest, error) {
+	t, ok := req.Key.(*pb.GetAccountRequest_Query)
+	if !ok {
+		return req, nil
+	}
+
+	q := t.Query
+
+	v, err := uuid.Parse(q)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid query string: %s", err)
+	}
+	return pb.AccountById(v), nil
 }

@@ -1,6 +1,7 @@
 package entpb
 
 import (
+	"github.com/lesomnus/entpb/pbgen"
 	"github.com/lesomnus/entpb/pbgen/ident"
 )
 
@@ -40,6 +41,7 @@ type Rpc struct {
 	Req    PbType
 	Res    PbType
 	Stream Stream
+	Opts   []pbgen.Option
 
 	EntReq *MessageAnnotation
 	EntRes *MessageAnnotation

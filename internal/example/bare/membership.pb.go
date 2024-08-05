@@ -111,17 +111,75 @@ func ToProtoMembership(v *ent.Membership) *pb.Membership {
 }
 func GetMembershipId(ctx context.Context, db *ent.Client, req *pb.GetMembershipRequest) (uuid.UUID, error) {
 	var r uuid.UUID
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
-	} else {
-		r = v
-		return r, nil
+	k := req.GetKey()
+	if t, ok := k.(*pb.GetMembershipRequest_Id); ok {
+		if v, err := uuid.FromBytes(t.Id); err != nil {
+			return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			return v, nil
+		}
+	}
+
+	p, err := GetMembershipSpecifier(req)
+	if err != nil {
+		return r, err
+	}
+
+	v, err := db.Membership.Query().Where(p).OnlyID(ctx)
+	if err != nil {
+		return r, ToStatus(err)
+	}
+
+	return v, nil
+}
+
+func GetMembershipSpecifier(req *pb.GetMembershipRequest) (predicate.Membership, error) {
+	switch t := req.GetKey().(type) {
+	case *pb.GetMembershipRequest_Id:
+		if v, err := uuid.FromBytes(t.Id); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			return membership.IDEQ(v), nil
+		}
+	case *pb.GetMembershipRequest_ByAccountInTeam:
+		ps := make([]predicate.Membership, 0, 2)
+		if p, err := GetAccountSpecifier(t.ByAccountInTeam.GetAccount()); err != nil {
+			s, _ := status.FromError(err)
+			return nil, status.Errorf(codes.InvalidArgument, "by_account_in_team.%s", s.Message())
+		} else {
+			ps = append(ps, membership.HasAccountWith(p))
+		}
+		if p, err := GetTeamSpecifier(t.ByAccountInTeam.GetTeam()); err != nil {
+			s, _ := status.FromError(err)
+			return nil, status.Errorf(codes.InvalidArgument, "by_account_in_team.%s", s.Message())
+		} else {
+			ps = append(ps, membership.HasTeamWith(p))
+		}
+		return membership.And(ps...), nil
+	case *pb.GetMembershipRequest_Query:
+		if req, err := ResolveGetMembershipQuery(req); err != nil {
+			return nil, err
+		} else {
+			return GetMembershipSpecifier(req)
+		}
+	case nil:
+		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
+	default:
+		return nil, status.Errorf(codes.Unimplemented, "unknown type of key")
 	}
 }
-func GetMembershipSpecifier(req *pb.GetMembershipRequest) (predicate.Membership, error) {
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
-	} else {
-		return membership.IDEQ(v), nil
+
+func ResolveGetMembershipQuery(req *pb.GetMembershipRequest) (*pb.GetMembershipRequest, error) {
+	t, ok := req.Key.(*pb.GetMembershipRequest_Query)
+	if !ok {
+		return req, nil
 	}
+
+	q := t.Query
+
+	v, err := uuid.Parse(q)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid query string: %s", err)
+	}
+	return pb.MembershipById(v), nil
 }

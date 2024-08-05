@@ -117,17 +117,70 @@ func ToProtoTeam(v *ent.Team) *pb.Team {
 }
 func GetTeamId(ctx context.Context, db *ent.Client, req *pb.GetTeamRequest) (uuid.UUID, error) {
 	var r uuid.UUID
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
-	} else {
-		r = v
-		return r, nil
+	k := req.GetKey()
+	if t, ok := k.(*pb.GetTeamRequest_Id); ok {
+		if v, err := uuid.FromBytes(t.Id); err != nil {
+			return r, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			return v, nil
+		}
+	}
+
+	p, err := GetTeamSpecifier(req)
+	if err != nil {
+		return r, err
+	}
+
+	v, err := db.Team.Query().Where(p).OnlyID(ctx)
+	if err != nil {
+		return r, ToStatus(err)
+	}
+
+	return v, nil
+}
+
+func GetTeamSpecifier(req *pb.GetTeamRequest) (predicate.Team, error) {
+	switch t := req.GetKey().(type) {
+	case *pb.GetTeamRequest_Id:
+		if v, err := uuid.FromBytes(t.Id); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			return team.IDEQ(v), nil
+		}
+	case *pb.GetTeamRequest_ByAliasInSilo:
+		ps := make([]predicate.Team, 0, 2)
+		ps = append(ps, team.AliasEQ(t.ByAliasInSilo.GetAlias()))
+		if p, err := GetSiloSpecifier(t.ByAliasInSilo.GetSilo()); err != nil {
+			s, _ := status.FromError(err)
+			return nil, status.Errorf(codes.InvalidArgument, "by_alias_in_silo.%s", s.Message())
+		} else {
+			ps = append(ps, team.HasSiloWith(p))
+		}
+		return team.And(ps...), nil
+	case *pb.GetTeamRequest_Query:
+		if req, err := ResolveGetTeamQuery(req); err != nil {
+			return nil, err
+		} else {
+			return GetTeamSpecifier(req)
+		}
+	case nil:
+		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
+	default:
+		return nil, status.Errorf(codes.Unimplemented, "unknown type of key")
 	}
 }
-func GetTeamSpecifier(req *pb.GetTeamRequest) (predicate.Team, error) {
-	if v, err := uuid.FromBytes(req.GetId()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
-	} else {
-		return team.IDEQ(v), nil
+
+func ResolveGetTeamQuery(req *pb.GetTeamRequest) (*pb.GetTeamRequest, error) {
+	t, ok := req.Key.(*pb.GetTeamRequest_Query)
+	if !ok {
+		return req, nil
 	}
+
+	q := t.Query
+
+	v, err := uuid.Parse(q)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid query string: %s", err)
+	}
+	return pb.TeamById(v), nil
 }

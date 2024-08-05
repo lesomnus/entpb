@@ -22,11 +22,16 @@ type User struct {
 	DateCreated time.Time `json:"date_created,omitempty"`
 	// Alias holds the value of the "alias" field.
 	Alias string `json:"alias,omitempty"`
+	// ParentID holds the value of the "parent_id" field.
+	ParentID *uuid.UUID `json:"parent_id,omitempty"`
+	// SignInAttemptCount holds the value of the "sign_in_attempt_count" field.
+	SignInAttemptCount uint `json:"sign_in_attempt_count,omitempty"`
+	// For users created by other users, this value is initially NULL.
+	DateUnlocked *time.Time `json:"date_unlocked,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
-	Edges         UserEdges `json:"edges"`
-	user_children *uuid.UUID
-	selectValues  sql.SelectValues
+	Edges        UserEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // UserEdges holds the relations/edges for other nodes in the graph.
@@ -98,14 +103,16 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case user.FieldParentID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case user.FieldSignInAttemptCount:
+			values[i] = new(sql.NullInt64)
 		case user.FieldAlias:
 			values[i] = new(sql.NullString)
-		case user.FieldDateCreated:
+		case user.FieldDateCreated, user.FieldDateUnlocked:
 			values[i] = new(sql.NullTime)
 		case user.FieldID:
 			values[i] = new(uuid.UUID)
-		case user.ForeignKeys[0]: // user_children
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -139,12 +146,25 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.Alias = value.String
 			}
-		case user.ForeignKeys[0]:
+		case user.FieldParentID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field user_children", values[i])
+				return fmt.Errorf("unexpected type %T for field parent_id", values[i])
 			} else if value.Valid {
-				u.user_children = new(uuid.UUID)
-				*u.user_children = *value.S.(*uuid.UUID)
+				u.ParentID = new(uuid.UUID)
+				*u.ParentID = *value.S.(*uuid.UUID)
+			}
+		case user.FieldSignInAttemptCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field sign_in_attempt_count", values[i])
+			} else if value.Valid {
+				u.SignInAttemptCount = uint(value.Int64)
+			}
+		case user.FieldDateUnlocked:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field date_unlocked", values[i])
+			} else if value.Valid {
+				u.DateUnlocked = new(time.Time)
+				*u.DateUnlocked = value.Time
 			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
@@ -212,6 +232,19 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("alias=")
 	builder.WriteString(u.Alias)
+	builder.WriteString(", ")
+	if v := u.ParentID; v != nil {
+		builder.WriteString("parent_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("sign_in_attempt_count=")
+	builder.WriteString(fmt.Sprintf("%v", u.SignInAttemptCount))
+	builder.WriteString(", ")
+	if v := u.DateUnlocked; v != nil {
+		builder.WriteString("date_unlocked=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -227,12 +227,21 @@ func (topLevelDef_) topLevelDef() {}
 type Data struct {
 	Fields []DataField
 
-	optionValue_
 	dataValue_
 }
 
 func (Data) TemplateName() string {
 	return "data"
+}
+
+type DataList struct {
+	Values []Data
+
+	dataValue_
+}
+
+func (DataList) TemplateName() string {
+	return "data-list"
 }
 
 type DataField struct {
@@ -241,14 +250,25 @@ type DataField struct {
 }
 
 type DataValue interface{ dataValue() }
-type dataValue_ struct{}
+type dataValue_ struct {
+	optionValue_
+}
 
 func (dataValue_) dataValue() {}
+
+type DataString struct {
+	Value string
+
+	dataValue_
+}
+
+func (DataString) TemplateName() string {
+	return "data-string"
+}
 
 type UnsafeLiteral struct {
 	Value string
 
-	optionValue_
 	dataValue_
 }
 

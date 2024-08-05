@@ -15,6 +15,7 @@ import (
 	status "google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	strings "strings"
 )
 
 type UserServiceServer struct {
@@ -109,6 +110,9 @@ func ToProtoUser(v *ent.User) *pb.User {
 	m.Id = v.ID[:]
 	m.DateCreated = timestamppb.New(v.DateCreated)
 	m.Alias = v.Alias
+	if v.DateUnlocked != nil {
+		m.DateUnlocked = timestamppb.New(*v.DateUnlocked)
+	}
 	if v := v.Edges.Parent; v != nil {
 		m.Parent = ToProtoUser(v)
 	}
@@ -146,6 +150,7 @@ func GetUserId(ctx context.Context, db *ent.Client, req *pb.GetUserRequest) (uui
 
 	return v, nil
 }
+
 func GetUserSpecifier(req *pb.GetUserRequest) (predicate.User, error) {
 	switch t := req.GetKey().(type) {
 	case *pb.GetUserRequest_Id:
@@ -156,9 +161,33 @@ func GetUserSpecifier(req *pb.GetUserRequest) (predicate.User, error) {
 		}
 	case *pb.GetUserRequest_Alias:
 		return user.AliasEQ(t.Alias), nil
+	case *pb.GetUserRequest_Query:
+		if req, err := ResolveGetUserQuery(req); err != nil {
+			return nil, err
+		} else {
+			return GetUserSpecifier(req)
+		}
 	case nil:
 		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
 	default:
 		return nil, status.Errorf(codes.Unimplemented, "unknown type of key")
 	}
+}
+
+func ResolveGetUserQuery(req *pb.GetUserRequest) (*pb.GetUserRequest, error) {
+	t, ok := req.Key.(*pb.GetUserRequest_Query)
+	if !ok {
+		return req, nil
+	}
+
+	q := t.Query
+
+	if v, ok := strings.CutPrefix(q, "@"); ok {
+		return pb.UserByAlias(v), nil
+	}
+	v, err := uuid.Parse(q)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid query string: %s", err)
+	}
+	return pb.UserById(v), nil
 }

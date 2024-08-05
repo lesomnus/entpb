@@ -224,6 +224,9 @@ func (p *Printer) PrintService(pb_file *protogen.File) error {
 			if err := o.ExecuteTemplate("get-specifier.go.tpl", ctx_); err != nil {
 				return fmt.Errorf("get-specifier: %w", err)
 			}
+			if err := o.ExecuteTemplate("resolve-get-query.go.tpl", ctx_); err != nil {
+				return fmt.Errorf("resolve-get-query: %w", err)
+			}
 
 			o := p.GetGeneratedFile("ent.pb.go", pb_file.GoImportPath)
 			if err := o.ExecuteTemplate("get-by.go.tpl", ctx_); err != nil {

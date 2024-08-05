@@ -52,6 +52,48 @@ func (uc *UserCreate) SetNillableAlias(s *string) *UserCreate {
 	return uc
 }
 
+// SetParentID sets the "parent_id" field.
+func (uc *UserCreate) SetParentID(u uuid.UUID) *UserCreate {
+	uc.mutation.SetParentID(u)
+	return uc
+}
+
+// SetNillableParentID sets the "parent_id" field if the given value is not nil.
+func (uc *UserCreate) SetNillableParentID(u *uuid.UUID) *UserCreate {
+	if u != nil {
+		uc.SetParentID(*u)
+	}
+	return uc
+}
+
+// SetSignInAttemptCount sets the "sign_in_attempt_count" field.
+func (uc *UserCreate) SetSignInAttemptCount(u uint) *UserCreate {
+	uc.mutation.SetSignInAttemptCount(u)
+	return uc
+}
+
+// SetNillableSignInAttemptCount sets the "sign_in_attempt_count" field if the given value is not nil.
+func (uc *UserCreate) SetNillableSignInAttemptCount(u *uint) *UserCreate {
+	if u != nil {
+		uc.SetSignInAttemptCount(*u)
+	}
+	return uc
+}
+
+// SetDateUnlocked sets the "date_unlocked" field.
+func (uc *UserCreate) SetDateUnlocked(t time.Time) *UserCreate {
+	uc.mutation.SetDateUnlocked(t)
+	return uc
+}
+
+// SetNillableDateUnlocked sets the "date_unlocked" field if the given value is not nil.
+func (uc *UserCreate) SetNillableDateUnlocked(t *time.Time) *UserCreate {
+	if t != nil {
+		uc.SetDateUnlocked(*t)
+	}
+	return uc
+}
+
 // SetID sets the "id" field.
 func (uc *UserCreate) SetID(u uuid.UUID) *UserCreate {
 	uc.mutation.SetID(u)
@@ -62,20 +104,6 @@ func (uc *UserCreate) SetID(u uuid.UUID) *UserCreate {
 func (uc *UserCreate) SetNillableID(u *uuid.UUID) *UserCreate {
 	if u != nil {
 		uc.SetID(*u)
-	}
-	return uc
-}
-
-// SetParentID sets the "parent" edge to the User entity by ID.
-func (uc *UserCreate) SetParentID(id uuid.UUID) *UserCreate {
-	uc.mutation.SetParentID(id)
-	return uc
-}
-
-// SetNillableParentID sets the "parent" edge to the User entity by ID if the given value is not nil.
-func (uc *UserCreate) SetNillableParentID(id *uuid.UUID) *UserCreate {
-	if id != nil {
-		uc = uc.SetParentID(*id)
 	}
 	return uc
 }
@@ -188,6 +216,10 @@ func (uc *UserCreate) defaults() {
 		v := user.DefaultAlias()
 		uc.mutation.SetAlias(v)
 	}
+	if _, ok := uc.mutation.SignInAttemptCount(); !ok {
+		v := user.DefaultSignInAttemptCount
+		uc.mutation.SetSignInAttemptCount(v)
+	}
 	if _, ok := uc.mutation.ID(); !ok {
 		v := user.DefaultID()
 		uc.mutation.SetID(v)
@@ -206,6 +238,9 @@ func (uc *UserCreate) check() error {
 		if err := user.AliasValidator(v); err != nil {
 			return &ValidationError{Name: "alias", err: fmt.Errorf(`ent: validator failed for field "User.alias": %w`, err)}
 		}
+	}
+	if _, ok := uc.mutation.SignInAttemptCount(); !ok {
+		return &ValidationError{Name: "sign_in_attempt_count", err: errors.New(`ent: missing required field "User.sign_in_attempt_count"`)}
 	}
 	return nil
 }
@@ -250,6 +285,14 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldAlias, field.TypeString, value)
 		_node.Alias = value
 	}
+	if value, ok := uc.mutation.SignInAttemptCount(); ok {
+		_spec.SetField(user.FieldSignInAttemptCount, field.TypeUint, value)
+		_node.SignInAttemptCount = value
+	}
+	if value, ok := uc.mutation.DateUnlocked(); ok {
+		_spec.SetField(user.FieldDateUnlocked, field.TypeTime, value)
+		_node.DateUnlocked = &value
+	}
 	if nodes := uc.mutation.ParentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -264,7 +307,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_children = &nodes[0]
+		_node.ParentID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := uc.mutation.ChildrenIDs(); len(nodes) > 0 {

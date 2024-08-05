@@ -42,6 +42,8 @@ type FieldAnnotation struct {
 
 	IsExplicitReadOnly bool
 	IsExplicitWritable bool
+
+	QueryPrefix string
 }
 
 func (a *FieldAnnotation) IsOneof() bool {
@@ -119,3 +121,13 @@ func (o *fieldOptWritable) fieldOpt(t *FieldAnnotation) {
 }
 
 func WithWritable() FieldOption { return &fieldOptWritable{} }
+
+type fieldOptWithQueryPrefix struct {
+	v string
+}
+
+func (o *fieldOptWithQueryPrefix) fieldOpt(t *FieldAnnotation) {
+	t.QueryPrefix = o.v
+}
+
+func WithQueryPrefix(prefix string) FieldOption { return &fieldOptWithQueryPrefix{v: prefix} }

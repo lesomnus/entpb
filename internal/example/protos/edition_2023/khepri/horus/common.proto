@@ -28,11 +28,19 @@ message Account {
 	google.protobuf.Timestamp date_created = 15;
 }
 
+message Conf {
+	string id = 1;
+	string value = 2;
+	google.protobuf.Timestamp date_updated = 14;
+	google.protobuf.Timestamp date_created = 15;
+}
+
 message Identity {
 	bytes id = 1;
 	User owner = 2;
 	string kind = 3;
-	string verifier = 4;
+	string value = 4;
+	string verifier = 5 [features.field_presence = EXPLICIT];
 	string name = 7;
 	string description = 8;
 	google.protobuf.Timestamp date_created = 15;
@@ -40,10 +48,10 @@ message Identity {
 
 message Invitation {
 	bytes id = 1;
-	Silo silo = 2;
 	Account inviter = 3;
-	string invitee = 4;
-	string type = 5;
+	Silo silo = 4;
+	string invitee = 5;
+	string type = 6;
 	google.protobuf.Timestamp date_canceled = 11 [features.field_presence = EXPLICIT];
 	google.protobuf.Timestamp date_declined = 12 [features.field_presence = EXPLICIT];
 	google.protobuf.Timestamp date_accepted = 13 [features.field_presence = EXPLICIT];
@@ -84,6 +92,7 @@ message Token {
 	User owner = 5;
 	Token parent = 6 [features.field_presence = EXPLICIT];
 	repeated Token children = 7;
+	uint64 use_count_limit = 8;
 	google.protobuf.Timestamp date_expired = 14;
 	google.protobuf.Timestamp date_created = 15;
 }
@@ -95,5 +104,7 @@ message User {
 	repeated User children = 4;
 	repeated Identity identities = 5;
 	repeated Account accounts = 6;
+	// For users created by other users, this value is initially NULL.
+	google.protobuf.Timestamp date_unlocked = 14 [features.field_presence = EXPLICIT];
 	google.protobuf.Timestamp date_created = 15;
 }

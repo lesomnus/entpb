@@ -19,6 +19,12 @@ const (
 	FieldDateCreated = "date_created"
 	// FieldAlias holds the string denoting the alias field in the database.
 	FieldAlias = "alias"
+	// FieldParentID holds the string denoting the parent_id field in the database.
+	FieldParentID = "parent_id"
+	// FieldSignInAttemptCount holds the string denoting the sign_in_attempt_count field in the database.
+	FieldSignInAttemptCount = "sign_in_attempt_count"
+	// FieldDateUnlocked holds the string denoting the date_unlocked field in the database.
+	FieldDateUnlocked = "date_unlocked"
 	// EdgeParent holds the string denoting the parent edge name in mutations.
 	EdgeParent = "parent"
 	// EdgeChildren holds the string denoting the children edge name in mutations.
@@ -34,18 +40,18 @@ const (
 	// ParentTable is the table that holds the parent relation/edge.
 	ParentTable = "users"
 	// ParentColumn is the table column denoting the parent relation/edge.
-	ParentColumn = "user_children"
+	ParentColumn = "parent_id"
 	// ChildrenTable is the table that holds the children relation/edge.
 	ChildrenTable = "users"
 	// ChildrenColumn is the table column denoting the children relation/edge.
-	ChildrenColumn = "user_children"
+	ChildrenColumn = "parent_id"
 	// IdentitiesTable is the table that holds the identities relation/edge.
 	IdentitiesTable = "identities"
 	// IdentitiesInverseTable is the table name for the Identity entity.
 	// It exists in this package in order to avoid circular dependency with the "identity" package.
 	IdentitiesInverseTable = "identities"
 	// IdentitiesColumn is the table column denoting the identities relation/edge.
-	IdentitiesColumn = "user_identities"
+	IdentitiesColumn = "owner_id"
 	// AccountsTable is the table that holds the accounts relation/edge.
 	AccountsTable = "accounts"
 	// AccountsInverseTable is the table name for the Account entity.
@@ -67,23 +73,15 @@ var Columns = []string{
 	FieldID,
 	FieldDateCreated,
 	FieldAlias,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the "users"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"user_children",
+	FieldParentID,
+	FieldSignInAttemptCount,
+	FieldDateUnlocked,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -97,6 +95,8 @@ var (
 	DefaultAlias func() string
 	// AliasValidator is a validator for the "alias" field. It is called by the builders before save.
 	AliasValidator func(string) error
+	// DefaultSignInAttemptCount holds the default value on creation for the "sign_in_attempt_count" field.
+	DefaultSignInAttemptCount uint
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -117,6 +117,21 @@ func ByDateCreated(opts ...sql.OrderTermOption) OrderOption {
 // ByAlias orders the results by the alias field.
 func ByAlias(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAlias, opts...).ToFunc()
+}
+
+// ByParentID orders the results by the parent_id field.
+func ByParentID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldParentID, opts...).ToFunc()
+}
+
+// BySignInAttemptCount orders the results by the sign_in_attempt_count field.
+func BySignInAttemptCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSignInAttemptCount, opts...).ToFunc()
+}
+
+// ByDateUnlocked orders the results by the date_unlocked field.
+func ByDateUnlocked(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDateUnlocked, opts...).ToFunc()
 }
 
 // ByParentField orders the results by parent field.

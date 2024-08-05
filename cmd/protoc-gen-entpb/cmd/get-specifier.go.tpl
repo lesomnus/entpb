@@ -3,7 +3,8 @@
 {{ if $isOneof -}}
 {{ $fields = (index $fields 0).Oneof -}}
 {{ end -}}
-func Get{{ $.EntMsg.Schema.Name }}Specifier(req *{{ print $.EntMsg.Ident | $.Pb.Ident | use }}) ({{ $.Pred.Ident $.EntMsg.Schema.Name | use }}, error) {
+{{ $func_name := print "Get" $.EntMsg.Schema.Name "Specifier" }}
+func {{ $func_name }}(req *{{ print $.EntMsg.Ident | $.Pb.Ident | use }}) ({{ $.Pred.Ident $.EntMsg.Schema.Name | use }}, error) {
 	{{ $schema := schema $.EntMsg.Schema -}}
 	{{ if not $isOneof -}}
 		{{ to_ent (index $fields 0) "req.GetId()" "v" (print "return " ($schema.Ident "IDEQ" | use) "(@), nil") }}
@@ -14,7 +15,13 @@ func Get{{ $.EntMsg.Schema.Name }}Specifier(req *{{ print $.EntMsg.Ident | $.Pb.
 			{{ $key_name := print .Ident | pascal -}}
 			{{ $in := print "t." $key_name -}}
 			case *{{ print $.EntMsg.Ident "_" $key_name | $.Pb.Ident | use }}:
-			{{ if not .IsTypeMessage -}}
+			{{ if eq .Ident "query" -}}
+				if req, err := {{ print "ResolveGet" $.EntMsg.Schema.Name "Query" }}(req); err != nil {
+					return nil, err
+				} else {
+				return {{ $func_name }}(req)
+				}
+			{{ else if not .IsTypeMessage -}}
 				{{ $pred := print (.EntName | entname) "EQ" | $schema.Ident | use  -}}
 				{{ print "return " $pred "(@), nil" | to_ent . $in "v" }}
 			{{ else -}}

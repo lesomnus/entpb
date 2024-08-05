@@ -28,7 +28,8 @@ func (Membership) Fields() []ent.Field {
 
 		field.Enum("role").
 			Annotations(entpb.Field(6)).
-			GoType(role.Role("")),
+			GoType(role.Role("")).
+			Default(string(role.Member)),
 	}
 }
 
@@ -53,6 +54,7 @@ func (Membership) Edges() []ent.Edge {
 
 func (Membership) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("account_id", "team_id").Unique(),
+		index.Fields("account_id", "team_id").Unique().
+			Annotations(entpb.Key("by_account_in_team", 3)),
 	}
 }

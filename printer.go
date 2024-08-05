@@ -203,6 +203,7 @@ func (u *printerUtils) printServices(f *ProtoFile) []pbgen.TopLevelDef {
 					Type:   rpc.Res.ReferencedIn(f.PbPackage),
 					Stream: (rpc.Stream & StreamServer) > 0,
 				},
+				Options: rpc.Opts,
 			}
 
 			d.Body = append(d.Body, v)

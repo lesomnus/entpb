@@ -110,11 +110,11 @@ func TestRpc(t *testing.T) {
 						Fields: []pbgen.DataField{
 							{
 								Name:  "a",
-								Value: pbgen.UnsafeLiteral{Value: "\"b\""},
+								Value: pbgen.DataString{Value: "b"},
 							},
 							{
 								Name:  "c",
-								Value: pbgen.UnsafeLiteral{Value: "\"d\""},
+								Value: pbgen.DataString{Value: "d"},
 							},
 							{
 								Name: "nested",
@@ -122,11 +122,11 @@ func TestRpc(t *testing.T) {
 									Fields: []pbgen.DataField{
 										{
 											Name:  "nested_a",
-											Value: pbgen.UnsafeLiteral{Value: "\"b\""},
+											Value: pbgen.DataString{Value: "b"},
 										},
 										{
 											Name:  "nested_c",
-											Value: pbgen.UnsafeLiteral{Value: "\"d\""},
+											Value: pbgen.DataString{Value: "d"},
 										},
 									},
 								},
@@ -149,6 +149,85 @@ func TestRpc(t *testing.T) {
 			nested_a: "b"
 			nested_c: "d"
 		}
+	};
+}`, v)
+	})
+
+	t.Run("options with list", func(t *testing.T) {
+		require := require.New(t)
+
+		d := pbgen.Rpc{
+			Name:     "Create",
+			Request:  pbgen.RpcType{Type: ident.Must("User")},
+			Response: pbgen.RpcType{Type: ident.Must("User")},
+			Options: []pbgen.Option{
+				{
+					Name: ident.Must("foo", "bar").WithBraces(),
+					Value: pbgen.Data{
+						Fields: []pbgen.DataField{
+							{
+								Name:  "a",
+								Value: pbgen.DataString{Value: "b"},
+							},
+							{
+								Name:  "c",
+								Value: pbgen.DataString{Value: "d"},
+							},
+							{
+								Name: "list",
+								Value: pbgen.DataList{
+									Values: []pbgen.Data{
+										{
+											Fields: []pbgen.DataField{
+												{
+													Name:  "a",
+													Value: pbgen.DataString{Value: "b"},
+												},
+												{
+													Name:  "c",
+													Value: pbgen.DataString{Value: "d"},
+												},
+											},
+										},
+										{
+											Fields: []pbgen.DataField{
+												{
+													Name:  "e",
+													Value: pbgen.DataString{Value: "f"},
+												},
+												{
+													Name:  "g",
+													Value: pbgen.DataString{Value: "h"},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		o := bytes.Buffer{}
+		err := pbgen.Execute(&o, &d)
+		require.NoError(err)
+
+		v := o.String()
+		require.Equal(`rpc Create (User) returns (User) {
+	option (foo.bar) = {
+		a: "b"
+		c: "d"
+		list: [
+			{
+				a: "b"
+				c: "d"
+			},
+			{
+				e: "f"
+				g: "h"
+			}
+		]
 	};
 }`, v)
 	})

@@ -13,6 +13,7 @@ import (
 	status "google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	strings "strings"
 )
 
 type SiloServiceServer struct {
@@ -128,6 +129,7 @@ func GetSiloId(ctx context.Context, db *ent.Client, req *pb.GetSiloRequest) (uui
 
 	return v, nil
 }
+
 func GetSiloSpecifier(req *pb.GetSiloRequest) (predicate.Silo, error) {
 	switch t := req.GetKey().(type) {
 	case *pb.GetSiloRequest_Id:
@@ -138,9 +140,33 @@ func GetSiloSpecifier(req *pb.GetSiloRequest) (predicate.Silo, error) {
 		}
 	case *pb.GetSiloRequest_Alias:
 		return silo.AliasEQ(t.Alias), nil
+	case *pb.GetSiloRequest_Query:
+		if req, err := ResolveGetSiloQuery(req); err != nil {
+			return nil, err
+		} else {
+			return GetSiloSpecifier(req)
+		}
 	case nil:
 		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
 	default:
 		return nil, status.Errorf(codes.Unimplemented, "unknown type of key")
 	}
+}
+
+func ResolveGetSiloQuery(req *pb.GetSiloRequest) (*pb.GetSiloRequest, error) {
+	t, ok := req.Key.(*pb.GetSiloRequest_Query)
+	if !ok {
+		return req, nil
+	}
+
+	q := t.Query
+
+	if v, ok := strings.CutPrefix(q, "@"); ok {
+		return pb.SiloByAlias(v), nil
+	}
+	v, err := uuid.Parse(q)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid query string: %s", err)
+	}
+	return pb.SiloById(v), nil
 }

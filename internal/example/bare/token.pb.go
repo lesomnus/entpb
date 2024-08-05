@@ -14,6 +14,7 @@ import (
 	status "google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	strings "strings"
 )
 
 type TokenServiceServer struct {
@@ -30,6 +31,9 @@ func (s *TokenServiceServer) Create(ctx context.Context, req *pb.CreateTokenRequ
 	q.SetType(req.GetType())
 	if v := req.Name; v != nil {
 		q.SetName(*v)
+	}
+	if v := req.UseCountLimit; v != nil {
+		q.SetUseCountLimit(*v)
 	}
 	if v := req.GetDateExpired(); v != nil {
 		w := v.AsTime()
@@ -98,6 +102,9 @@ func (s *TokenServiceServer) Update(ctx context.Context, req *pb.UpdateTokenRequ
 	if v := req.Name; v != nil {
 		q.SetName(*v)
 	}
+	if v := req.UseCountLimit; v != nil {
+		q.SetUseCountLimit(*v)
+	}
 	if v := req.DateExpired; v != nil {
 		w := v.AsTime()
 		q.SetDateExpired(w)
@@ -117,6 +124,7 @@ func ToProtoToken(v *ent.Token) *pb.Token {
 	m.Value = v.Value
 	m.Type = v.Type
 	m.Name = v.Name
+	m.UseCountLimit = v.UseCountLimit
 	m.DateExpired = timestamppb.New(v.DateExpired)
 	if v := v.Edges.Owner; v != nil {
 		m.Owner = ToProtoUser(v)
@@ -152,6 +160,7 @@ func GetTokenId(ctx context.Context, db *ent.Client, req *pb.GetTokenRequest) (u
 
 	return v, nil
 }
+
 func GetTokenSpecifier(req *pb.GetTokenRequest) (predicate.Token, error) {
 	switch t := req.GetKey().(type) {
 	case *pb.GetTokenRequest_Id:
@@ -162,9 +171,33 @@ func GetTokenSpecifier(req *pb.GetTokenRequest) (predicate.Token, error) {
 		}
 	case *pb.GetTokenRequest_Value:
 		return token.ValueEQ(t.Value), nil
+	case *pb.GetTokenRequest_Query:
+		if req, err := ResolveGetTokenQuery(req); err != nil {
+			return nil, err
+		} else {
+			return GetTokenSpecifier(req)
+		}
 	case nil:
 		return nil, status.Errorf(codes.InvalidArgument, "key not provided")
 	default:
 		return nil, status.Errorf(codes.Unimplemented, "unknown type of key")
 	}
+}
+
+func ResolveGetTokenQuery(req *pb.GetTokenRequest) (*pb.GetTokenRequest, error) {
+	t, ok := req.Key.(*pb.GetTokenRequest_Query)
+	if !ok {
+		return req, nil
+	}
+
+	q := t.Query
+
+	if v, ok := strings.CutPrefix(q, ""); ok {
+		return pb.TokenByValue(v), nil
+	}
+	v, err := uuid.Parse(q)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid query string: %s", err)
+	}
+	return pb.TokenById(v), nil
 }
